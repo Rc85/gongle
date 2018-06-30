@@ -1,0 +1,29 @@
+- var overviewClass = ''
+- var usersClass = ''
+- var postsClass = ''
+- var catClass = ''
+- var topicsClass = ''
+- var configClass = ''
+- var reportsClass = ''
+if page === 'overview'
+    - overviewClass = 'active'
+else if page === 'users'
+    - usersClass = 'active'
+else if page === 'posts'
+    - postsClass = 'active'
+else if page === 'categories'
+    - catClass = 'active'
+else if page === 'topics'
+    - topicsClass = 'active'
+else if page === 'config'
+    - configClass = 'active'
+else if page === 'reports'
+    - reportsClass = 'active'
+aside.w-15.admin-sidebar
+    a(href='/admin-page/overview', class=overviewClass) Overview
+    a(href='/admin-page/users', class=usersClass) Users
+    a(href='/admin-page/posts', class=postsClass) Posts
+    a(href='/admin-page/categories', class=catClass) Categories 
+    a(href='/admin-page/topics', class=topicsClass) Forums
+    a(href='/admin-page/config', class=configClass) Site
+    a(href='/admin-page/reports', class=reportsClass) Reports

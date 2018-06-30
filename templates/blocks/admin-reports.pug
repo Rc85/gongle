@@ -1,0 +1,12 @@
+extends ../layout
+
+block header
+    link(rel='stylesheet', href='/css/admin.css')
+
+block content
+    .section-container.w-100
+        .d-flex
+            include ../inc/admin-sidebar
+            .admin-main
+                h2 Reports
+                .posts-table

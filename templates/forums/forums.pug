@@ -1,0 +1,18 @@
+extends ../forum-layout
+
+block content
+    #popular.section-container
+        h2 POPULAR POSTS
+        include ../inc/sub-topics-header
+        each post, i in popular
+            include ../inc/lg-post
+    #most-active.section-container
+        h2 MOST ACTIVE POSTS
+        include ../inc/sub-topics-header
+        each post, i in active
+            include ../inc/lg-post
+    #new-posts.section-container
+        h2 NEW POSTS
+        include ../inc/sub-topics-header
+        each post, i in new_posts
+            include ../inc/lg-post

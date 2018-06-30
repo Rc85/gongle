@@ -1,0 +1,97 @@
+extends ../layout
+
+block header
+    link(rel='stylesheet', href='/css/admin.css')
+    script(src='/scripts/admin-post-details.js')
+
+block content
+    section.section-container.w-100
+        .d-flex
+            include ../inc/admin-sidebar
+            section.admin-main
+                h2 #{title}
+                section.section-container
+                    header.header.col
+                        .w-5 ID
+                        .w-40 Post Title
+                        .w-15 Posted By
+                        .w-25 Posted On
+                        .w-10 Status
+                        .w-5
+                    .admin-post-container
+                        .admin-post-row
+                            .w-5 #{orig.post_id}
+                            .w-40.admin-post-row-title.show-posts
+                                i.fas.fa-lg.fa-angle-down.mr-5
+                                | #{orig.post_title}
+                            .w-15 #{orig.post_user}
+                            .w-25 #{orig.post_created}
+                            .w-10
+                                if orig.post_status === 'Open'
+                                    span.post-status.user-badge.success-badge #{orig.post_status}
+                                else if orig.post_status === 'Closed'
+                                    span.post-status.user-badge.error-badge #{orig.post_status}
+                                else if orig.post_status === 'Removed'
+                                    span.post-status.user-badge.critical-badge #{orig.post_status}
+                            .w-5.text-center
+                                .mod-user-menu-container
+                                    button.mod-user-button
+                                        i.fas.fa-lg.fa-ellipsis-h
+                                    .mod-user-menu.text-left
+                                        form.open-post(action='/change-post-status', method='post')
+                                            input(type='hidden', name='post_id', value=orig.post_id)
+                                            input(type='hidden', name='status', value='Open')
+                                            a(href='#') Open Post
+                                            i.ml-5.far.fa-question-circle(title='Makes post visible and accessible')
+                                        form.close-post(action='/change-post-status', method='post')
+                                            input(type='hidden', name='post_id', value=orig.post_id)
+                                            input(type='hidden', name='status', value='Closed')
+                                            a(href='#') Close Post
+                                            i.ml-5.far.fa-question-circle(title='Changes post to read-only')
+                                        form.close-post(action='/change-post-status', method='post')
+                                            input(type='hidden', name='post_id', value=orig.post_id)
+                                            input(type='hidden', name='status', value='Removed')
+                                            a(href='#') Remove Post
+                                            i.ml-5.far.fa-question-circle(title='Hides post and makes it accessible')
+                        .post-content-container
+                            .post-content
+                                .post-content-body #{orig.post_body}
+                                    if orig.post_modified !== 'Invalid date'
+                                        .text-right.mt-15
+                                            small Edited on #{orig.post_modified}
+                section.section-container
+                    each reply, i in replies
+                        .admin-post-container
+                            .admin-post-row
+                                .w-5 #{reply.post_id}
+                                .w-40.admin-post-row-title.show-posts #{reply.post_title}
+                                .w-15 #{reply.post_user}
+                                .w-25 #{reply.post_created}
+                                .w-10
+                                    if reply.post_status === 'Open'
+                                        span.post-status.user-badge.success-badge #{reply.post_status}
+                                    else if reply.post_status === 'Closed'
+                                        span.post-status.user-badge.error-badge #{reply.post_status}
+                                    else if reply.post_status === 'Removed'
+                                        span.post-status.user-badge.critical-badge #{reply.post_status}
+                                .w-5.text-center
+                                    .mod-user-menu-container
+                                        button.mod-user-button
+                                            i.fas.fa-lg.fa-ellipsis-h
+                                        .mod-user-menu.text-left
+                                            form.open-post(action='/change-post-status', method='post')
+                                                input(type='hidden', name='post_id', value=reply.post_id)
+                                                input(type='hidden', name='status', value='Open')
+                                                a(href='#') Open Post
+                                                i.ml-5.far.fa-question-circle(title='Makes post visible and accessible')
+                                            form.close-post(action='/change-post-status', method='post')
+                                                input(type='hidden', name='post_id', value=reply.post_id)
+                                                input(type='hidden', name='status', value='Removed')
+                                                a(href='#') Remove Post
+                                                i.ml-5.far.fa-question-circle(title='Hides post and makes it accessible')
+                            .post-content-container
+                                .post-content
+                                    .post-content-body #{reply.post_body}
+                                        if reply.post_modified !== 'Invalid date'
+                                            .text-right.mt-15
+                                                small Edited on #{reply.post_modified}

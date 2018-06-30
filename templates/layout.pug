@@ -1,0 +1,18 @@
+doctype html
+- var siteTitle = 'Yappaholic'
+
+include inc/mixins
+
+html
+    head
+        include inc/header
+    body
+        include inc/top
+        include inc/nav
+
+        main
+            block sidebar
+            block content
+        
+        include inc/footer
+        

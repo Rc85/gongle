@@ -1,0 +1,19 @@
+extends ../layout
+
+block content
+    section.section-container.w-100
+        h2 EDIT POST
+        form#edit-post-form(action='/edit-post', method='post')
+            input(type='hidden', name='post_id', value=post.post_id)
+            .mb-15
+                label(for='title') Title:
+                input.w-100(type='text', name='title', required, value=post.post_title)
+            .mb-15
+                small Posted on #{post.post_created.toDateString()} | 
+                    a(href='/subtopics/' + post.post_topic) #{post.subtopic_title}
+            .mb-15
+                textarea.w-100(name='post_body', rows='10') #{post.post_body}
+            .text-right
+                input.mr-5(type='submit', value='Submit')
+                input.mr-5(type='reset', value='Clear')
+                input(type='button', value='Cancel', onClick='javascript:history.go(-1)')

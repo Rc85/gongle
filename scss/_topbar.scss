@@ -1,0 +1,47 @@
+#top-bar {
+    background-color: $primary_color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 10px 30px 10px;
+    z-index: 6;
+
+    .title h1 {
+        margin-bottom: 0;
+    }
+
+    a {
+        color: rgb(255, 255, 255);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        align-items: center;
+    }
+}
+
+.message-icon {
+    position: relative;
+}
+
+.message-counter {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    background: rgb(255, 125, 0);
+    border-radius: 100%;
+    font-size: 0.6em;
+    padding: 3px;
+    font-weight: bold;
+}
+
+.user-panel-icon-highlight {
+    color: $secondary_color;
+}

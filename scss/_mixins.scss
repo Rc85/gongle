@@ -1,0 +1,57 @@
+@mixin widths-list {
+    @for $i from 0 through 100 {
+        .w-#{$i} {
+            width: percentage($i / 100);
+        }
+    }
+}
+
+@mixin margins-list {
+    @for $i from 0 through 100 {
+        .mt-#{$i} {
+            margin-top: #{$i}px;
+        }
+    }
+
+    @for $i from 0 through 100 {
+        .mr-#{$i} {
+            margin-right: #{$i}px;
+        }
+    }
+
+    @for $i from 0 through 100 {
+        .mb-#{$i} {
+            margin-bottom: #{$i}px;
+        }
+    }
+
+    @for $i from 0 through 100 {
+        .ml-#{$i} {
+            margin-left: #{$i}px;
+        }
+    }
+
+    @for $i from 0 through 100 {
+        .m-#{$i} {
+            margin: #{$i}px;
+        }
+    }
+}
+
+@mixin grey-button {
+    border: 1px solid $light_border_color;
+    background: linear-gradient(white, rgb(240, 240, 240));
+    color: rgb(0, 0, 0);
+    padding: 5px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer; 
+}
+
+@mixin box-shadow {
+    box-shadow: 0 3px 5px #444444;
+}
+
+@mixin badges($color) {
+    background: linear-gradient(200deg, lighten($color, 20%), $color);
+}

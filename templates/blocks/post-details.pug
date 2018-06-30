@@ -1,0 +1,88 @@
+extends ../forum-layout
+
+block subforum-header
+    script(src='/scripts/post-details.js')
+    link(rel='stylesheet', href='/css/post-details.css')
+
+block content
+    section.section-container
+        section.post-details(id='post-' + posts.post.post_id)
+            header.col.mb-10
+                - let post = posts.post
+                .w-10
+                    +vote(post)
+                .w-80
+                    h2.mb-5 #{posts.post.post_title}
+                        if posts.post.post_status === 'Closed'
+                            span.user-badge.error-badge.ml-5 #{posts.post.post_status}
+                    small Posted by 
+                        +mod-user(posts.post.post_user, posts.post.user_id, posts.post.last_login)
+                        |  #{posts.post.post_created} in 
+                        a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
+                        i.fas.fa-angle-right.ml-5.mr-5
+                        a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
+                        if posts.post.post_modified !== 'Invalid date'
+                            |  | 
+                            i.post-edited Edited #{posts.post.post_modified}
+                .w-10.follow-div
+                    if user
+                        - let followed = false
+                        each post, i in user.followed_posts
+                            if post.followed_post === posts.post.post_id
+                                - followed = true
+                        form#follow-post-form.mb-0(action='/follow-post', method='POST')
+                            input(type='hidden', name='post_id', value=posts.post.post_id)
+                            if followed
+                                button(type='submit', name='follow')
+                                    span.fa-stack.fa-lg
+                                        i.fas.fa-star.fa-stack-1x.followed
+                                        i.far.fa-star.fa-stack-1x
+                                    | Followed
+                            else
+                                button(type='submit', name='follow')
+                                    i.far.fa-lg.fa-star
+                                    |  Follow
+            section.post-body #{posts.post.post_body}
+            footer
+                +postAction(posts.post, posts.post)
+        section.replies
+            if posts.replies.length > 0
+                .post-details-pagination.mb-15
+            each post, i in posts.replies
+                section.reply(id='reply-' + post.post_id)
+                    header.col
+                        .w-90
+                            h4.mb-5 [##{post.post_id}] #{post.post_title}
+                            small Posted by 
+                                if post.post_user === posts.post.post_user
+                                    mark
+                                        +mod-user(post.post_user, post.user_id, post.last_login)
+                                else
+                                    +mod-user(post.post_user, post.user_id, post.last_login)
+                                |  #{post.post_created} in  
+                                a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
+                                i.fas.fa-angle-right.ml-5.mr-5
+                                a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
+                                if post.post_modified !== 'Invalid date'
+                                    |  | 
+                                    i.post-edited Edited #{post.post_modified}
+                        .w-10
+                            +vote(post)
+                    section
+                        section.quote
+                            header.col
+                                h4.m-0 Original post by 
+                                    if post.p2_post_user === posts.post.post_user
+                                        mark
+                                            a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
+                                    else
+                                        a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
+                                    |  #{post.p2_post_created} 
+                                    button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&tid=' + posts.post.post_topic + '&rid=' + post.p2_post_id + '"')
+                                        i.fa.fa-angle-double-right
+                            section.quote-body #{post.p2_post_body}
+                        section.post-body.mb-15 #{post.post_body}
+                    footer
+                        +postAction(posts.post, post)
+            if posts.replies.length > 0
+                .post-details-pagination.mb-15

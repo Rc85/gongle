@@ -1,0 +1,16 @@
+extends ../layout
+
+block header
+    script(src='/scripts/admin-topics.js')
+    link(rel='stylesheet', href='/css/admin.css')
+
+block content
+    section.section-container.w-100
+        .d-flex
+            include ../inc/admin-sidebar
+            section.admin-main
+                h2 Forums
+                section.section-container.subtopic-settings
+                    +adminSearchForm('/get-subtopic-details', false)
+                    #settings
+                        

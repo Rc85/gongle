@@ -1,0 +1,51 @@
+extends ../layout
+
+block header
+    script(src='/scripts/admin-categories.js')
+    link(rel='stylesheet', href='/css/admin.css')
+
+block content
+    section.section-container.w-100
+        .d-flex
+            include ../inc/admin-sidebar
+            section.admin-main
+                h2 Create Category
+                section.section-container
+                    form#create-category-form(action='/create-category', method='POST')
+                        .col.mb-15.align-items-center
+                            label(for='category_name') Category:
+                            input.w-100(type='text', name='category')
+                        .text-right
+                            input(type='submit', value='Create')
+                h2 Categories
+                section.section-container
+                    header.header.col
+                        .w-5 ID
+                        .w-25 Category
+                        .w-20 Created On
+                        .w-25 Creatd By
+                        .w-10 Status
+                        .w-15 Actions
+                    each category, i in categories
+                        .col
+                            .w-5 #{category.cat_id}
+                            .w-25.category-title-container
+                                .category-title #{category.category}
+                                form.rename-category(action='/rename-category', method='post')
+                                    input(type='hidden', name='cat_id', value=category.cat_id)
+                                    .d-flex
+                                        input(type='text', name='category')
+                                        input.cancel-rename-category.ml-10(type='button', value='Cancel')
+                            .w-20 #{category.cat_created_on}
+                            .w-25 #{category.cat_created_by}
+                            .w-10
+                                if category.cat_status === 'Open'
+                                    span.user-badge.success-badge #{category.cat_status}
+                                else
+                                    span.user-badge.error-badge #{category.cat_status}
+                            .w-15
+                                form#change-category-status-form(action='/change-category-status', method='post')
+                                    select(name='status')
+                                        option
+                                        option(value='Open') Open
+                                        option(value='Closed') Close

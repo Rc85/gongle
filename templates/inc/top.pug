@@ -1,0 +1,52 @@
+- var userSettingClass = ''
+- var messageClass = ''
+if title === 'User Settings'
+    - userSettingClass = 'user-panel-icon-highlight';
+else if title === 'Messages'
+    - messageClass = 'user-panel-icon-highlight';
+
+#top-bar
+    .title
+        h1 Yappaholic
+
+    section.user-panel
+        if user
+            .d-flex.w-60
+                .text-center
+                    a(href='/profile?key=' + user.session_key)
+                        img.profile-pic.mb-5(src=user.avatar_url)
+                .ml-10
+                    .mb-10.username-profile-link
+                        a(href='/profile?u=' + user.username) #{user.username}
+                    .d-flex
+                        span.message-icon.mr-10
+                            a(href='/messages?key=' + user.session_key)
+                                i(class=messageClass + ' fas fa-lg fa-envelope')
+                        a.mr-10(href='/user-settings?key=' + user.session_key)
+                            i(class=userSettingClass + ' fas fa-lg fa-cog')
+                        if user.privilege > 1
+                            a.mr-10(href='/admin-page')
+                                i.fas.fa-lg.fa-user-cog
+                        a.mr-10(href='/logout')
+                            i.fas.fa-lg.fa-sign-out-alt
+        else
+            form#login-form(action='/login', method='post')
+                .d-flex
+                    .form-group.mr-10
+                        .mr-5
+                            label(for='email') Email:
+                        div
+                            input(type='email', name='email', maxlength='100', required)
+                    .form-group
+                        .mr-5
+                            label(for='password') Password:
+                        div
+                            input(type='password', name='password', minlength='6', maxlength='45', required)
+                .d-flex.justify-content-end.align-items-center
+                    .text-right.mr-10
+                        small
+                            a(href='/register') Register
+                            |  | 
+                            a(href='/forgot-password') Forgot Password
+                    .text-right
+                        input(type='submit', value='Login')

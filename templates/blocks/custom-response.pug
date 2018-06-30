@@ -1,0 +1,10 @@
+extends ../layout
+
+block content
+    section.section-container.w-50.text-center.mx-auto
+        h2 #{status}
+        p.message #{message}
+        if link
+            p Click 
+                a(href=link) here
+                |  to go back.

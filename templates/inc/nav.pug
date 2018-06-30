@@ -1,0 +1,18 @@
+- var homeStyle = ''
+- var forumsStyle = ''
+- var searchStyle = ''
+- var borderStyle = 'border-bottom: 3px solid #19c896';
+if title === 'Main'
+    - homeStyle = borderStyle
+else if title === 'Forums'
+    - forumsStyle = borderStyle
+else if title === 'Search'
+    - searchStyle = borderStyle
+nav
+    #nav-bar
+        .nav-link-div(style=homeStyle)
+            a(href='/') HOME
+        .nav-link-div(style=forumsStyle)
+            a(href='/forums') FORUMS
+        .nav-link-div(style=searchStyle)
+            a(href='/search') SEARCH

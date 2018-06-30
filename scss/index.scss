@@ -1,0 +1,34 @@
+@import 'variables';
+@import 'mixins';
+
+.category-list-parent {
+    display: none;
+}
+
+.topic-list {
+    padding: 0 10px 0 10px;
+}
+
+.category-list {
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    border-top: 0;
+    border-right: 1px;
+    border-left: 1px;
+    border-bottom: 1px;
+    border-style: solid;
+    border-color: $light_border_color;
+}
+
+.category-list, .category-title {
+    display: flex;
+    padding: 10px;
+}
+
+.category-title {
+    justify-content: space-between;
+    border: 1px solid $light_border_color;
+    margin-top: 15px;
+    margin-bottom: 0;
+    cursor: pointer;
+}

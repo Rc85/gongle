@@ -1,0 +1,180 @@
+//- @param post {object} must contain post id and # of upvotes and downvotes
+mixin vote(post)
+    - let postVotes = parseInt(post.post_upvote) + parseInt(post.post_downvote)
+    if user
+        .voting(class=`vote-${post.post_id}`)
+            if user.votes
+                - let upvoteClass = 'far'
+                - let downvoteClass = 'far'
+                - let upvoteDisabled = false
+                - let downvoteDisabled = false
+                each v, i in user.votes
+                    if v.voting_post_id === post.post_id
+                        if v.vote === 'up'
+                            - upvoteClass = 'fas'
+                            - downvoteClass = 'far'
+                            - upvoteDisabled = true
+                            - downvoteDisabled = false
+                        else
+                            - downvoteClass = 'fas'
+                            - upvoteClass = 'far'
+                            - upvoteDisabled = false
+                            - downvoteDisabled = true
+                button.vote-post(type='button', name='vote', value='up', data-id=post.post_id, disabled=upvoteDisabled)
+                    i(class=`${upvoteClass} fa-lg fa-thumbs-up`)
+                .d-flex.flex-direction-column.align-items-center
+                    span.ml-5.mr-5.vote-counter #{postVotes}
+                    small Votes
+                button.vote-post(type='button', name='vote', value='down', data-id=post.post_id, disabled=downvoteDisabled)
+                    i(class=`${downvoteClass} fa-lg fa-thumbs-down`)
+    else
+        .voting.d-flex.flex-direction-column.align-items-center
+            span.vote-counter.justify-content-end #{postVotes}
+            small Votes
+            
+mixin mod-user(username, id, last_login)
+    .mod-user-menu-container
+        button.user-menu-button #{username}
+        .mod-user-menu
+            .d-flex
+                .mr-5
+                    a(href='/profile?u=' + username)
+                        img.profile-pic(src='/files/' + id + '/profile_pic/' + username + '_profile_pic.png')
+                div
+                    div
+                        a(href='/profile?u=' + username) #{username}
+                    div
+                        if last_login !== 'Invalid date'
+                            small Last seen #{last_login}
+            if user
+                if user.privilege > 0
+                    if user.user_id !== id
+                        hr
+                        form.issue-violation(action='/issue-violation', method='post')
+                            input(type='hidden', name='user_id', value=id)
+                            input(type='submit', value='Issue a Violation')
+                        form.temp-ban(action='/change-user-status', method='post')
+                            input(type='hidden', name='user_id', value=id)
+                            input(type='hidden', name='option', value='Active')
+                            input(type='submit', value='Activate User')
+                        form.temp-ban(action='/change-user-status', method='post')
+                            input(type='hidden', name='user_id', value=id)
+                            input(type='hidden', name='option', value='Suspended')
+                            input(type='submit', value='Temporary Ban User')
+                        form.perm-ban(action='/change-user-status', method='post')
+                            input(type='hidden', name='user_id', value=id)
+                            input(type='hidden', name='option', value='Banned')
+                            input(type='submit', value='Permanent Ban User')
+                
+mixin postAction(op, reply)
+    if user
+        if op.subtopic_status === 'Open'
+            .text-right
+                if post.post_status !== 'Closed'
+                    if reply.post_user !== user.username
+                        button.ml-auto.reply-post-button(type='button') Reply
+                        form.reply-post-form.mt-15(action='/post', method='post')
+                            input(type='hidden', name='belongs_to_post_id', value=reply.post_id)
+                            input(type='hidden', name='reply_to_post_id', value=reply.post_id)
+                            input(type='hidden', name='subtopic_id', value=reply.post_topic)
+                            .mb-15
+                                input.w-100(type='text', name='title', value=reply.post_title)
+                            .mb-15
+                                textarea.w-100(name='post_body', rows='10')
+                            .text-right
+                                input.mr-5(type='submit', value='Submit')
+                    else
+                        button.ml-auto.edit-post-button(type='button', data-edit-post-id=reply.post_id, onClick='javascript:location.href="/edit-post?pid=' + reply.post_id + '"') Edit
+            .d-flex.mt-15
+                form.user-report.mr-10(action='/user-report', method='post')
+                    input(type='hidden', name='type', value='forum')
+                    input(type='hidden', name='id', value=reply.post_id)
+                    a(href='#')
+                        small Report
+                if user.privilege > 0
+                    if post.post_status !== 'Open' && op === reply
+                        form.open-post.mr-10(action='/change-post-statsus', method='POST')
+                            input(type='hidden', name='post_id', value=op.post_id)
+                            input(type='hidden', name='status', value='Open')
+                            a(href='#')
+                                small Open Post
+                    if post.post_status !== 'Closed' && op === reply
+                        form.close-post.mr-10(action='/change-post-statsus', method='POST')
+                            input(type='hidden', name='post_id', value=op.post_id)
+                            input(type='hidden', name='status', value='Closed')
+                            a(href='#')
+                                small Close Post
+                    if post.post_status !== 'Removed'
+                        if op !== reply
+                            - var postId = reply.post_id
+                        else
+                            - var postId = op.post_id
+                        form.remove-post.mr-10(action='/change-post-statsus', method='POST')
+                            input(type='hidden', name='post_id', value=postId)
+                            input(type='hidden', name='status', value='Removed')
+                            a(href='#')
+                                small Remove Post
+
+mixin adminSearchForm(action, bool)
+    if bool
+        - var topicRequired = false
+        - var width = 'w-33'
+    else
+        - var topicRequired = true
+        - var width = 'w-48'
+    form#get-details-form.mb-15(action='/get-subtopic-details', method='POST')
+        .search-form-fields
+            div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                label(for='select-category') Category:
+                select#select-category.select-category.w-70(name='category', required)
+                    option
+            div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                label(for='select-topic') Topic:
+                select#select-topic.w-70(name='topic')
+                    option
+            if bool
+                div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                    label(for='select-subtopic') Subtopic:
+                    select#select-subtopic.w-70(name='subtopic')
+                        option
+                div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                    label(for='input-post-id') Post ID:
+                    input.w-70(type='text', name='post_id')
+                div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                    label(for='input-username') Username:
+                    input.w-70(type='text', name='username')
+                div(class=width + ' d-flex justify-content-between align-items-center mb-15')
+                    label(for='post-status') Status:
+                    select.w-70(name='status')
+                        option
+                        option(value='Open') Open
+                        option(value='Closed') Closed
+                        option(value='Removed') Removed
+                div.w-100.d-flex.justify-content-between.align-items-center.mb-15
+                    label(for='title') Title:
+                    input.w-95(type='text', name='title')
+        .form-buttons
+            input(type='submit', value='Retrieve')
+            input(type='reset', value='Clear')
+
+mixin user-status-name(obj)
+    a(href='/profile?u=' + obj.post_user) #{obj.post_user}
+    if user.privilege > 0
+        if obj.user_status === 'Active'
+            span.ml-5.user-status.user-badge.success-badge #{obj.user_status}
+        else if obj.user_status === 'Suspended'
+            span.ml-5.user-status.user-badge.warning-badge #{obj.user_status}
+        else if obj.user_status === 'Banned'
+            span.ml-5.user-status.user-badge.error-badge #{obj.user_status}
+        else if obj.user_status === 'Deleted'
+            span.ml-5.user-status.user-badge.critical-badge #{obj.user_status}
+
+mixin userSettingsForm(title, desc, type, yes, no)
+    h3 #{title}
+    small #{desc}
+    form.settings-form.mt-15(action='/change-settings', method='post')
+        input(type='hidden', name='type', value=type)
+        select.mr-15(name='option')
+            option(value='yes', selected=yes) Yes
+            option(value='no', selected=no) No
+        button(type='submit') Save

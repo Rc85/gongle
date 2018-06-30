@@ -1,0 +1,39 @@
+extends ../layout
+
+block header
+    script(src='/scripts/subtopics.js')
+    link(rel='stylesheet', href='/css/subtopics.css')
+
+block content
+    if user
+        if status === 'Open'
+            .post-control
+                button#new-post-button(type='button') NEW POST
+            form.section-container#post-form(action='/post', method='POST')
+                input(type='hidden', name='subtopic_id', value=subtopic_id)
+                .mb-15
+                    label(for='title') Title
+                    input.w-100(type='text', name='title', required)
+                .mb-15
+                    textarea.w-100(name='post_body', rows='10', required, minlength='10')
+                .text-right
+                    input.mr-5(type='submit', name='submit_button', value='Submit')
+                    input(type='reset', value='Clear')
+        else
+            .error.mb-15 This subtopic is currently closed and is read only. Please check back later.
+    section.section-container
+        h2 #{title.toUpperCase()}
+        include ../inc/sub-topics-header
+        each post, i in posts.post
+            .col.mb-10(id='post-' + post.post_id)
+                .w-10
+                    +vote(post)
+                .w-50
+                    a(href='/forums/posts/post-details?pid=' + post.post_id + '&tid=' + post.post_topic + '&page=1') #{post.post_title}
+                .w-10
+                    small #{post.replies} Replies
+                .w-15
+                    small
+                        a(href='/profile?u=' + post.post_user) #{post.post_user}
+                .w-15.d-flex.justify-content-end
+                    small #{post.post_created}

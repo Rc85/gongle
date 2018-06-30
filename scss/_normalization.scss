@@ -1,0 +1,112 @@
+/* @font-face {
+    font-family: 'Noto Sans';
+    src: url('/fonts/NotoSans-Regular.ttf');
+} */
+
+html, body {
+    min-height: 100vh;
+}
+
+body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    overflow-x: hidden;
+
+    font: {
+        family: 'Arial';
+        size: 1em;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        text-transform: uppercase;
+        margin: 0 0 15px 0;
+    }
+
+    label {
+        text-transform: uppercase;
+    }
+}
+
+body > nav {
+    z-index: 5;
+    box-shadow: 3px 3px 5px;
+}
+
+button, input[type=submit], input[type=reset], input[type=button] {
+    @include grey-button;
+}
+
+hr {
+    border-top: 1px solid $light_border_color;
+    border-bottom: 0px;
+    border-left: 0px;
+    border-right: 0px;
+}
+
+header {
+    border-bottom: 1px solid $light_border_color;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+}
+
+main {
+    min-height: 100%;
+    position: relative;
+    background-color: $tetiary_color;
+    padding: 30px;
+    flex: 1;
+}
+
+a {
+    color: $link-color;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+textarea, input[type=text], input[type=password], input[type=email], input[list] {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+textarea {
+    border-radius: 3px;
+    font-family: 'Arial';
+    padding: 10px;
+}
+
+input[type=text], input[type=password], input[type=email], input[list] {
+    height: 30px;
+    padding: 0 10px 0 10px;
+    border-radius: 3px;
+    font-family: 'Arial';
+    border: 1px solid rgb(175, 175, 175);
+}
+
+select {
+    border-radius: 3px;
+    padding: 5px;
+}
+
+input[type=submit], input[type=reset], input[type=button], button[type=button], button[type=submit], button[type=reset] {
+    @include grey-button;
+}
+
+input[type=checkbox] {
+    transform: scale(2);
+    margin-right: 10px;
+    vertical-align: bottom;
+}
+
+input:focus {
+    border: 0;
+}
+
+label {
+    font-weight: bold;
+}

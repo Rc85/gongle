@@ -1,0 +1,147 @@
+.admin-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.admin-sidebar a {
+  padding: 10px;
+  width: 100%;
+}
+.admin-sidebar .active {
+  background: #c8c8c8;
+  border-radius: 3px;
+}
+
+.admin-main {
+  background: #c8c8c8;
+  border-radius: 3px;
+  padding: 10px 20px;
+  width: 85%;
+}
+.admin-main h2 {
+  margin: 0 0 15px 0;
+}
+
+.ok-status, .error-status {
+  font-weight: bold;
+}
+
+.ok-status {
+  color: #00e100;
+}
+
+.error-status {
+  color: #e10000;
+}
+
+.pending-status {
+  color: #007de1;
+}
+
+.warning-status {
+  color: #e1c800;
+}
+
+.notification {
+  margin-bottom: 5px;
+  padding-left: 20px;
+}
+
+.user-details-profile-pic {
+  position: relative;
+}
+
+.delete-user-profile-pic-form {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.user-details, .topics-list, .subtopics-list, .post-content-container, .rename-category {
+  display: none;
+}
+
+.category-title-container {
+  position: relative;
+}
+
+.rename-category {
+  position: absolute;
+  top: 0;
+}
+
+.users-username {
+  cursor: pointer;
+}
+
+.admin-post-form button {
+  min-width: 25px;
+  min-height: 25px;
+}
+
+/* .admin-post-container {
+    border: 1px solid $light_border_color;
+} */
+.admin-post-container:nth-of-type(n+2) {
+  border-top: 0;
+}
+
+.post-content {
+  display: flex;
+  justify-content: center;
+  background: #c8c8c8;
+  padding: 10px;
+}
+
+.post-content-body {
+  width: 90%;
+  white-space: pre-line;
+  border-left: 5px solid #555555;
+  padding-left: 10px;
+}
+
+.replies {
+  padding-left: 30px;
+  background: #969696;
+}
+
+.post-row {
+  background: white;
+  border: 1px solid #c8c8c8;
+}
+
+.topics-header, .categories-header {
+  cursor: pointer;
+}
+
+.user-fields {
+  width: 75%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.search-form-fields {
+  display: flex;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.admin-post-row {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.admin-post-row:hover {
+  background: #F0F0F0;
+}
+
+.admin-post-row-title {
+  cursor: pointer;
+}
+
+.admin-post-row-title:hover {
+  text-decoration: underline;
+}
+
+/*# sourceMappingURL=css/admin.css.map */

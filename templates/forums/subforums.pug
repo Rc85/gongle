@@ -1,0 +1,40 @@
+extends ../forum-layout
+
+block content
+    .d-flex
+        section.section-container.w-33.mr-10
+            h2 Popular
+            each post, i in popular
+                include ../inc/sm-post
+        section.section-container.w-33.mr-10
+            h2 NEW
+            each post, i in new_posts
+                include ../inc/sm-post
+        section.section-container.w-33
+            h2 MOST ACTIVE
+            each post, i in active
+                include ../inc/sm-post
+    section.section-container
+        h2 #{title}
+        section
+            each subtopic, i in subtopics
+                header.col
+                    .w-50.show-posts
+                        - var keyCheck = /General$/;
+                        if subtopic.subtopic_title !== undefined
+                            - var link = '/subforums/' + subtopic.topic_title.toLowerCase().replace(' ', '_') + '/' + subtopic.subtopic_title.toLowerCase().replace(' ', '_') + '?page=1'
+                            - var title = subtopic.subtopic_title
+                        else
+                            if keyCheck.test(subtopic.topic_title)
+                                - var link = '/subforums/' + subtopic.topic_title.toLowerCase().replace(' ', '_') + '/' + subtopic.topic_title.toLowerCase().replace(' ', '_') + '?page=1'
+                                - var title = 'General'
+                            else
+                                - var link = '/subforums/' + subtopic.topic_title.toLowerCase().replace(' ', '_')
+                                - var title = subtopic.topic_title
+                        a(href=link) #{title}
+                    .w-25
+                        if subtopic.last_posted !== 'Invalid date'
+                            | Last post was #{subtopic.last_posted}
+                    .w-25.text-right
+                        if subtopic.post_user 
+                            | by #{subtopic.post_user}

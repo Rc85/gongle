@@ -1,0 +1,69 @@
+extends ../layout
+
+block header
+    script(src='/scripts/user-settings.js')
+
+block content
+    section.section-container.w-100.user-settings
+        h2 SETTINGS
+        .col.mb-15
+            - var emailYes = true
+            - var emailNo = false
+            - var showYes = true
+            - var showNo = false
+            - var hideEmailYes = true
+            - var hideEmailNo = false
+            if user.receive_email === true
+                - emailYes = true
+                - emailNo = false
+            else
+                - emailYes = false
+                - emailNo = true
+            if user.show_online === true
+                - showYes = true
+                - showNo = false
+            else
+                - showYes = false
+                - showNo = true
+            if user.hide_email === true
+                - hideEmailYes = true
+                - hideEmailNo = false
+            else
+                - hideEmailYes = false
+                - hideEmailNo = true
+            .w-33
+                +userSettingsForm('RECEIVE EMAIL', "Do you want to be notified by email on changes to your account?", 'email', emailYes, emailNo)
+            .w-33
+                +userSettingsForm('SHOW ONLINE', "Do you want to be visible to others (including friends) while you're online?", 'show', showYes, showNo)
+            .w-33
+                +userSettingsForm('HIDE EMAIL', "Do you want to be hide your email from other users?", 'hide_email', hideEmailYes, hideEmailNo)
+        h3 CHANGE EMAIL
+        form#change-email-form(action='/change-email', method='post')
+            .col
+                .w-33.mr-5.mb-15
+                    label(for='current_email') Current Email:
+                    input.w-100(type='email', name='current', required)
+                .w-33.mr-5.mb-15
+                    label(for='new_email') New Email:
+                    input.w-100(type='email', name='new', required)
+                .w-33.mb-15
+                    label(for='confirm_email') Confirm Email:
+                    input.w-100(type='email', name='confirm', required)
+            .form-buttons
+                input(type='submit', value='Submit')
+                input(type='reset', value='Clear')
+        h3 CHANGE PASSWORD
+        form#change-password-form(action='/change-password', method='post')
+            .col
+                .w-33.mr-5.mb-15
+                    label(for='current_password') Current Password:
+                    input.w-100(type='password', name='current', required)
+                .w-33.mr-5.mb-15
+                    label(for='new_password') New Password:
+                    input.w-100(type='password', name='new', required)
+                .w-33.mr-5.mb-15
+                    label(for='confirm_password') Confirm Password:
+                    input.w-100(type='password', name='confirm', required)
+            .form-buttons
+                input(type='submit', value='Submit')
+                input(type='reset', value='Clear')

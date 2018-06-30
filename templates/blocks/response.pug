@@ -1,0 +1,14 @@
+extends ../layout
+
+block content
+    section.section-container.w-50.text-center.mx-auto
+        h2 #{status}
+        p.message #{message}
+        if from
+            p Click 
+                a(href=from) here
+                |  to go back.
+        else
+            p Click 
+                a(href='javascript: history.back()') here
+                |  to go back.

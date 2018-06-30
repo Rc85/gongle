@@ -1,0 +1,97 @@
+#new-post-button {
+  background: linear-gradient(#19c896, #199664);
+  color: black;
+  border: 1px solid black;
+  margin-bottom: 20px;
+}
+
+#post-form, .reply-post-form, .reply-form {
+  display: none;
+}
+
+.post-details {
+  margin-bottom: 30px;
+  border-bottom: 1px solid #c8c8c8;
+  padding-bottom: 30px;
+}
+.post-details section, .post-details footer {
+  margin: 0 auto 0 auto;
+  width: 80%;
+}
+
+.replies {
+  margin: 0 auto 0 auto;
+  width: 80%;
+}
+
+.follow-div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.follow-div button[type=button], .follow-div button[type=submit], .follow-div button[type=submit]:disabled, .follow-div button[type=button]:disabled {
+  border: 1px solid #c8c8c8;
+  background: linear-gradient(white, #f0f0f0);
+  color: black;
+  padding: 5px;
+  outline: none;
+}
+.follow-div button[type=button], .follow-div button[type=submit] {
+  cursor: pointer;
+}
+.follow-div button[type=submit]:disabled, .follow-div button[type=button]:disabled {
+  padding: 5px 5px 5px 0px;
+  cursor: default;
+}
+.follow-div .fa-stack {
+  display: inline-block;
+  height: auto;
+  line-height: 0.75em;
+  position: relative;
+  vertical-align: top;
+  width: 1.35em;
+}
+
+.followed {
+  color: yellow;
+}
+
+.post-options {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.comment-header, .post-options {
+  border-bottom: 1px solid #c8c8c8;
+  padding-bottom: 10px;
+}
+
+.reply {
+  border-radius: 3px;
+  padding: 10px;
+  background-color: #c8e1c8;
+  border: 1px solid #199664;
+  margin-bottom: 30px;
+}
+.reply header {
+  border-bottom: 1px solid #199664;
+}
+
+.quote {
+  margin: 20px auto 15px auto;
+  background-color: #afc8af;
+  padding: 10px;
+  border: 1px solid #96af96;
+  width: 80%;
+  border-radius: 3px;
+}
+
+.quote-body, .post-body {
+  white-space: pre-line;
+}
+
+.post-edited {
+  color: #c84b00;
+}
+
+/*# sourceMappingURL=css/post-details.css.map */

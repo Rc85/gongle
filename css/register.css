@@ -1,0 +1,8 @@
+#register-form div:not(.form-buttons) {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+/*# sourceMappingURL=css/register.css.map */

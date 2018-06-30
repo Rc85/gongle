@@ -1,0 +1,17 @@
+extends ../layout
+
+block header
+    script(src='/scripts/admin-posts.js')
+    link(rel='stylesheet', href='/css/admin.css')
+
+block content
+    section.section-container.w-100
+        .d-flex
+            include ../inc/admin-sidebar
+            section.admin-main
+                h2 Posts
+                section.section-container
+                    +adminSearchForm('/get-post-details', true)
+                    .pagination-container.mb-15
+                    #post-settings
+                    .pagination-container.mt-15

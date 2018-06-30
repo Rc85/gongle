@@ -1,0 +1,33 @@
+extends ../layout
+
+block header
+    script(src='/scripts/index.js')
+    link(rel='stylesheet', href='/css/index.css')
+
+block content
+    section.section-container
+        h2 Forums
+        section#forum-list
+            each category, cat in categories
+                section.category
+                    h3.category-title #{cat} 
+                        i.fa.fa-lg.fa-angle-up
+                    section.category-list-parent
+                        section.category-list
+                            each topic, key in category
+                                section.topic-list
+                                    - var keyCheck = /General$/
+                                    if keyCheck.test(key)
+                                        - var topicName = 'General'
+                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_') + '/' + key.toLowerCase().replace(' ', '_')
+                                    else
+                                        - var topicName = key
+                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_')
+                                    h4
+                                        a(href=topicLink) #{topicName}
+                                    each subtopic, i in topic
+                                        if !keyCheck.test(i)
+                                            .mb-5
+                                                a(href='/subforums/' + key.toLowerCase().replace(' ', '_') + '/' + i.toLowerCase().replace(' ', '_')) #{i}
+
+        

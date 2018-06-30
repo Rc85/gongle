@@ -1,0 +1,9 @@
+extends layout
+
+block header
+    script(src='/scripts/forums.js')
+    link(rel='stylesheet', href='/css/forums.css')
+    block subforum-header
+
+block sidebar
+    include inc/forum-sidebar

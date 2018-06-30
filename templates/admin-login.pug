@@ -1,0 +1,23 @@
+html
+    head
+        title HealMe - A community for health and medical issues
+
+        meta(http-equiv='Content-Type', content='text/html;charset=UTF-8')
+        link(rel='stylesheet', href='/css/styles.css')
+    body
+        section.admin-login
+            if message
+                .error.mb-15 #{message}
+            form(action='/login', method='post')
+                .mb-15
+                    div
+                        label(for='username') Email:
+                    div
+                        input(type='email', name='email')
+                .mb-15
+                    div
+                        label(for='password') Password
+                    div
+                        input(type='password', name='password')
+                .text-right
+                    input(type='submit', value='Login')
