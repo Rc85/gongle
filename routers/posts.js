@@ -16,9 +16,6 @@ app.post('/post', function(req, resp) {
                             console.log(err);
                             resp.send({status: 'fail'});
                         } else if (result !== undefined && result.rowCount === 1) {
-                            if (req.body.reply_to_post_id !== undefined) {
-                                db.query('UPDATE posts SET replies = ')
-                            }
                             let link = req.headers.referer;
             
                             resp.render('blocks/response', {user: req.session.user, status: 'Success', message: 'Post successfully created.', from: link})

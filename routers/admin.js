@@ -73,13 +73,20 @@ app.post('/delete-user-profile-pic', function(req, resp) {
                     console.log(err);
                     resp.send({status: 'error'});
                 } else if (result !== undefined && result.rowCount === 1) {
-                    db.query('INSERT INTO violations (v_user_id, violation, v_issued_by) VALUES ($1, $2, $3)', [result.rows[0].user_id, req.body.reason, req.session.user.user_id]);
-                    fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
+                    db.query('INSERT INTO violations (v_user_id, violation, v_issued_by) VALUES ($1, $2, $3)', [result.rows[0].user_id, req.body.reason, req.session.user.user_id], function(err, result) {
                         if (err) {
                             console.log(err);
-                            resp.send({status: 'error'})
+                        } else if (result !== undefined && result.rowCount === 1) {
+                            fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
+                                if (err) {
+                                    console.log(err);
+                                    resp.send({status: 'error'})
+                                } else {
+                                    resp.send({status: 'success', avatar_url: result.rows[0].avatar_url});
+                                }
+                            });
                         } else {
-                            resp.send({status: 'success', avatar_url: result.rows[0].avatar_url});
+                            resp.send({status: 'error'});
                         }
                     });
                 }

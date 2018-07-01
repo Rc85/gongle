@@ -43,19 +43,26 @@ app.post('/registration', function(req, resp) {
                             console.log(err);
                             fn.error(req, resp, 500);
                         } else if (result !== undefined && result.rowCount === 1) {
-                            db.query('UPDATE users SET avatar_URL = $1 WHERE user_id = $2', ['/files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', result.rows[0].user_id]);
-
-                            fs.mkdir('user_files/' + result.rows[0].user_id, function(err) {
-                                if (err) { console.log(err); }
-                                fs.mkdir('user_files/' + result.rows[0].user_id + '/profile_pic', function(err) {
-                                    if (err) { console.log(err); }
-
-                                    fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
+                            db.query('UPDATE users SET avatar_URL = $1 WHERE user_id = $2', ['/files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', result.rows[0].user_id], function(err, result) {
+                                if (err) {
+                                    console.log(err);
+                                    fn.error(req, resp, 500);
+                                } else if (result !== undefined && result.rowCount === 1) {
+                                    fs.mkdir('user_files/' + result.rows[0].user_id, function(err) {
                                         if (err) { console.log(err); }
-    
-                                        resp.render('blocks/custom-response', {status: 'Success', message: 'Registration successful.'});
+                                        fs.mkdir('user_files/' + result.rows[0].user_id + '/profile_pic', function(err) {
+                                            if (err) { console.log(err); }
+        
+                                            fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
+                                                if (err) { console.log(err); }
+            
+                                                resp.render('blocks/custom-response', {status: 'Success', message: 'Registration successful.'});
+                                            });
+                                        });
                                     });
-                                });
+                                } else {
+                                    fn.error(req, resp, 500);
+                                }
                             });
                         } else {
                             fn.error(req, resp, 500);
@@ -89,35 +96,42 @@ app.post('/login', function(req, resp) {
                         let now = new Date();
                         let user = result.rows[0];
 
-                        db.query('UPDATE users SET last_login = $1 WHERE email = $2', [now, req.body.email]);
-
-                        db.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [user.user_id], function(err, result) {
-                            if (err) { console.log(err); }
-
-                            if (result !== undefined) {
-                                let votes = result.rows;
-
-                                db.query('SELECT * FROM followed_posts WHERE user_following = $1', [user.username], function(err, result) {
-                                    if (err) {
-                                        console.log(err);
-                                        fn.error(req, resp, 400);
+                        db.query('UPDATE users SET last_login = $1 WHERE email = $2', [now, req.body.email], function(err, result) {
+                            if (err) {
+                                console.log(err);
+                                fn.error(req, resp, 500);
+                            } else if (result !== undefined && result.rowCount === 1) {
+                                db.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [user.user_id], function(err, result) {
+                                    if (err) { console.log(err); }
+        
+                                    if (result !== undefined) {
+                                        let votes = result.rows;
+        
+                                        db.query('SELECT * FROM followed_posts WHERE user_following = $1', [user.username], function(err, result) {
+                                            if (err) {
+                                                console.log(err);
+                                                fn.error(req, resp, 400);
+                                            }
+        
+                                            delete user.password;
+                                            user.last_login = moment.tz(user.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
+                                            user.session_key = encoded;
+                                            user.followed_posts = result.rows;
+                                            user.votes = votes;
+        
+                                            req.session.user = user;
+        
+                                            let referer = req.get('referer').split('/').pop();
+                                            if (referer === 'login' || referer === 'registration') {
+                                                resp.redirect('/');
+                                            } else {
+                                                resp.redirect(req.get('referer'));
+                                            }
+                                        })
                                     }
-
-                                    delete user.password;
-                                    user.last_login = moment.tz(user.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
-                                    user.session_key = encoded;
-                                    user.followed_posts = result.rows;
-                                    user.votes = votes;
-
-                                    req.session.user = user;
-
-                                    let referer = req.get('referer').split('/').pop();
-                                    if (referer === 'login' || referer === 'registration') {
-                                        resp.redirect('/');
-                                    } else {
-                                        resp.redirect(req.get('referer'));
-                                    }
-                                })
+                                });
+                            } else {
+                                fn.error(req, resp, 404);
                             }
                         });
                     } else if (result.rows[0].user_status === 'Banned') {
