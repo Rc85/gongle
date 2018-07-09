@@ -51,6 +51,34 @@ $(document).ready(function() {
                     alertify.error('An error occurred');
                 }
             }
-        })
-    })
+        });
+    });
+
+    $('#accept-friend').on('click', function(e) {
+        e.preventDefault();
+        let url = $(this).attr('href');
+
+        showLoading();
+
+        $.get({
+            url: url,
+            success: function(resp) {
+                hideLoading();
+
+                if (resp.status === 'success') {
+                    alertify.success('Friend accepted');
+                } else if (resp.status === 'error') {
+                    alertify.error('An error occurred');
+                } else if (resp.status === 'are friends') {
+                    alertify.error('You two are already friends');
+                } else if (resp.status === 'add error') {
+                    alertify.error('An error occurred when trying to add the user');
+                } else if (resp.status === 'accept error') {
+                    alertify.error('A error occurred when accepting the request');
+                } else if (resp.status === 'invalid') {
+                    alertify.error('Invalid user');
+                }
+            }
+        });
+    });
 });

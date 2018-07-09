@@ -504,4 +504,44 @@ app.get('/get-num-of-posts-in/:subtopic/:page', function(req, resp) {
     });
 });
 
+app.post('/get-friends', function(req, resp) {
+    if (req.session.user) {
+        if (req.body.username === req.session.user.username) {
+            db.connect(async function(err, client, done) {
+                if (err) { console.log(err); }
+
+                let offset;
+
+                if (req.body.page > 1) {
+                    offset = (req.body.page - 1) * 25;
+                } else {
+                    offset = 0;
+                }
+
+                await client.query("SELECT friends.*, users.online_status, users.last_login, users.avatar_url, users.user_level, CASE WHEN users.hide_email = FALSE THEN users.email END AS email FROM friends LEFT JOIN users ON friends.befriend_with = users.username WHERE friends.friendly_user = $1 AND friends.friend_confirmed IS TRUE ORDER BY users.online_status = 'Online', friends.befriend_with OFFSET $2 LIMIT 25", [req.session.user.username, offset])
+                .then((result) => {
+                    done();
+
+                    if (result !== undefined) {
+                        for (let i in result.rows) {
+                            result.rows[i].became_friend_on = moment(result.rows[i].became_friend_on).fromNow(); 
+                            result.rows[i].last_login = moment(result.rows[i].last_login).fromNow(); 
+                        }
+
+                        resp.send({status: 'success', friends: result.rows});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resp.send({status: 'error'});
+                });
+            });
+        } else {
+            fn.error(req, resp, 403, 'You are not allow to retrieve other users\' friends list.');
+        }
+    } else {
+        fn.error(req, resp, 403);
+    }
+});
+
 module.exports = app;

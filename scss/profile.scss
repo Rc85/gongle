@@ -102,3 +102,13 @@ div:not(#user-stats) {
         margin: 0;
     }
 }
+
+#user-friends-content {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+
+    small {
+        font-size: 0.6em;
+    }
+}

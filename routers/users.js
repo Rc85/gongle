@@ -321,7 +321,7 @@ app.post('/add-friend', function(req, resp) {
                 resp.send({status: 'error'});
             });
 
-            let message = `<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a href='/accept-friend-request?id=${addFriend[0].fid}'>Accept Friend Request</a></p>`;
+            let message = `<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a id='accept-friend' href='/accept-friend-request?id=${addFriend[0].fid}'>Accept Friend Request</a></p>`;
 
             await db.query("INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, 'You have a friend request from " + req.session.user.username + "', $3)", [req.session.user.username, req.body.username, message])
             .then((result) => {
@@ -345,7 +345,7 @@ app.post('/delete-friend', function(req, resp) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            await client.query('DELETE FROM friends WHERE friendly_user = $1 AND befriend_with = $2 RETURNING befriend_with', [req.session.user.username, req.body.username])
+            await client.query('DELETE FROM friends WHERE (friendly_user = $1 AND befriend_with = $2) OR (friendly_user = $2 AND befriend_with = $1) RETURNING befriend_with', [req.session.user.username, req.body.username])
             .then((result) => {
                 done();
                 if (result !== undefined && result.rowCount === 1) {
@@ -359,6 +359,63 @@ app.post('/delete-friend', function(req, resp) {
                 console.log(err);
                 resp.send({status: 'error'});
             });
+        });
+    } else {
+        fn.error(req, resp, 403);
+    }
+});
+
+app.get('/accept-friend-request', function(req, resp) {
+    if (req.session.user) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let authorizeUser = await client.query('SELECT * FROM friends WHERE fid = $1', [req.query.id])
+            .then((result) => {
+                if (result !== undefined) {
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+
+            if (req.session.user.username === authorizeUser[0].befriend_with) {
+                let addFriend = await client.query('INSERT INTO friends (friendly_user, befriend_with, friend_confirmed, became_friend_on) VALUES ($1, $2, TRUE, current_timestamp) ON CONFLICT ON CONSTRAINT unique_pair DO UPDATE SET friend_confirmed = TRUE, became_friend_on = current_timestamp WHERE friends.friendly_user = $1 AND friends.befriend_with = $2 AND friends.friend_confirmed = FALSE', [req.session.user.username, authorizeUser[0].friendly_user])
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'add error'});
+                });
+
+                let acceptFriend = await client.query('UPDATE friends SET friend_confirmed = TRUE, became_friend_on = current_timestamp WHERE fid = $1 AND friend_confirmed = FALSE', [req.query.id])
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'accept error'});
+                });
+
+                let message = '<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>' + req.session.user.username + ' has accepted your friend request and has been added to your friends list.</p>'
+
+                await client.query('INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, $3, $4)', [req.session.user.username, authorizeUser[0].friendly_user, 'Friend Request Accepted', message])
+                .catch((err) => {
+                    console.log(err);
+                    resp.send({status: 'error'});
+                });
+
+                done();
+
+                if (addFriend.rowCount === 1 && acceptFriend.rowCount === 1) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'are friends'});
+                }
+            } else {
+                done();
+                resp.send({status: 'invalid'});
+            }
         });
     } else {
         fn.error(req, resp, 403);

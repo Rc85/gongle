@@ -91,4 +91,13 @@ div:not(#user-stats) h3 {
   margin: 0;
 }
 
+#user-friends-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+#user-friends-content small {
+  font-size: 0.6em;
+}
+
 /*# sourceMappingURL=css/profile.css.map */

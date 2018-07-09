@@ -1,4 +1,12 @@
 $(document).ready(function() {
+    var urlString = new URL(window.location.href);
+        urlParams = new URLSearchParams(urlString.searchParams.toString()),
+        username = urlParams.get('u'),
+        postsLoaded = false,
+        repliesLoaded = false,
+        followedPostsLoaded = false,
+        friendsListLoaded = false;
+
     $('.tab-link-button').on('click', function(e) {
         let clicked = $(this).attr('data-id');
         $('.tab-link-button').removeClass('active');
@@ -40,6 +48,8 @@ $(document).ready(function() {
     }
 
     function getUserPosts(page, type, appendDiv) {
+        showLoading();
+
         $.post({
             url: '/get-user-posts',
             data: {
@@ -47,6 +57,15 @@ $(document).ready(function() {
                 page: page
             },
             success: function(resp) {
+                hideLoading();
+                if (type === 'posts') {
+                    postsLoaded = true;
+                } else if (type === 'replies') {
+                    repliesLoaded = true;
+                } else if (type === 'followed') {
+                    followedPostsLoaded = true;
+                }
+
                 if (resp.status === 'success') {
                     $(appendDiv).empty();
 
@@ -63,8 +82,6 @@ $(document).ready(function() {
                     if (resp.posts.total_posts > 0) {
                         createPagination(appendPaginationTo, resp.posts.total_posts, 10, false, false, getUserPosts);
                     }
-                    
-                    console.log(resp)
                 } else {
                     $(appendDiv).append(
                         $('<div>').addClass('section-container').html('An error occurred while trying to retrieve your posts.')
@@ -74,9 +91,76 @@ $(document).ready(function() {
         });
     }
 
-    getUserPosts(1, 'posts', '#user-posts-content');
-    getUserPosts(1, 'replies', '#user-replies-content');
-    getUserPosts(1, 'followed', '#user-followed-content');
+    function getFriendsList(page) {
+        showLoading();
+
+        $.post({
+            url: '/get-friends',
+            data: {
+                username: username,
+                page: page
+            },
+            success: function(resp) {
+                hideLoading();
+
+                friendsListLoaded = true;
+
+                for (let friend of resp.friends) {
+                    $('#user-friends-content').append(
+                        $('<section>').addClass('section-container d-flex w-45').append(
+                            $('<div>').addClass('w-10 mr-10').append(
+                                $('<a>').attr('href', '/profile?u=' + friend.befriend_with).append(
+                                    $('<img>').addClass('w-100').css({'border-radius': '100%'}).attr('src', friend.avatar_url)
+                                )
+                            ),
+                            $('<div>').addClass('w-75').append(
+                                $('<div>').append(
+                                    $('<a>').attr('href', '/profile?u=' + friend.befriend_with).html(friend.befriend_with),
+                                    friend.online_status === 'Online' ?
+                                    $('<span>').addClass('ml-10 user-badge success-badge').text('Online') :
+                                    $('<span>').addClass('ml-10 user-badge user-badge-newcomer').text('Offline')
+                                ),
+                                $('<div>').append(
+                                    $('<small>').text('Became friends ' + friend.became_friend_on)
+                                ),
+                                $('<div>').append(
+                                    $('<small>').text('Last seen ' + friend.last_login)
+                                )
+                            ),
+                            $('<div>').addClass('d-flex justify-content-between w-15').append(
+                                $('<i>').addClass('fas fa-lg fa-envelope'),
+                                $('<i>').addClass('fas fa-lg fa-user-minus')
+                            )
+                        )
+                    )
+                }
+            }
+        });
+    }
+
+    $('#user-posts-button').on('click', function(e) {
+        if (!postsLoaded) {
+            getUserPosts(1, 'posts', '#user-posts-content');
+        }
+    });
+
+    $('#user-replies-button').on('click', function() {
+        if (!repliesLoaded) {
+            getUserPosts(1, 'replies', '#user-replies-content');
+        }
+    });
+
+    $('#user-followed-posts-button').on('click', function() {
+        if (!followedPostsLoaded) {
+            getUserPosts(1, 'followed', '#user-followed-content');
+        }
+    });
+
+    $('#user-friends-button').on('click', function() {
+        if (!friendsListLoaded) {
+            getFriendsList();
+        }
+    });
 
     function randomColor() {
         let char = '0123456789ABCDEF';
@@ -87,10 +171,6 @@ $(document).ready(function() {
 
         return color;
     }
-
-    var urlString = new URL(window.location.href);
-    var urlParams = new URLSearchParams(urlString.searchParams.toString());
-    var username = urlParams.get('u');
 
     $.post({
         url: '/get-post-freq',

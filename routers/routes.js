@@ -138,11 +138,14 @@ app.get('/forums', function(req, resp) {
 
 app.get('/forums/:category', function(req, resp) {
     db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+        
         let title = fn.capitalize(req.params.category.replace('_', ' ')),
             moreQuery = " AND categories.category = '" + title + "'";
 
         let categories = await client.query("SELECT topic_title, pt.last_posted, pt.post_user FROM topics LEFT JOIN categories ON categories.cat_id = topics.topic_category LEFT JOIN (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic) st ON topics.topic_id = st.belongs_to_topic LEFT JOIN (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id WHERE category = $1 ORDER BY subtopic_title LIKE '%General' DESC, subtopic_title", [title])
         .then((result) => {
+            done();
             if (result !== undefined) {
                 for (let i in result.rows) {
                     result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
@@ -1046,9 +1049,30 @@ app.get('/messages/:location', function(req, resp) {
 
             if (validatedKey === req.session.user.username) {
                 let outbox = [],
-                    inbox = [];
+                    inbox = [],
+                    deletedMessagesArray = [];
 
-                let allMessages = await client.query('SELECT * FROM messages WHERE sender = $1 OR recipient = $1 ORDER BY message_date DESC', [req.session.user.username])
+                await client.query('SELECT * FROM deleted_messages WHERE msg_deleted_by = $1', [req.session.user.username])
+                .then((result) => {
+                    if (result !== undefined) {
+                        for (let i in result.rows) {
+                            deletedMessagesArray.push(result.rows[i].deleted_msg);
+                        }
+                    }
+                })
+                .catch((err) => { console.log(err); });
+
+                let deletedMessagesIds;
+                let deletedMessagesQuery;
+                deletedMessagesIds = deletedMessagesArray.join(',');
+
+                if (deletedMessagesArray.length > 0) {
+                    deletedMessagesQuery = 'SELECT * FROM messages WHERE sender = $1 OR recipient = $1 WHERE message_id NOT IN (' + deletedMessagesIds + ') ORDER BY message_date DESC';
+                } else {
+                    deletedMessagesQuery = 'SELECT * FROM messages WHERE sender = $1 OR recipient = $1 ORDER BY message_date DESC';
+                }
+
+                let allMessages = await client.query(deletedMessagesQuery, [req.session.user.username])
                 .then((result) => {
                     if (result !== undefined) {
                         for (let i in result.rows) {
@@ -1077,16 +1101,9 @@ app.get('/messages/:location', function(req, resp) {
                             starredIdArray.push(result.rows[i].saved_msg);
                         }
 
-                        let joinedIds = starredIdArray.join(',');
-                        let arrayToString;
+                        let starredIds = starredIdArray.join(',');
 
-                        if (starredIdArray.length > 1) {
-                            arrayToString = joinedIds.slice(0, -1);
-                        } else {
-                            arrayToString = starredIdArray.toString();
-                        }
-
-                        return arrayToString;
+                        return starredIds;
                     }
                 }).catch((err) => {
                     console.log(err);

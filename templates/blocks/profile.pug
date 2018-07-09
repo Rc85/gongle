@@ -45,13 +45,13 @@ block content
                         h4 STATS
                     if user
                         if user.user_id === viewing.user_id
-                            a.tab-link-button(href='#', data-id='user-posts')
+                            a#user-posts-button.tab-link-button(href='#', data-id='user-posts')
                                 h4 POSTS
-                            a.tab-link-button(href='#', data-id='user-replies')
+                            a#user-replies-button.tab-link-button(href='#', data-id='user-replies')
                                 h4 REPLIES
-                            a.tab-link-button(href='#', data-id='user-followed-posts')
+                            a#user-followed-posts-button.tab-link-button(href='#', data-id='user-followed-posts')
                                 h4 FOLLOWED POSTS
-                            a.tab-link-button(href='#', data-id='user-friends')
+                            a#user-friends-button.tab-link-button(href='#', data-id='user-friends')
                                 h4 FRIENDS
                 #user-stats.tab-content
                     section.col.mb-15
@@ -100,3 +100,6 @@ block content
                                 #user-followed-content
                                 .profile-followed-pagination
                             #user-friends.tab-content
+                                .profile-friend-pagination
+                                #user-friends-content
+                                .profile-friend-pagination
