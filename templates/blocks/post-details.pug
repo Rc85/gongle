@@ -20,7 +20,7 @@ block content
                         |  #{posts.post.post_created} in 
                         a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
                         i.fas.fa-angle-right.ml-5.mr-5
-                        a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
+                        a(href='/subforums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
                         if posts.post.post_modified !== 'Invalid date'
                             |  | 
                             i.post-edited Edited #{posts.post.post_modified}
@@ -62,7 +62,7 @@ block content
                                 |  #{post.post_created} in  
                                 a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
                                 i.fas.fa-angle-right.ml-5.mr-5
-                                a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
+                                a(href='/subforums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
                                 if post.post_modified !== 'Invalid date'
                                     |  | 
                                     i.post-edited Edited #{post.post_modified}

@@ -1,0 +1,38 @@
+extends ../layout
+
+block header
+    script(src='/scripts/messages.js')
+    link(rel='stylesheet', href='/css/messages.css')
+
+block content
+    section.section-container
+        .d-flex.message-main
+            include ../inc/message-nav
+            .message-body
+                section.section-container
+                    header.header.col
+                        .w-5
+                            input#check-all(type='checkbox', name='check_all')
+                        .w-35 Subject
+                        .w-15 Sender
+                        .w-20 Date
+                        .w-5
+                        .w-10
+                    each message, i in messages
+                        if message.message_status === 'Unread' && location === 'inbox'
+                            - var unreadClass = 'message-unread'
+                        else if location !== 'inbox'
+                            -var unreadClass = ''
+                        .col(class=unreadClass)
+                            .w-5
+                                input.select-message(type='checkbox', name='select_message', value=message.message_id)
+                            .w-35.overflow-text
+                                a(href='/messages/content?id=' + message.message_id + '&key=' + user.session_key + '&location=' + location, title=message.subject) #{message.subject}
+                            .w-15 #{message.sender}
+                            .w-20 #{message.message_date}
+                            .w-5
+                                if message.message_status === 'Unread' && location === 'inbox'
+                                    span.user-badge.success-badge NEW
+                            .w-10.d-flex.justify-content-end
+                                include ../inc/delete-message
+                                include ../inc/star-message

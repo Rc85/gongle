@@ -1,0 +1,30 @@
+.message-nav {
+  display: flex;
+  flex-direction: column;
+  width: 15%;
+}
+.message-nav a {
+  padding: 10px;
+  width: 100%;
+}
+.message-nav a.active {
+  background: #c8c8c8;
+  border-radius: 3px;
+}
+
+.message-body {
+  width: 85%;
+  background: #c8c8c8;
+  border-radius: 3px;
+  padding: 10px;
+}
+
+.message-unread {
+  font-weight: bold;
+}
+
+.reply-form {
+  display: none;
+}
+
+/*# sourceMappingURL=css/messages.css.map */

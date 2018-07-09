@@ -59,7 +59,11 @@ app.use(adminPanel);
 const forums = require('./routers/forums');
 app.use(forums);
 
-// put configurations
+// message controller
+const message = require('./routers/messages');
+app.use(message);
+
+// setting view engine to use pug
 app.set('view engine', 'pug');
 app.set('views', ['templates', 'templates/inc', 'templates/blocks']);
 

@@ -36,11 +36,11 @@ $(document).ready(function() {
                         for (let key in resp.menu[i]) {
                             let keyCheck = /General$/;
                             let newKey = key;
-                            let newLink = '/subforums/' + key.toLowerCase().replace(' ', '_');
+                            let newLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '');
     
                             if (keyCheck.test(key)) {
                                 newKey = 'General';
-                                newLink = '/subforums/' + key.toLowerCase().replace(' ', '_') + '/' + key.toLowerCase().replace(' ', '_');
+                                newLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '') + '/' + key.toLowerCase().replace(' ', '_');
                             }
     
                             $(topics).append(
@@ -53,7 +53,7 @@ $(document).ready(function() {
                         $('#forum-sidebar').append(
                             $('<header>').addClass('header').append(
                                 $('<div>').addClass('forum-sidebar-header').append(
-                                    $('<a>').attr('href', '/forums/' + i.toLowerCase().replace(' ', '_')).text(i)
+                                    $('<a>').attr('href', '/forums/' + i.toLowerCase().replace(' ', '_').replace('/', '')).text(i)
                                 )
                             ),
                             $(topics)

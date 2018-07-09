@@ -46,6 +46,19 @@ mixin mod-user(username, id, last_login)
                     div
                         if last_login !== 'Invalid date'
                             small Last seen #{last_login}
+                    if user && user.user_id !== id
+                        hr
+                        div
+                            if user.friends.indexOf(username) < 0
+                                form.add-friend(action='/add-friend', method='post')
+                                    input(type='hidden', name='username', value=username)
+                                    button(type='submit')
+                                        i.fas.fa-lg.fa-user-plus
+                            else
+                                form.delete-friend(action='/delete-friend', method='post')
+                                    input(type='hidden', name='username', value=username)
+                                    button(type='submit')
+                                        i.fas.fa-lg.fa-user-minus
             if user
                 if user.privilege > 0
                     if user.user_id !== id
@@ -93,13 +106,13 @@ mixin postAction(op, reply)
                         small Report
                 if user.privilege > 0
                     if post.post_status !== 'Open' && op === reply
-                        form.open-post.mr-10(action='/change-post-statsus', method='POST')
+                        form.open-post.mr-10(action='/change-post-status', method='POST')
                             input(type='hidden', name='post_id', value=op.post_id)
                             input(type='hidden', name='status', value='Open')
                             a(href='#')
                                 small Open Post
                     if post.post_status !== 'Closed' && op === reply
-                        form.close-post.mr-10(action='/change-post-statsus', method='POST')
+                        form.close-post.mr-10(action='/change-post-status', method='POST')
                             input(type='hidden', name='post_id', value=op.post_id)
                             input(type='hidden', name='status', value='Closed')
                             a(href='#')
@@ -109,7 +122,7 @@ mixin postAction(op, reply)
                             - var postId = reply.post_id
                         else
                             - var postId = op.post_id
-                        form.remove-post.mr-10(action='/change-post-statsus', method='POST')
+                        form.remove-post.mr-10(action='/change-post-status', method='POST')
                             input(type='hidden', name='post_id', value=postId)
                             input(type='hidden', name='status', value='Removed')
                             a(href='#')

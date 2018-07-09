@@ -1,0 +1,10 @@
+if (starred_messages.indexOf(message.message_id) < 0)
+    form.star-message(action='/star-message', method='post')
+        input(type='hidden', name='message_id', value=message.message_id)
+        button(type='submit')
+            i.far.fa-lg.fa-star
+else
+    button(type='submit', name='follow')
+        span.fa-stack.fa-lg
+            i.fas.fa-star.fa-stack-1x.followed
+            i.far.fa-star.fa-stack-1x

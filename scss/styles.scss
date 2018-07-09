@@ -56,6 +56,12 @@
     flex: 1;
 }
 
+.overflow-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .header {
     font-weight: bold;
     text-transform: uppercase;
@@ -72,6 +78,7 @@
 .col {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 10px;
 }
 
@@ -266,6 +273,19 @@ button[name=vote]:disabled {
             text-decoration: underline;
         }
     }
+}
+
+span.fa-stack {
+    display: inline-block;
+    height: auto;
+    line-height: 0.75em;
+    position: relative;
+    vertical-align: top;
+    width: 1.35em;
+}
+
+.followed {
+    color: $yellow;
 }
 
 @include widths-list;

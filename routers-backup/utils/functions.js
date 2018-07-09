@@ -15,54 +15,7 @@ module.exports = {
         return newString.toString().replace(/,/g, ' ');
     },
     newActivePopular: function(moreWhereClause, show, callback) {
-        db.connect(async function(err, client, done) {
-            if (err) { console.log(err); }
-            
-            let popular = await client.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, (post_upvote + post_downvote) AS votes, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY votes DESC, CASE WHEN votes = 0 THEN post_created END DESC LIMIT $1", [show])
-            .then((result) => {
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                        result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
-                    }
-
-                    return result.rows;
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            let newPosts = await client.query("SELECT post_id, post_title, subtopic_title, user_id, user_status, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, posts.post_id, users.user_id, topics.topic_title ORDER BY post_created DESC LIMIT $1", [show])
-            .then((result) => {
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                        result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
-                    }
-    
-                    return result.rows;
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            let mostActive = await client.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, last_login, post_user, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + "  GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY total_replies DESC, CASE WHEN total_replies = 0 THEN post_created END DESC LIMIT $1", [show])
-            .then((result) => {
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                        result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
-                    }
-    
-                    return result.rows;
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            done();
-
-            let results = {popular: popular, new_posts: newPosts, active: mostActive}
-            callback(results);
-        });
-        /* db.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, (post_upvote + post_downvote) AS votes, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY votes DESC, CASE WHEN votes = 0 THEN post_created END DESC LIMIT $1", [show], function(err, result) {
+        db.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, (post_upvote + post_downvote) AS votes, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY votes DESC, CASE WHEN votes = 0 THEN post_created END DESC LIMIT $1", [show], function(err, result) {
             if (err) { console.log(err); }
     
             if (result !== undefined) {
@@ -101,16 +54,8 @@ module.exports = {
                     }
                 });
             }
-        }); */
+        });
     },
-    /** Error Handling - Redirects the user to an error page displaying the error
-     * @param {Number} code - 400 Bad Request
-     * - 401 Unauthorized
-     * - 403 Forbidden
-     * - 406 Not Acceptable
-     * - 413 Payload Too Large
-     * - 500 Internal Server Error
-    */
     error: function(req, resp, code, message) {
         let customMessage = '';
 

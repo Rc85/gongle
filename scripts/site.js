@@ -13,7 +13,8 @@ $(document).ready(function() {
                 vote: vote  
             },
             success: function(resp) {
-                if (resp.status === 'success' || resp.status === 'replaced') {
+                console.log(resp);
+                if (resp.status === 'success') {
                     if (resp.vote === 'up') {
                         $('.vote-' + id).find('button[value=up]').prop('disabled', true).html('<i class="fas fa-lg fa-thumbs-up">');
                         $('.vote-' + id).find('button[value=down]').prop('disabled', false).children().removeClass('fas').addClass('far');
@@ -24,7 +25,7 @@ $(document).ready(function() {
                         $('.vote-' + id).find('span.vote-counter').text(resp.vote_count);
                     }
                 } else if (resp.status === 'error') {
-                    alertify.alert('An error occurred while performing this action. The error has been logged.');
+                    alertify.error('An error occurred');
                 }
             }
         });
@@ -182,5 +183,22 @@ $(document).ready(function() {
         e.preventDefault();
 
         $(this).parent().submit();
+    });
+
+    $('.add-friend').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+
+        $.post({
+            url: '/add-friend',
+            data: $(form).serialize(),
+            success: function(resp) {
+                if (resp.status === 'success') {
+                    alertify.success('Friend request sent');
+                } else if (resp.status === 'error') {
+                    alertify.error('An error occurred');
+                }
+            }
+        });
     });
 });

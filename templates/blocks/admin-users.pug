@@ -13,12 +13,12 @@ block content
                 section.section-container
                     form.search-users-form.mb-15(action='/admin-page/users', method='get')
                         .col.mb-15
-                            .w-33.mr-10.d-flex
-                                label Username:
-                                input.search-users-username(type='text', name='username')
-                            .w-33.mr-10.d-flex
-                                label Level:
-                                select(name='user_level')
+                            .w-33.mr-10.d-flex.align-items-center
+                                label.mr-10 Username:
+                                input.w-100.search-users-username(type='text', name='username')
+                            .w-33.mr-10.d-flex.align-items-center
+                                label.mr-10 Level:
+                                select.w-100(name='user_level')
                                     option
                                     option(value='Newcomer') Newcomer
                                     option(value='Contributor') Contributor
@@ -26,9 +26,9 @@ block content
                                     option(value='Regular') Regular
                                     option(value='Moderator') Moderator
                                     option(value='Administrator') Administrator
-                            .w-33.d-flex
-                                label.mr-5 Status:
-                                select(name='user_status')
+                            .w-33.d-flex.align-items-center
+                                label.mr-10 Status:
+                                select.w-100(name='user_status')
                                     option
                                     option(value='Pending') Pending
                                     option(value='Active') Active

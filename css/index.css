@@ -17,17 +17,20 @@
   border-color: #c8c8c8;
 }
 
-.category-list, .category-title {
+.category-list, .category-bar {
   display: flex;
   padding: 10px;
 }
 
-.category-title {
+.category-bar {
   justify-content: space-between;
   border: 1px solid #c8c8c8;
   margin-top: 15px;
   margin-bottom: 0;
   cursor: pointer;
+}
+.category-bar h3 {
+  margin: 0;
 }
 
 /*# sourceMappingURL=css/index.css.map */

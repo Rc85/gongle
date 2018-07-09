@@ -1,0 +1,58 @@
+extends ../layout
+
+block header
+    script(src='/scripts/messages.js')
+    link(rel='stylesheet', href='/css/messages.css')
+
+block content
+    section.section-container
+        .d-flex.message-main
+            include ../inc/message-nav
+            .message-body
+                if location === 'compose'
+                    form.compose-message(action='/send-message', method='post')
+                        .mb-15
+                            label To:
+                            input.w-100(type='text', name='username')
+                        .mb-15
+                            label Subject:
+                            input.w-100(type='text', name='subject')
+                        .mb-15
+                            label Message:
+                            textarea.w-100(name='message', rows='10')
+                        .text-right
+                            input.mr-5(type='submit', value='Send')
+                            input(type='reset', value='Clear')
+                else if location === 'inbox'
+                    section.section-container
+                        .mb-15.d-flex
+                            .w-90
+                                .mb-10.d-flex
+                                    label.w-10 From: 
+                                    span #{message.sender}
+                                .mb-10.d-flex
+                                    label.w-10 Subject: 
+                                    span #{message.subject}
+                                .mb-10.d-flex
+                                    label.w-10 Date: 
+                                    span #{message.message_date}
+                            .w-10.d-flex.justify-content-end.align-items-center
+                                include ../inc/delete-message
+                                include ../inc/star-message
+                        .mb-15 !{message.message}
+                        .mb-15.text-right
+                            button#reply-button(type='button') Reply
+                        form.reply-form(action='/message/reply', method='POST')
+                            input(type='hidden', name='reply_to_message_id', value=message.message_id)
+                            input(type='hidden', name='subject', value=message.subject)
+                            .mb-15
+                                input.w-100(type='text', name='alt_subject', value='RE: ' + message.subject)
+                            .mb-15
+                                textarea.w-100(name='message', rows='10')
+                            .text-right
+                                input.mr-5(type='submit', value='Send')
+                                input(type='reset', value='Clear')
+                        .d-flex.mt-15
+                            form
+                            
+                            

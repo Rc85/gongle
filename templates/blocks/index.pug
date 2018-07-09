@@ -10,7 +10,9 @@ block content
         section#forum-list
             each category, cat in categories
                 section.category
-                    h3.category-title #{cat} 
+                    .category-bar
+                        a(href='/forums/' + cat.toLowerCase().replace(' ', '_').replace('/', ''))
+                            h3.category-title #{cat} 
                         i.fa.fa-lg.fa-angle-up
                     section.category-list-parent
                         section.category-list
@@ -19,15 +21,15 @@ block content
                                     - var keyCheck = /General$/
                                     if keyCheck.test(key)
                                         - var topicName = 'General'
-                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_') + '/' + key.toLowerCase().replace(' ', '_')
+                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '') + '/' + key.toLowerCase().replace(' ', '_')
                                     else
                                         - var topicName = key
-                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_')
+                                        - var topicLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '')
                                     h4
                                         a(href=topicLink) #{topicName}
                                     each subtopic, i in topic
                                         if !keyCheck.test(i)
                                             .mb-5
-                                                a(href='/subforums/' + key.toLowerCase().replace(' ', '_') + '/' + i.toLowerCase().replace(' ', '_')) #{i}
+                                                a(href='/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '') + '/' + i.toLowerCase().replace(' ', '_').replace('/', '')) #{i}
 
         

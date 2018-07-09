@@ -20,15 +20,19 @@
     border-color: $light_border_color;
 }
 
-.category-list, .category-title {
+.category-list, .category-bar {
     display: flex;
     padding: 10px;
 }
 
-.category-title {
+.category-bar {
     justify-content: space-between;
     border: 1px solid $light_border_color;
     margin-top: 15px;
     margin-bottom: 0;
     cursor: pointer;
+
+    h3 {
+        margin: 0;
+    }
 }

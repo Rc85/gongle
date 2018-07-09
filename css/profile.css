@@ -48,6 +48,9 @@
   padding: 10px;
   margin-right: 5px;
 }
+.tab-container .active {
+  background: #c8c8c8;
+}
 
 .tab-content {
   border: 1px solid #c8c8c8;

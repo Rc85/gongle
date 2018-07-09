@@ -1,0 +1,33 @@
+@import 'variables';
+@import 'mixins';
+
+.message-nav {
+    display: flex;
+    flex-direction: column;
+    width: 15%;
+
+    a {
+        padding: 10px;
+        width: 100%;
+    }
+
+    a.active {
+        background: $light_border_color;
+        border-radius: 3px;
+    }
+}
+
+.message-body {
+    width: 85%;
+    background: $light_border_color;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+.message-unread {
+    font-weight: bold;
+}
+
+.reply-form {
+    display: none;
+}

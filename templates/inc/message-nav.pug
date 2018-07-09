@@ -1,0 +1,17 @@
+- var inboxActive = ''
+- var outboxActive = ''
+- var starredActive = ''
+- var composeActive = ''
+if location === 'inbox'
+    - inboxActive = 'active'
+else if location === 'outbox'
+    - outboxActive = 'active'
+else if location === 'starred'
+    - starredActive = 'active'
+else if location === 'compose'
+    - composeActive = 'active'
+.message-nav
+    a(href='/message/compose', class=composeActive) Compose
+    a(href='/messages/inbox?key=' + user.session_key, class=inboxActive) Inbox
+    a(href='/messages/outbox?key=' + user.session_key, class=outboxActive) Outbox
+    a(href='/messages/starred?key=' + user.session_key, class=starredActive) Starred

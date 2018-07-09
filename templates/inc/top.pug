@@ -1,9 +1,14 @@
 - var userSettingClass = ''
+- var adminClass = ''
 - var messageClass = ''
+- var checkTitle = /^Admin/;
 if title === 'User Settings'
     - userSettingClass = 'user-panel-icon-highlight';
 else if title === 'Messages'
     - messageClass = 'user-panel-icon-highlight';
+else if checkTitle.test(title)
+    - adminClass = 'user-panel-icon-highlight';
+
 
 #top-bar
     .title
@@ -26,7 +31,7 @@ else if title === 'Messages'
                             i(class=userSettingClass + ' fas fa-lg fa-cog')
                         if user.privilege > 1
                             a.mr-10(href='/admin-page')
-                                i.fas.fa-lg.fa-user-cog
+                                i(class=adminClass + ' fas fa-lg fa-user-cog')
                         a.mr-10(href='/logout')
                             i.fas.fa-lg.fa-sign-out-alt
         else
