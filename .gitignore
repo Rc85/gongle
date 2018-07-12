@@ -1,2 +1,4 @@
 node_modules/
 .env
+routers-backup/
+database.pgsql
