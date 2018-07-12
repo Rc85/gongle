@@ -2,21 +2,19 @@ $(document).ready(function() {
     var urlString = new URL(window.location.href);
     var urlParams = new URLSearchParams(urlString.searchParams.toString());
     var postId = urlParams.get('pid');
-    var topicId = urlParams.get('tid');
     var page = urlParams.get('page');
 
     $.post({
         url: '/get-replies',
         data: {
             post_id: postId,
-            topic_id: topicId,
             page: page
         },
         success: function(resp) {
             console.log(resp);
             
             if (resp.status === 'success') {
-                createPagination('.post-details-pagination', resp.replies, 10, resp.obj, '/forums/posts/post-details?pid=' + postId + '&tid=' + topicId)
+                createPagination('.post-details-pagination', resp.replies, 10, resp.obj, '/forums/posts/post-details?pid=' + postId + '&page=1')
             }
         }
     });
@@ -63,5 +61,17 @@ $(document).ready(function() {
                 }
             }
         });
+    });
+
+    $('.quote-header').on('click', function() {
+        $(this).siblings('.quote-body').slideToggle();
+
+        let arrow = $(this).children('i');
+
+        if ($(arrow).hasClass('fa-angle-down')) {
+            $(arrow).removeClass('fa-angle-down').addClass('fa-angle-up');
+        } else {
+            $(arrow).removeClass('fa-angle-up').addClass('fa-angle-down');
+        }
     });
 });

@@ -12,13 +12,13 @@ else if checkTitle.test(title)
 
 #top-bar
     .title
-        h1 Yappaholic
+        h1 #{siteTitle}
 
     section.user-panel
         if user
             .d-flex.w-60
                 .text-center
-                    a(href='/profile?key=' + user.session_key)
+                    a(href='/profile?u=' + user.username)
                         img.profile-pic.mb-5(src=user.avatar_url)
                 .ml-10
                     .mb-10.username-profile-link

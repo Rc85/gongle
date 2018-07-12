@@ -1,11 +1,18 @@
 .col
     .w-10
         +vote(post)
-    .w-40.show-posts
-        a(href='/forums/posts/post-details?pid=' + post.post_id + '&tid=' + post.post_topic + '&page=1') #{post.post_title}
-    .w-10
+    .w-80.show-posts
+        a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
+        div
+            small Posted by 
+                +mod-user(post.post_user, post.user_id, post.last_login)
+                |  #{post.post_created} in 
+                a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
+    .w-10.text-right #{post.total_replies} Replies
+
+    //-.w-10
         a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
-    .w-10 #{post.total_replies} Replies
-    .w-15.d-flex.post-username-column
+    //-.w-10 #{post.total_replies} Replies
+    //-.w-15.d-flex.post-username-column
         +mod-user(post.post_user, post.user_id, post.last_login)
-    .w-15.text-right #{post.post_created}
+    //-.w-15.text-right #{post.post_created}

@@ -2,20 +2,31 @@ const app = require('express').Router();
 const db = require('./db');
 const moment = require('moment-timezone');
 const fn = require('./utils/functions');
+const fs = require('fs');
 
 app.use(/^(?!\/admin-page|\/logout|\/login|\/change-config)/, function(req, resp, next) {
+    /* let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+    console.log(config);
+
+    if (!config.site) {
+        resp.render('closed', {status: 'Closed', message: 'The site is down for maintenance. Please check back later.', title: 'Closed'});
+    } else {
+        next();
+    } */
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
-
+        
         let config = await client.query('SELECT * FROM config ORDER BY config_id')
         .then((result) => {
+            done();
             if (result !== undefined) {
                 return result.rows;
             }
         })
-        .catch((err) => { console.log(err); });
-
-        done();
+        .catch((err) => {
+            console.log(err);
+            done();
+        })
 
         if (config[1].status === 'Closed') {
             resp.render('closed', {status: 'Closed', message: 'The site is down for maintenance. Please check back later.', title: 'Closed'});
@@ -23,17 +34,6 @@ app.use(/^(?!\/admin-page|\/logout|\/login|\/change-config)/, function(req, resp
             next();
         }
     });
-    /* db.query('SELECT * FROM config ORDER BY config_id', function(err, result) {
-        if (err) { console.log(err); }
-
-        if (result !== undefined) {
-            if (result.rows[1].status === 'Closed') {
-                resp.render('closed', {status: 'Closed', message: 'The site is down for maintenance. Please check back later.', title: 'Closed'});
-            } else {
-                next();
-            }
-        }
-    }); */
 });
 
 app.get('/', function(req, resp) {
@@ -42,16 +42,16 @@ app.get('/', function(req, resp) {
 
         let allTopics = await client.query("SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category FROM categories LEFT OUTER JOIN topics ON topics.topic_category = categories.cat_id LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic GROUP BY belongs_to_topic, subtopic_title, topic_title, category ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title = 'Other' ASC, subtopic_title")
         .then((result) => {
+            done();
             if (result !== undefined) {
                 return result.rows;
             }
         })
         .catch((err) => {
             console.log(err);
+            done();
             fn.error(req, resp, 400)
         });
-        
-        done();
 
         /* Create an object in the form of
         {
@@ -153,6 +153,10 @@ app.get('/forums/:category', function(req, resp) {
 
                 return result.rows;
             }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
         });
 
         fn.newActivePopular(moreQuery, 10, function(results) {
@@ -181,19 +185,22 @@ app.get('/register', function(req, resp) {
     if (req.session.user) {
         fn.error(req, resp, 400, 'You are logged in');
     } else {
-        db.connect(function(err, client, done) {
+        db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
             
-            client.query("SELECT * FROM config WHERE config_name = 'Registration'")
+            await client.query("SELECT * FROM config WHERE config_name = 'Registration'")
             .then((result) => {
+                done();
                 if (result !== undefined && result.rows[0].status === 'Open') {
-                    done();
                     resp.render('blocks/register', {title: 'Register'});
                 } else {
                     fn.error(req, resp, 403, 'Registration is closed. Please check back later.');
                 }
             })
-            .catch((err) => { console.log(err); });
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
         });
     }
 });
@@ -214,11 +221,16 @@ app.get('/profile', function(req, resp) {
             } else {
                 fn.error(req, resp, 401);
             }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
         });
 
         if (req.session.user) {
             violations = await client.query('SELECT violations.*, users.username FROM violations LEFT JOIN users ON violations.v_issued_by = users.user_id WHERE v_user_id = $1 ORDER BY v_date DESC', [req.session.user.user_id])
             .then((result) => {
+                done();
                 if (result !== undefined) {
                     for (let i in result.rows) {
                         result.rows[i].v_date = moment(result.rows[i].v_date).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -229,11 +241,10 @@ app.get('/profile', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);  
             });
         }
-
-        done();
 
         resp.render('blocks/profile', {user: req.session.user, viewing: userProfile, violations: violations, title: 'Profile'});
     });
@@ -290,6 +301,7 @@ app.get('/subforums/:topic', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             fn.error(req, resp, 500);
         });
 
@@ -344,6 +356,7 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             fn.error(req, resp, 500);
         });
 
@@ -361,8 +374,9 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
             var offset = 0;
         }
 
-        let posts = await client.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset])
+        let posts = await client.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login, subtopics.subtopic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset])
         .then((result) => {
+            done();
             if (result !== undefined) {
                 for (let i in result.rows) {
                     result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
@@ -374,10 +388,9 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             fn.error(req, resp, 500);
         });
-
-        done();
         
         resp.render('forums/posts', {user: req.session.user, posts: posts, status: status, title: subtopic, topic_title: topic_title, subtopic_id: subtopic_id, category: category});
     });
@@ -422,12 +435,11 @@ app.get('/forums/posts/post-details', function(req, resp) {
         if (err) { console.log(err); }
 
         let post_id = req.query.pid,
-            topic_id = req.query.tid,
             reply_id = req.query.rid,
             page = req.query.page,
             results = {};
 
-        let originalPost = await client.query("SELECT posts.*, topics.topic_title, subtopics.subtopic_title, users.user_id, users.last_login FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN users ON posts.post_user = users.username WHERE posts.post_id = $1 AND posts.post_status != 'Removed'", [post_id])
+        let originalPost = await client.query("SELECT posts.*, topics.topic_title, subtopics.subtopic_title, subtopics.subtopic_status, users.user_id, users.last_login FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN users ON posts.post_user = users.username WHERE posts.post_id = $1 AND posts.post_status != 'Removed'", [post_id])
         .then((result) => {
             if (result !== undefined) {
                 result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
@@ -441,6 +453,7 @@ app.get('/forums/posts/post-details', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             fn.error(req, resp, 500);
         });
 
@@ -450,18 +463,18 @@ app.get('/forums/posts/post-details', function(req, resp) {
         if (reply_id) { // if the reply_id query string is provided, get that reply only
             let reply = await client.query("SELECT * FROM posts LEFT JOIN users ON posts.post_user = users.username WHERE post_id = $1 AND post_status != 'Removed'", [reply_id, show_posts])
             .then((result) => {
+                done();
                 if (result !== undefined && result.rows.length === 1) {
                     result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
                     result.rows[0].post_modified = moment(result.rows[0].post_modified).fromNow();
                     result.rows[0].last_login = moment(result.rows[0].last_login).fromNow();
 
                     return result.rows[0];
-                } else {
-                    fn.error(req, resp, 500);
                 }
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
 
@@ -477,6 +490,7 @@ app.get('/forums/posts/post-details', function(req, resp) {
 
             let repliesWithQuotes = await client.query("SELECT orig.*, p2.post_id AS p2_post_id, p2.post_user AS p2_post_user, p2.post_created AS p2_post_created, p2.post_body AS p2_post_body, p2.reply_to_post_id AS p2_reply_to_post_id, users.user_status, users.user_id, users.last_login FROM posts orig LEFT JOIN posts p2 ON orig.reply_to_post_id = p2.post_id LEFT JOIN users ON orig.post_user = users.username WHERE orig.belongs_to_post_id = $1 AND  orig.post_status != 'Removed' ORDER BY orig.post_created, p2.post_created DESC OFFSET $2 LIMIT 10", [post_id, offset])
             .then((result) => {
+                done();
                 if (result !== undefined) {
                     for (let i in result.rows) {
                         result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
@@ -486,16 +500,13 @@ app.get('/forums/posts/post-details', function(req, resp) {
                     }
 
                     return result.rows;
-                } else {
-                    fn.error(req, resp, 500);
                 }
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
-
-            done();
 
             results['replies'] = repliesWithQuotes;
 
@@ -570,18 +581,16 @@ app.get('/edit-post', function(req, resp) {
 
             let post = await client.query("SELECT * FROM posts JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE post_id = $1 AND post_status != 'Removed'", [post_id])
             .then((result) => {
+                done();
                 if (result !== undefined && result.rows.length === 1) {
                     return result.rows[0];
-                } else {
-                    fn.error(req, resp, 404, 'Post does not exist');
                 }
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
-
-            done();
 
             resp.render('blocks/edit-post', {user: req.session.user, post: post, title: 'Edit Post'});
         });
@@ -633,6 +642,7 @@ app.get('/admin-page/overview', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
 
@@ -659,6 +669,7 @@ app.get('/admin-page/overview', function(req, resp) {
 
                 let configs = await client.query('SELECT * FROM config ORDER BY config_id')
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
                         return result.rows;
                     } else {
@@ -667,10 +678,9 @@ app.get('/admin-page/overview', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-overview', {user: req.session.user, page: 'overview', categories: category, configs: configs, title: 'Admin Overview'});
             });
@@ -745,6 +755,7 @@ app.get('/admin-page/users', function(req, resp) {
 
                 let users = await client.query(queryString, params)
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].user_created = moment(result.rows[i].user_created).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -759,10 +770,9 @@ app.get('/admin-page/users', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-users', {user: req.session.user, page: 'users', users: users, title: 'Admin Users'});
             });
@@ -796,6 +806,7 @@ app.get('/admin-page/posts', function(req, resp) {
 
                 let posts = await client.query('SELECT post_id, post_title, post_user, post_created, post_status, post_body FROM posts ORDER BY post_id')
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].post_created = moment(result.rows[i].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -808,10 +819,9 @@ app.get('/admin-page/posts', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-posts', {user: req.session.user, page: 'posts', posts: posts, title: 'Admin Posts'});
             })
@@ -844,6 +854,7 @@ app.get('/admin-page/categories', function(req, resp) {
 
                 let categories = await client.query('SELECT * FROM categories')
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].cat_created_on = moment(result.rows[i].cat_created_on).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -856,10 +867,9 @@ app.get('/admin-page/categories', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-categories', {user: req.session.user, page: 'categories', categories: categories, title: 'Admin Categories'});
             });
@@ -903,6 +913,7 @@ app.get('/admin-page/config', function(req, resp) {
 
                 let config = await client.query('SELECT * FROM config ORDER BY config_id')
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
                         return result.rows;
                     } else {
@@ -911,10 +922,9 @@ app.get('/admin-page/config', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-config', {user: req.session.user, page: 'config', config: config, title: 'Admin Config'});
             })
@@ -976,10 +986,13 @@ app.get('/admin-page/posts/details', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
 
-                let replies = await client.query('SELECT * FROM posts WHERE belongs_to_post_id = $1 ORDER BY post_created DESC', [postId]).then((result) => {
+                let replies = await client.query('SELECT * FROM posts WHERE belongs_to_post_id = $1 ORDER BY post_created DESC', [postId])
+                .then((result) => {
+                    done();
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].post_created = moment(result.rows[i].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -988,12 +1001,12 @@ app.get('/admin-page/posts/details', function(req, resp) {
 
                         return result.rows;
                     }
-                }).catch((err) => {
+                })
+                .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 resp.render('blocks/admin-post-details', {orig: originalPost, replies: replies, page: 'posts', title: originalPost.post_title});
             })
@@ -1060,14 +1073,17 @@ app.get('/messages/:location', function(req, resp) {
                         }
                     }
                 })
-                .catch((err) => { console.log(err); });
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
 
                 let deletedMessagesIds;
                 let deletedMessagesQuery;
                 deletedMessagesIds = deletedMessagesArray.join(',');
 
                 if (deletedMessagesArray.length > 0) {
-                    deletedMessagesQuery = 'SELECT * FROM messages WHERE sender = $1 OR recipient = $1 WHERE message_id NOT IN (' + deletedMessagesIds + ') ORDER BY message_date DESC';
+                    deletedMessagesQuery = 'SELECT * FROM messages WHERE (sender = $1 OR recipient = $1) AND message_id NOT IN (' + deletedMessagesIds + ') ORDER BY message_date DESC';
                 } else {
                     deletedMessagesQuery = 'SELECT * FROM messages WHERE sender = $1 OR recipient = $1 ORDER BY message_date DESC';
                 }
@@ -1090,12 +1106,14 @@ app.get('/messages/:location', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
 
                 let starredIdArray = [];
 
-                let starredIds = await client.query('SELECT saved_msg FROM saved_messages WHERE msg_saved_by = $1', [req.session.user.username]).then((result) => {
+                /* let starredIds = await client.query('SELECT saved_msg FROM saved_messages WHERE msg_saved_by = $1', [req.session.user.username])
+                .then((result) => {
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             starredIdArray.push(result.rows[i].saved_msg);
@@ -1105,33 +1123,42 @@ app.get('/messages/:location', function(req, resp) {
 
                         return starredIds;
                     }
-                }).catch((err) => {
+                })
+                .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
 
-                let queryString;
+                let getStarredMessages;
 
                 if (starredIdArray.length > 0) {
-                    queryString = 'SELECT * FROM messages WHERE message_id IN (' + starredIds + ')';
+                    getStarredMessages = 'SELECT * FROM messages WHERE message_id IN (' + starredIds + ')';
                 } else {
-                    queryString = 'SELECT * FROM messages WHERE message_id IS NULL';
-                }
+                    getStarredMessages = 'SELECT * FROM messages WHERE message_id IS NULL';
+                } */
 
                 let messages;
 
-                let starredMessages = await client.query(queryString).then((result) => {
+                let starredMessages = await client.query('SELECT messages.sender, messages.recipient, messages.subject, messages.message, messages.message_status, saved_messages.msg_saved_on AS message_date, saved_messages.msg_saved_by, saved_messages.saved_msg AS message_id FROM saved_messages LEFT JOIN messages ON saved_msg = messages.message_id WHERE msg_saved_by = $1', [req.session.user.username])
+                .then((result) => {
+                    done();
                     if (result !== undefined) {
+                        for (let i in result.rows) {
+                            result.rows[i].message_date = moment(result.rows[i].message_date).format('MM/DD/YYYY @ hh:mm:ss A');
+                            starredIdArray.push(result.rows[i].saved_msg);
+                        }
+
                         return result.rows;
                     } else {
                         fn.error(req, resp, 500);
                     }
-                }).catch((err) => {
+                })
+                .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
-
-                done();
 
                 if (req.params.location === 'inbox') {
                     messages = inbox;
@@ -1146,6 +1173,13 @@ app.get('/messages/:location', function(req, resp) {
                 } else {
                     let message;
                     let messageId = parseInt(req.query.id);
+                    if (req.query.location === 'inbox') {
+                        await client.query("UPDATE messages SET message_status = 'Read' WHERE message_id = $1", [req.query.id])
+                        .catch((err) => {
+                            console.log(err);
+                            done();
+                        });
+                    }
 
                     for (let msg of allMessages) {
                         if (msg.message_id === messageId) {
@@ -1280,6 +1314,8 @@ app.get('/messages/:location', function(req, resp) {
 app.get('/message/compose', function(req, resp) {
     if (req.session.user) {
         resp.render('blocks/message', {user: req.session.user, title: 'Compose Message', location: 'compose'});
+    } else {
+        fn.error(req, resp, 403);
     }
 });
 

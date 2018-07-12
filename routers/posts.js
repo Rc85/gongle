@@ -18,6 +18,7 @@ app.post('/post', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
 
@@ -44,6 +45,7 @@ app.post('/post', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     fn.error(req, resp, 500);
                 });
             }      
@@ -71,6 +73,7 @@ app.post('/edit-post', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             })
         });
@@ -141,7 +144,10 @@ app.post('/vote-post', function(req, resp) {
                     resp.send({status: 'success', vote_count: vote_count, vote: vote});
                 }
             })
-            .catch((err) => { console.log(err); });
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
         });
     }
 
@@ -160,18 +166,21 @@ app.post('/vote-post', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             });
 
             let trackedVotes = await client.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [req.session.user.user_id])
             .then((result) => {
+                done();
                 if (result !== undefined) {
                     return result.rows;
                 }
             })
-            .catch((err) => { console.log(err); });
-
-            done();
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
 
             req.session.user.votes = trackedVotes;
 
@@ -192,12 +201,14 @@ app.post('/vote-post', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             });
 
             if (voted.length === 1) {
                 // If vote exists and if vote (up or down) sent from client matches one in database, respond with 'voted'
                 if (req.body.vote === voted[0].vote) {
+                    done();
                     resp.send({status: 'voted'});
                 } else {
                     // If vote sent is 'down' and vote stored in database is 'up', deduct 1 from upvote and deduct 1 from downvote
@@ -212,28 +223,30 @@ app.post('/vote-post', function(req, resp) {
                         queryString = 'UPDATE posts SET post_downvote = post_downvote + 1, post_upvote = post_upvote + 1 WHERE post_id = $1 RETURNING post_upvote, post_downvote';
                     }
 
-                    await client.query(queryString, [req.body.id])
+                    let voteCount = await client.query(queryString, [req.body.id])
                     .then((result) => {
                         done();
                         if (result !== undefined && result.rowCount === 1) {
-                            let vote_count = result.rows[0].post_upvote + result.rows[0].post_downvote;
-
-                            updateVoteTracking(vote_count);
+                            return result.rows[0].post_upvote + result.rows[0].post_downvote;
                         }
                     })
-                    .catch((err) => { console.log(err); });
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                    });
+
+                    updateVoteTracking(voteCount);
                 }
             } else {
                 let insertVote = await client.query('INSERT INTO vote_tracking (voting_user_id, voting_post_id, vote) VALUES ($1, $2, $3) RETURNING vote', [req.session.user.user_id, req.body.id, req.body.vote])
                 .then((result) => {
-                    if (result !== undefined && result.rowCount === 1) {
+                    if (result !== undefined) {
                         return result.rows;
-                    } else {
-                        resp.send({status: 'error'});
                     }
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     resp.send({status: 'error'});
                 });
 
@@ -245,16 +258,19 @@ app.post('/vote-post', function(req, resp) {
                     queryString = 'UPDATE posts SET post_downvote = post_downvote - 1 WHERE post_id = $1 RETURNING post_upvote, post_downvote';
                 }
 
-                await client.query(queryString, [req.body.id])
+                let voteCount = await client.query(queryString, [req.body.id])
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
-                        let vote_count = result.rows[0].post_upvote + result.rows[0].post_downvote;
-
-                        getTrackedVotes(vote_count, insertVote[0].vote);
+                        return result.rows[0].post_upvote + result.rows[0].post_downvote;
                     }
                 })
-                .catch((err) => { console.log(err); });
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
+
+                getTrackedVotes(voteCount, insertVote[0].vote);
             }
         });
     }
@@ -277,6 +293,7 @@ app.post('/get-post-freq', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'error'});
         });
     });
@@ -304,6 +321,7 @@ app.post('/follow-post', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
     
                     if (err.code = 23505) {
                         resp.send({status: 'followed'});
@@ -314,14 +332,17 @@ app.post('/follow-post', function(req, resp) {
 
                 await client.query('SELECT SUM(posts.post_upvote) AS upvotes, SUM(posts.post_downvote) AS downvotes, subtopic_title, post_topic, post_title, post_user, post_created, followed_id, followed_post, user_following FROM followed_posts LEFT OUTER JOIN posts ON followed_posts.followed_post = posts.post_id LEFT OUTER JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE user_following = $1 AND followed_id = $2 GROUP BY posts.post_topic, posts.post_title, posts.post_user, posts.post_created, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id', [req.session.user.username, insertFollowedPost[0].followed_id])
                 .then((result) => {
+                    done();
                     if (result !== undefined) {
-                        done();
                         result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
                         req.session.user.followed_posts.push(result.rows[0]);
                         resp.send({status: 'success'});
                     }
                 })
-                .catch((err) => { console.log(err); });
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
             } else {
                 await client.query('DELETE FROM followed_posts WHERE followed_id = $1', [followedPost[0].followed_id])
                 .then((result) => {
@@ -329,7 +350,10 @@ app.post('/follow-post', function(req, resp) {
                         return result.rows;
                     }
                 })
-                .catch((err) => { console.log(err); });
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
 
                 await client.query('SELECT * FROM followed_posts WHERE user_following = $1', [req.session.user.username])
                 .then((result) => {
@@ -342,7 +366,10 @@ app.post('/follow-post', function(req, resp) {
                         resp.send({status: 'unfollowed'});
                     }
                 })
-                .catch((err) => { console.log(err); });
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
             }
         });
     }

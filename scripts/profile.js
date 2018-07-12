@@ -1,7 +1,5 @@
 $(document).ready(function() {
-    var urlString = new URL(window.location.href);
-        urlParams = new URLSearchParams(urlString.searchParams.toString()),
-        username = urlParams.get('u'),
+    var username = urlParams().get('u'),
         postsLoaded = false,
         repliesLoaded = false,
         followedPostsLoaded = false,
@@ -20,7 +18,7 @@ $(document).ready(function() {
 
     function populatePosts(parent, obj, show_body, is_reply) {
         //if (is_reply) {
-            var url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&tid=' + obj.post_topic + '&page=1';
+            var url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&page=1';
         //} else {
             //var url = '/forums/posts/post-details?pid=' + obj.post_id + '&tid=' + obj.post_topic + '&page=1';
         //}
@@ -127,9 +125,47 @@ $(document).ready(function() {
                                     $('<small>').text('Last seen ' + friend.last_login)
                                 )
                             ),
-                            $('<div>').addClass('d-flex justify-content-between w-15').append(
-                                $('<i>').addClass('fas fa-lg fa-envelope'),
-                                $('<i>').addClass('fas fa-lg fa-user-minus')
+                            $('<div>').addClass('d-flex justify-content-around w-15').append(
+                                $('<a>').attr('href', '/message/compose?u=' + friend.befriend_with).append(
+                                    $('<i>').addClass('fas fa-envelope')
+                                ),
+                                $('<a>').attr('href', '#').append(
+                                    $('<i>').addClass('fas fa-user-minus')
+                                ).on('click', function(e) {
+                                    e.preventDefault();
+                                    let friendDiv = $(this).parent().parent();
+
+                                    alertify
+                                    .okBtn('Yes')
+                                    .cancelBtn('No')
+                                    .confirm('Are you sure you want to unfriend this user?', function(e) {
+                                        e.preventDefault();
+
+                                        showLoading();
+
+                                        $.post({
+                                            url: '/unfriend',
+                                            data: {
+                                                fid: friend.fid
+                                            },
+                                            success: function(resp) {
+                                                console.log(resp);
+                                                hideLoading();
+
+                                                if (resp.status === 'success') {
+                                                    friendDiv.remove();
+                                                    alertify.success('You\'re two are no longer friends.');
+                                                } else if (resp.status === 'failed') {
+                                                    alertify.error('An error occurred during delete');
+                                                } else if (resp.status === 'error') {
+                                                    alertify.error('An error occurred');
+                                                } else if (resp.status === 'not found') {
+                                                    alertify.error('Friend not found');
+                                                }
+                                            }
+                                        });
+                                    });
+                                })
                             )
                         )
                     )

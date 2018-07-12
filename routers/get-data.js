@@ -18,6 +18,7 @@ app.get('/get-categories', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'fail'});
         });
     });
@@ -47,6 +48,7 @@ app.post('/get-topics-by-category', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'fail'});
             });
         });
@@ -70,16 +72,16 @@ app.post('/get-subtopics-by-topics', function(req, resp) {
 
         await client.query('SELECT subtopic_id, subtopic_title FROM subtopics WHERE belongs_to_topic = $1 ORDER BY subtopic_title', [req.body.topic])
         .then((result) => {
+            done();
             if (result !== undefined) {
                 resp.send({status: 'success', subtopics: result.rows});
             }
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'fail'});
         });
-
-        done();
     });
     /* db.query('SELECT subtopic_id, subtopic_title FROM subtopics WHERE belongs_to_topic = $1 ORDER BY subtopic_title', [req.body.topic], function(err, result) {
         if (err) {
@@ -107,6 +109,7 @@ app.post('/get-belongs-to', function(req, resp) {
 
         await client.query(queryString, param)
         .then((result) => {
+            done();
             if (result !== undefined) {
                 resp.send({status: 'success', topics: result.rows, id: id});
             } else {
@@ -115,10 +118,9 @@ app.post('/get-belongs-to', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'fail'});
         });
-
-        done();
     });
 
     /* db.query(queryString, param, function(err, result) {
@@ -147,6 +149,7 @@ app.post('/get-subtopic-details', function(req, resp) {
 
         let subtopicDetails = await client.query(queryString, params)
         .then((result) => {
+            done();
             if (result !== undefined && result.rows.length > 0) {
                 return result.rows;
             } else {
@@ -154,11 +157,11 @@ app.post('/get-subtopic-details', function(req, resp) {
             }
         })
         .catch((err) => {
-            if (err) { console.log(err); }
+            console.log(err);
+            done();
         });
 
         if (subtopicDetails.length > 0) {
-            done();
             let last = 0;
             let obj = {}
 
@@ -193,7 +196,10 @@ app.post('/get-subtopic-details', function(req, resp) {
                     resp.send({status: 'success', subtopics: [], results: result.rows});
                 }
             })
-            .catch((err) => { console.log(err); });
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
         }
     });
 
@@ -257,6 +263,7 @@ app.post('/get-subtopics', function(req, resp) {
         .catch((err) => {
             if (err) {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             }
         });
@@ -301,6 +308,7 @@ app.post('/get-posts', function(req, resp) {
         .catch((err) => {
             if (err) {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             }
         });
@@ -345,40 +353,51 @@ app.post('/get-replies', function(req, resp) {
                 resp.send({status: 'success', replies: result.rows[0].num_of_replies, obj: obj});
             }
         })
-        .catch((err) => { console.log(err); });
+        .catch((err) => {
+            console.log(err);
+            done();
+        });
     });
 });
 
 app.post('/get-user-posts', function(req, resp) {
     if (req.session.user) {
-        let page = req.body.page;
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
 
-        if (page > 1) {
-            var offset = (page - 1) * 10;
-        } else {
-            var offset = 0;
-        }
+            let page = req.body.page;
 
-        if (req.body.type === 'posts') {
-            var queryString = "SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title FROM posts JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE post_user = $1 AND reply_to_post_id IS NULL AND posts.post_status != 'Removed' GROUP BY posts.post_id, subtopics.subtopic_title ORDER BY post_created DESC LIMIT 10 OFFSET $2";
-        } else if (req.body.type === 'replies') {
-            var queryString = "SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title FROM posts JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE post_user = $1 AND reply_to_post_id IS NOT NULL AND posts.post_status != 'Removed' GROUP BY posts.post_id, subtopics.subtopic_title ORDER BY post_created DESC LIMIT 10 OFFSET $2";
-        } else if (req.body.type === 'followed') {
-            var queryString = "SELECT COUNT(posts.post_id) AS total_posts, subtopic_title, posts.*, followed_id, followed_post, user_following FROM followed_posts LEFT OUTER JOIN posts ON followed_posts.followed_post = posts.post_id LEFT OUTER JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE user_following = $1 GROUP BY posts.post_id, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id ORDER BY followed_on DESC LIMIT 10 OFFSET $2";
-        }
-
-        db.query(queryString, [req.session.user.username, offset], function(err, result) {
-            if (err) {
-                console.log(err);
-                resp.send({status: 'error'});
-            } else if (result !== undefined) {
-                for (let i in result.rows) {
-                    result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                    result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
-                }
-
-                resp.send({status: 'success', posts: result.rows});
+            if (page > 1) {
+                var offset = (page - 1) * 10;
+            } else {
+                var offset = 0;
             }
+
+            if (req.body.type === 'posts') {
+                var queryString = "SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title FROM posts JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE post_user = $1 AND reply_to_post_id IS NULL AND posts.post_status != 'Removed' GROUP BY posts.post_id, subtopics.subtopic_title ORDER BY post_created DESC LIMIT 10 OFFSET $2";
+            } else if (req.body.type === 'replies') {
+                var queryString = "SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title FROM posts JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE post_user = $1 AND reply_to_post_id IS NOT NULL AND posts.post_status != 'Removed' GROUP BY posts.post_id, subtopics.subtopic_title ORDER BY post_created DESC LIMIT 10 OFFSET $2";
+            } else if (req.body.type === 'followed') {
+                var queryString = "SELECT COUNT(posts.post_id) AS total_posts, subtopic_title, posts.*, followed_id, followed_post, user_following FROM followed_posts LEFT OUTER JOIN posts ON followed_posts.followed_post = posts.post_id LEFT OUTER JOIN subtopics ON posts.post_topic = subtopics.subtopic_id WHERE user_following = $1 GROUP BY posts.post_id, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id ORDER BY followed_on DESC LIMIT 10 OFFSET $2";
+            }
+
+            await client.query(queryString, [req.session.user.username, offset])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
+                        result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
+                    }
+
+                    resp.send({status: 'success', posts: result.rows});
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
         });
     } else {
         fn.error(req, resp, 401);
@@ -468,6 +487,7 @@ app.post('/get-post-details', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     resp.send({status: 'error'});
                 });
             });
@@ -499,6 +519,7 @@ app.get('/get-num-of-posts-in/:subtopic/:page', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'error'});
         });
     });
@@ -513,15 +534,14 @@ app.post('/get-friends', function(req, resp) {
                 let offset;
 
                 if (req.body.page > 1) {
-                    offset = (req.body.page - 1) * 25;
+                    offset = (req.body.page - 1) * 24;
                 } else {
                     offset = 0;
                 }
 
-                await client.query("SELECT friends.*, users.online_status, users.last_login, users.avatar_url, users.user_level, CASE WHEN users.hide_email = FALSE THEN users.email END AS email FROM friends LEFT JOIN users ON friends.befriend_with = users.username WHERE friends.friendly_user = $1 AND friends.friend_confirmed IS TRUE ORDER BY users.online_status = 'Online', friends.befriend_with OFFSET $2 LIMIT 25", [req.session.user.username, offset])
+                await client.query("SELECT friends.*, users.online_status, users.last_login, users.avatar_url, users.user_level, CASE WHEN users.hide_email = FALSE THEN users.email END AS email FROM friends LEFT JOIN users ON friends.befriend_with = users.username WHERE friends.friendly_user = $1 AND friends.friend_confirmed IS TRUE ORDER BY users.online_status = 'Online', friends.befriend_with OFFSET $2 LIMIT 24", [req.session.user.username, offset])
                 .then((result) => {
                     done();
-
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].became_friend_on = moment(result.rows[i].became_friend_on).fromNow(); 
@@ -533,6 +553,7 @@ app.post('/get-friends', function(req, resp) {
                 })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     resp.send({status: 'error'});
                 });
             });

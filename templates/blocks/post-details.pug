@@ -12,7 +12,7 @@ block content
                 .w-10
                     +vote(post)
                 .w-80
-                    h2.mb-5 #{posts.post.post_title}
+                    h2 #{posts.post.post_title}
                         if posts.post.post_status === 'Closed'
                             span.user-badge.error-badge.ml-5 #{posts.post.post_status}
                     small Posted by 
@@ -52,7 +52,7 @@ block content
                 section.reply(id='reply-' + post.post_id)
                     header.col
                         .w-90
-                            h4.mb-5 [##{post.post_id}] #{post.post_title}
+                            h4 [##{post.post_id}] #{post.post_title}
                             small Posted by 
                                 if post.post_user === posts.post.post_user
                                     mark
@@ -70,16 +70,17 @@ block content
                             +vote(post)
                     section
                         section.quote
-                            header.col
-                                h4.m-0 Original post by 
+                            header.col.quote-header
+                                h4 Original post by 
                                     if post.p2_post_user === posts.post.post_user
                                         mark
                                             a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
                                     else
                                         a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
                                     |  #{post.p2_post_created} 
-                                    button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&tid=' + posts.post.post_topic + '&rid=' + post.p2_post_id + '"')
+                                    button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&rid=' + post.p2_post_id + '"')
                                         i.fa.fa-angle-double-right
+                                i.fas.fa-lg.fa-angle-down
                             section.quote-body #{post.p2_post_body}
                         section.post-body.mb-15 #{post.post_body}
                     footer

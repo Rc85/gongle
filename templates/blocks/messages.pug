@@ -17,22 +17,29 @@ block content
                         .w-15 Sender
                         .w-20 Date
                         .w-5
-                        .w-10
+                        .w-10.text-right
+                            form.delete-all-messages(action='/delete-all-messages', method='post')
+                                button(type='submit')
+                                    i.far.fa-lg.fa-trash-alt
                     each message, i in messages
+                        #messages
+                        -var unreadClass = ''
                         if message.message_status === 'Unread' && location === 'inbox'
-                            - var unreadClass = 'message-unread'
-                        else if location !== 'inbox'
-                            -var unreadClass = ''
+                            - unreadClass = 'message-unread'
+                        else if location !== 'inbox' || message.message_status === 'Read'
+                            -unreadClass = ''
                         .col(class=unreadClass)
                             .w-5
                                 input.select-message(type='checkbox', name='select_message', value=message.message_id)
                             .w-35.overflow-text
                                 a(href='/messages/content?id=' + message.message_id + '&key=' + user.session_key + '&location=' + location, title=message.subject) #{message.subject}
-                            .w-15 #{message.sender}
+                            .w-15
+                                a(href='/profile?u=' + message.sender) #{message.sender}
                             .w-20 #{message.message_date}
                             .w-5
                                 if message.message_status === 'Unread' && location === 'inbox'
-                                    span.user-badge.success-badge NEW
+                                    span.user-badge.success-badge Unread
                             .w-10.d-flex.justify-content-end
-                                include ../inc/delete-message
-                                include ../inc/star-message
+                                +deleteMessage(message, 'messages')
+                                if location === 'inbox'
+                                    include ../inc/star-message

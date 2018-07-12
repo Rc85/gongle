@@ -120,6 +120,7 @@ app.post('/change-settings', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             });
         });
@@ -141,7 +142,10 @@ app.post('/change-email', function(req, resp) {
                     return false;
                 }
             })
-            .catch((err) => { console.log(err); });
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
 
             if (userExists) {
                 if (regex.email.test(req.body.new) && regex.email.test(req.body.confirm)) {
@@ -156,6 +160,7 @@ app.post('/change-email', function(req, resp) {
                             })
                             .catch((err) => {
                                 console.log(err);
+                                done();
                                 fn.error(req, resp, 500);
                             });
 
@@ -196,7 +201,10 @@ app.post('/change-password', function(req, resp) {
                     return result.rows;
                 }
             })
-            .catch((err) => { console.log(err); })
+            .catch((err) => {
+                console.log(err);
+                done();
+            })
 
             let authentication = await bcrypt.compare(req.body.current, getPassword[0].password)
             .then((result) => { return result; })
@@ -209,8 +217,9 @@ app.post('/change-password', function(req, resp) {
                     .catch((err) => { console.log(err); });
 
                     
-                    await db.query('UPDATE users SET password = $1 WHERE user_id = $2', [newPassword, req.session.user.user_id])
+                    await client.query('UPDATE users SET password = $1 WHERE user_id = $2', [newPassword, req.session.user.user_id])
                     .then((result) => {
+                        done();
                         if (result !== undefined && result.rowCount === 1) {
                             let link = req.headers.referer;
 
@@ -219,12 +228,15 @@ app.post('/change-password', function(req, resp) {
                     })
                     .catch((err) => {
                         console.log(err);
+                        done();
                         fn.error(req, resp, 500);
                     });
                 } else {
+                    done();
                     fn.error(req, resp, 400, 'The password you entered is incorrect.');
                 }
             } else {
+                done();
                 fn.error(req, resp, 400, 'The password you entered is incorrect.');
             }
         });
@@ -262,11 +274,16 @@ app.post('/upload-profile-pic', function(req, resp) {
                                 resp.redirect(req.get('referer'));
                             }
                         })
-                        .catch((err) => { console.log(err); })
+                        .catch((err) => {
+                            console.log(err);
+                            done();
+                        })
                     } else {
+                        done();
                         fn.error(req, resp, 406, 'The file you\'re trying to upload is not an acceptable image file.');
                     }
                 } else {
+                    done();
                     fn.error(req, resp, 500);
                 }
             });
@@ -292,6 +309,7 @@ app.post('/user-report', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
 
                 if (err.code = '23505') {
                     resp.send({status: 'duplicate'});
@@ -318,12 +336,17 @@ app.post('/add-friend', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
-                resp.send({status: 'error'});
+                done();
+                if (err.code = '23505') {
+                    resp.send({status: 'requested'});
+                } else {
+                    resp.send({status: 'error'});
+                }
             });
 
             let message = `<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a id='accept-friend' href='/accept-friend-request?id=${addFriend[0].fid}'>Accept Friend Request</a></p>`;
 
-            await db.query("INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, 'You have a friend request from " + req.session.user.username + "', $3)", [req.session.user.username, req.body.username, message])
+            await client.query("INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, 'You have a friend request from " + req.session.user.username + "', $3)", [req.session.user.username, req.body.username, message])
             .then((result) => {
                 done();
                 if (result !== undefined && result.rowCount === 1) {
@@ -332,6 +355,7 @@ app.post('/add-friend', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             });
         });
@@ -357,6 +381,7 @@ app.post('/delete-friend', function(req, resp) {
             })
             .catch((err) => {
                 console.log(err);
+                done();
                 resp.send({status: 'error'});
             });
         });
@@ -372,8 +397,10 @@ app.get('/accept-friend-request', function(req, resp) {
 
             let authorizeUser = await client.query('SELECT * FROM friends WHERE fid = $1', [req.query.id])
             .then((result) => {
-                if (result !== undefined) {
+                if (result !== undefined && result.rows.length === 1) {
                     return result.rows;
+                } else {
+                    resp.send({status: 'not found'});
                 }
             })
             .catch((err) => {
@@ -384,6 +411,13 @@ app.get('/accept-friend-request', function(req, resp) {
 
             if (req.session.user.username === authorizeUser[0].befriend_with) {
                 let addFriend = await client.query('INSERT INTO friends (friendly_user, befriend_with, friend_confirmed, became_friend_on) VALUES ($1, $2, TRUE, current_timestamp) ON CONFLICT ON CONSTRAINT unique_pair DO UPDATE SET friend_confirmed = TRUE, became_friend_on = current_timestamp WHERE friends.friendly_user = $1 AND friends.befriend_with = $2 AND friends.friend_confirmed = FALSE', [req.session.user.username, authorizeUser[0].friendly_user])
+                .then((result) => {
+                    if (result !== undefined) {
+                        return result;
+                    } else {
+                        resp.send({status: 'error'});
+                    }
+                 })
                 .catch((err) => {
                     console.log(err);
                     done();
@@ -391,6 +425,13 @@ app.get('/accept-friend-request', function(req, resp) {
                 });
 
                 let acceptFriend = await client.query('UPDATE friends SET friend_confirmed = TRUE, became_friend_on = current_timestamp WHERE fid = $1 AND friend_confirmed = FALSE', [req.query.id])
+                .then((result) => {
+                    if (result !== undefined) {
+                        return result;
+                    } else {
+                        resp.send({status: 'error'});
+                    }
+                })
                 .catch((err) => {
                     console.log(err);
                     done();
@@ -400,12 +441,12 @@ app.get('/accept-friend-request', function(req, resp) {
                 let message = '<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>' + req.session.user.username + ' has accepted your friend request and has been added to your friends list.</p>'
 
                 await client.query('INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, $3, $4)', [req.session.user.username, authorizeUser[0].friendly_user, 'Friend Request Accepted', message])
+                .then(() => { done(); })
                 .catch((err) => {
                     console.log(err);
+                    done();
                     resp.send({status: 'error'});
                 });
-
-                done();
 
                 if (addFriend.rowCount === 1 && acceptFriend.rowCount === 1) {
                     resp.send({status: 'success'});
@@ -419,6 +460,84 @@ app.get('/accept-friend-request', function(req, resp) {
         });
     } else {
         fn.error(req, resp, 403);
+    }
+});
+
+app.post('/unfriend', function(req, resp) {
+    if (req.session.user) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let authorizeUser = await client.query('SELECT friendly_user, befriend_with FROM friends WHERE fid = $1', [req.body.fid])
+            .then((result) => {
+                if (result !== undefined && result.rows.length === 1) {
+                    return result.rows;
+                } else {
+                    resp.send({status: 'not found'});
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+
+            if (req.session.user.username === authorizeUser[0].friendly_user) {
+                let friendship = await client.query('SELECT fid FROM friends WHERE (friendly_user = $1 AND befriend_with = $2) OR (friendly_user = $2 AND befriend_with = $1)', [authorizeUser[0].friendly_user, authorizeUser[0].befriend_with])
+                .then((result) => {
+                    if (result !== undefined && result.rows.length > 0) {
+                        return result.rows;
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
+
+                let friendsIdQuery;
+
+                if (friendship.length > 1) {
+                    let friendsId = [];
+                    for (let friend of friendship) {
+                        friendsId.push(friend.fid);
+                    }
+
+                    friendsIdQuery = 'DELETE FROM friends WHERE fid in (' + friendsId + ') RETURNING befriend_with';
+                } else {
+                    friendsIdQuery = 'DELETE FROM friends WHERE fid = ' + friendship[0].fid + ' RETURNING befriend_with';
+                }
+
+                console.log(friendsIdQuery)
+
+                await client.query(friendsIdQuery)
+                .then((result) => {
+                    done();
+                    if (result.rows.length > 1) {
+                        for (let friend of result.rows) {
+                            if (friend.befriend_with !== req.session.user.username) {
+                                req.session.user.friends.splice(req.session.user.friends.indexOf(friend.befriend_with), 1);
+                            }
+                        }
+                    } else {
+                        req.session.user.friends.splice(req.session.user.friends.indexOf(friend.befriend_with), 1);
+                    }
+                    
+                    if (result !== undefined && result.rowCount > 0) {
+                        resp.send({status: 'success'});
+                    } else {
+                        resp.send({status: 'failed'});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                });
+            } else {
+                done();
+                resp.send({status: 'invalid'});
+            }
+        });
     }
 });
 

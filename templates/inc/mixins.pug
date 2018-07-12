@@ -81,6 +81,7 @@ mixin mod-user(username, id, last_login)
                 
 mixin postAction(op, reply)
     if user
+        | #{op.subtopic_status}
         if op.subtopic_status === 'Open'
             .text-right
                 if post.post_status !== 'Closed'
@@ -100,7 +101,7 @@ mixin postAction(op, reply)
                         button.ml-auto.edit-post-button(type='button', data-edit-post-id=reply.post_id, onClick='javascript:location.href="/edit-post?pid=' + reply.post_id + '"') Edit
             .d-flex.mt-15
                 form.user-report.mr-10(action='/user-report', method='post')
-                    input(type='hidden', name='type', value='forum')
+                    input(type='hidden', name='type', value='forum post')
                     input(type='hidden', name='id', value=reply.post_id)
                     a(href='#')
                         small Report
@@ -191,3 +192,10 @@ mixin userSettingsForm(title, desc, type, yes, no)
             option(value='yes', selected=yes) Yes
             option(value='no', selected=no) No
         button(type='submit') Save
+
+mixin deleteMessage(message, from)
+    form.delete-message.mr-5(action='/delete-message', method='post')
+        input(type='hidden', name='message_id', value=message.message_id)
+        input(type='hidden', name='from', value=from)
+        button(type='submit')
+            i.far.fa-lg.fa-trash-alt

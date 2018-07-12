@@ -393,3 +393,10 @@ function adminPostRow(obj, isInDetails) {
 
     return row;
 }
+
+function urlParams() {
+    var urlString = new URL(window.location.href),
+        urlParams = new URLSearchParams(urlString.searchParams.toString());
+
+    return urlParams;
+}

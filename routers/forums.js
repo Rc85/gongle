@@ -9,6 +9,7 @@ app.get('/get-forum-sidebar', function(req, resp) {
 
         let forumSidebar = await client.query("SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category FROM categories LEFT OUTER JOIN topics ON topics.topic_category = categories.cat_id LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic GROUP BY belongs_to_topic, subtopic_title, topic_title, category ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title")
         .then((result) => {
+            done();
             if (result !== undefined) {
                 return result.rows;
             } else {
@@ -17,10 +18,9 @@ app.get('/get-forum-sidebar', function(req, resp) {
         })
         .catch((err) => {
             console.log(err);
+            done();
             resp.send({status: 'error'});
         });
-
-        done();
 
         let category = {}
         let last = '';

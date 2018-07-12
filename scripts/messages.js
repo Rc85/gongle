@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $('.compose-message').on('submit', function(e) {
+    $('.compose-message, .reply-form').on('submit', function(e) {
         e.preventDefault();
         let form = $(this);
 
@@ -11,9 +11,8 @@ $(document).ready(function() {
             success: function(resp) {
                 hideLoading();
 
-                $(form).find('input[type=text], textarea').val('');
-                
                 if (resp.status === 'success') {
+                    $(form).find('input[type=text], textarea').not('input[name=alt_subject]').val('');
                     alertify.success('Message sent');
                 } else if (resp.status === 'error') {
                     alertify.error('An error occurred');
@@ -77,8 +76,114 @@ $(document).ready(function() {
                     alertify.error('A error occurred when accepting the request');
                 } else if (resp.status === 'invalid') {
                     alertify.error('Invalid user');
+                } else if (resp.status === 'not found') {
+                    alertify.error('Friend request not found');
                 }
             }
         });
+    });
+
+    let recipient = urlParams().get('u');
+
+    if (recipient) {
+        $('#recipient-input').val(recipient);
+    }
+
+    $('.delete-message').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+
+        alertify
+        .okBtn('Yes')
+        .cancelBtn('No')
+        .confirm('Are you sure you want to delete this message?' , function(e) {
+            e.preventDefault();
+
+            showLoading();
+
+            $.post({
+                url: '/delete-message',
+                data: $(form).serialize(),
+                success: function(resp) {
+                    hideLoading();
+                    console.log(resp);
+
+                    if (resp.status === 'success') {
+                        if (resp.from === 'messages') {
+                            $(form).parent().parent().remove();
+                        } else {
+                            location.href = '/messages/inbox?key=' + resp.key;
+                        }
+
+                        alertify.success('Message deleted')
+                    } else if (resp.status === 'failed') {
+                        alertify.error('Unable to delete message');
+                    } else if (resp.status === 'error') {
+                        alertify.error('An error occurred');
+                    } else if (resp.status === 'unauthorized') {
+                        alertify.error('You\'re not authorized');
+                    }
+                }
+            });
+        });
+    });
+
+    let messages = [];
+
+    $('#check-all').on('click', function() {
+        if ($('#check-all').prop('checked')) {
+            $('.select-message').prop('checked', true);
+            $('.select-message').each(function(i, message) {
+                messages.push($(message).attr('value'));
+            });
+        } else {
+            $('.select-message').prop('checked', false);
+        }
+    });
+
+    $('.delete-all-messages').on('submit', function(e) {
+        e.preventDefault();
+
+        alertify
+        .okBtn('Yes')
+        .cancelBtn('No')
+        .confirm('Are you sure you want to delete the selected messages?', function(e) {
+            e.preventDefault();
+
+            if (messages.length > 0) {
+                $.post({
+                    url: '/delete-all-messages',
+                    data: {
+                        messages: messages
+                    },
+                    success: function(resp) {
+                        console.log(resp);
+                        hideLoading();
+
+                        if (resp.status === 'success') {
+                            location.reload();
+                        } else if (resp.status === 'error') {
+                            alertify.error('An error occurred');
+                        } else if (resp.status === 'nothing') {
+                            alertify('Nothing to delete');
+                        }
+                    }
+                });
+            } else {
+                alertify.error('Select messages to delete');
+            }
+        });
+    });
+
+    $('.select-message').on('click', function() {
+        let checkbox = $(this);
+
+        if ($(checkbox).prop('checked')) {
+            messages.push(parseInt($(checkbox).attr('value')));
+        } else {
+            messages.splice(messages.indexOf($(checkbox).attr('value')), 1);
+        }
+
+        console.log(messages);
     });
 });

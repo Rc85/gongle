@@ -24,6 +24,10 @@
   width: 80%;
 }
 
+.post-details h1, .post-details h2, .post-details h3, .post-details h4, .post-details h5, .post-details h6, .replies h1, .replies h2, .replies h3, .replies h4, .replies h5, .replies h6 {
+  margin-bottom: 0;
+}
+
 .follow-div {
   display: flex;
   align-items: center;
@@ -42,6 +46,10 @@
 .follow-div button[type=submit]:disabled, .follow-div button[type=button]:disabled {
   padding: 5px 5px 5px 0px;
   cursor: default;
+}
+
+.quote-header {
+  cursor: pointer;
 }
 
 .post-options {
@@ -69,13 +77,16 @@
   margin: 20px auto 15px auto;
   background-color: #afc8af;
   padding: 10px;
-  border: 1px solid #96af96;
-  width: 80%;
+  border: 1px solid #199664;
   border-radius: 3px;
 }
 
 .quote-body, .post-body {
   white-space: pre-line;
+}
+
+.quote-body {
+  display: none;
 }
 
 .post-edited {

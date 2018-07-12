@@ -14,6 +14,7 @@ app.post('/check-exists', function(req, resp) {
         if (req.body.type === 'username') { 
             let user = await client.query('SELECT username FROM users WHERE username = $1', [req.body.string])
             .then((result) => {
+                done();
                 if (result !== undefined) {
                     if (result.rows.length === 1) {
                         return true;
@@ -23,12 +24,12 @@ app.post('/check-exists', function(req, resp) {
                 } else {
                     fn.error(req, resp, 500);
                 }
-            }).catch((err) => {
+            })
+            .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
-
-            done();
 
             if (user) {
                 resp.send({status: 'exist'});
@@ -45,7 +46,9 @@ app.post('/check-exists', function(req, resp) {
                 }
             }); */
         } else if (req.body.type === 'email') {
-            let email = await client.query('SELECT email FROM users WHERE email = $1', [req.body.string]).then((result) => {
+            let email = await client.query('SELECT email FROM users WHERE email = $1', [req.body.string])
+            .then((result) => {
+                done();
                 if (result !== undefined) {
                     if (result.rows.length === 1) {
                         return true;
@@ -55,12 +58,12 @@ app.post('/check-exists', function(req, resp) {
                 } else {
                     fn.error(req, resp, 500);
                 }
-            }).catch((err) => {
+            })
+            .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
-
-            done();
 
             if (email) {
                 resp.send({status: 'exist'});
@@ -94,6 +97,7 @@ app.post('/registration', function(req, resp) {
 
                     let registerUser = await client.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING user_id, username', [req.body.username, hashPassword, req.body.email])
                     .then((result) => {
+                        done();
                         if (result !== undefined && result.rowCount === 1) {
                             return result.rows;
                         } else {
@@ -102,10 +106,9 @@ app.post('/registration', function(req, resp) {
                     })
                     .catch((err) => {
                         console.log(err);
+                        done();
                         fn.error(req, resp, 500);
                     });
-
-                    done();
 
                     fs.mkdir('user_files/' + registerUser[0].user_id, (err) => {
                         if (err) { console.log(err); }
@@ -180,17 +183,24 @@ app.post('/login', (req, resp) => {
                 fn.error(req, resp, 404, 'That user does not exist');
             }
         })
-        .catch((err) => { console.log(err); })
+        .catch((err) => {
+            console.log(err);
+            done();
+        })
 
         let authorized = await bcrypt.compare(req.body.password, loginUser.password)
         .then((result) => { return result })
-        .catch((err) => { console.log(err); });
+        .catch((err) => {
+            console.log(err);
+            done();
+        });
 
         if (authorized) {
             let now = new Date();
             await client.query('UPDATE users SET last_login = $1 WHERE email = $2', [now, req.body.email])
             .catch((err) => {
                 console.log(err);
+                done();
                 fn.error(req, resp, 500);
             });
 
@@ -203,7 +213,10 @@ app.post('/login', (req, resp) => {
                     votes = result.rows;
                 }
             })
-            .catch((err) => { console.log(err); });
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
 
             await client.query('SELECT * FROM followed_posts WHERE user_following = $1', [loginUser.username])
             .then((result) => {
@@ -213,7 +226,7 @@ app.post('/login', (req, resp) => {
             })
             .catch((err) => { console.log(err); });
 
-            await client.query('SELECT befriend_with FROM friends WHERE friendly_user = $1', [loginUser.username])
+            await client.query('SELECT befriend_with FROM friends WHERE friendly_user = $1 AND friend_confirmed IS TRUE', [loginUser.username])
             .then((result) => {
                 if (result !== undefined) {
                     for (let i in result.rows) {
@@ -225,6 +238,7 @@ app.post('/login', (req, resp) => {
 
             await client.query('SELECT blocked_user FROM blocked_users WHERE blocking_user = $1', [loginUser.username])
             .then((result) => {
+                done();
                 if (result !== undefined) {
                     for (let i in result.rows) {
                         blockedUsers.push(result.rows[i].blocked_user);
@@ -232,8 +246,6 @@ app.post('/login', (req, resp) => {
                 }
             })
             .catch((err) => { console.log(err); });
-
-            done();
 
             delete loginUser.password;
             loginUser.last_login = moment.tz(loginUser.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
@@ -393,6 +405,11 @@ app.post('/admin-login', function(req, resp) {
             } else {
                 resp.render('admin-login', {message: 'You\'re not authorized.', title: 'Admin Login'});
             }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            fn.error(req, resp, 500);
         });
     });
     /* db.query('SELECT * FROM users WHERE username = $1', [req.body.username], function(err, result) {

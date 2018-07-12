@@ -13,7 +13,7 @@ block content
                     form.compose-message(action='/send-message', method='post')
                         .mb-15
                             label To:
-                            input.w-100(type='text', name='username')
+                            input#recipient-input.w-100(type='text', name='username')
                         .mb-15
                             label Subject:
                             input.w-100(type='text', name='subject')
@@ -23,13 +23,14 @@ block content
                         .text-right
                             input.mr-5(type='submit', value='Send')
                             input(type='reset', value='Clear')
-                else if location === 'inbox'
+                else
                     section.section-container
                         .mb-15.d-flex
                             .w-90
                                 .mb-10.d-flex
                                     label.w-10 From: 
-                                    span #{message.sender}
+                                    span
+                                        a(href='/profile?u=' + message.sender) #{message.sender}
                                 .mb-10.d-flex
                                     label.w-10 Subject: 
                                     span #{message.subject}
@@ -37,22 +38,25 @@ block content
                                     label.w-10 Date: 
                                     span #{message.message_date}
                             .w-10.d-flex.justify-content-end.align-items-center
-                                include ../inc/delete-message
+                                +deleteMessage(message, 'message')
                                 include ../inc/star-message
                         .mb-15 !{message.message}
-                        .mb-15.text-right
-                            button#reply-button(type='button') Reply
-                        form.reply-form(action='/message/reply', method='POST')
-                            input(type='hidden', name='reply_to_message_id', value=message.message_id)
-                            input(type='hidden', name='subject', value=message.subject)
+                        if location !== 'outbox'
+                            .mb-15.text-right
+                                button#reply-button(type='button') Reply
+                        form.reply-form(action='/send-message', method='POST')
+                            input(type='hidden', name='username', value=message.sender)
+                            if message.original_message !== null
+                                - var subject = message.subject
+                                input(type='hidden', name='original_message', value=message.original_message)
+                            else
+                                - var subject = 'RE: ' + message.subject
+                                input(type='hidden', name='original_message', value=message.message_id)
+                            input(type='hidden', name='subject', value=subject)
                             .mb-15
-                                input.w-100(type='text', name='alt_subject', value='RE: ' + message.subject)
+                                input.w-100(type='text', name='alt_subject', value=subject, disabled)
                             .mb-15
                                 textarea.w-100(name='message', rows='10')
                             .text-right
                                 input.mr-5(type='submit', value='Send')
                                 input(type='reset', value='Clear')
-                        .d-flex.mt-15
-                            form
-                            
-                            

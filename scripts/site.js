@@ -197,6 +197,8 @@ $(document).ready(function() {
                     alertify.success('Friend request sent');
                 } else if (resp.status === 'error') {
                     alertify.error('An error occurred');
+                } else if (resp.status === 'requested') {
+                    alertify.error('Request already sent');
                 }
             }
         });
