@@ -1,8 +1,6 @@
 $(document).ready(function() {
-    var urlString = new URL(window.location.href);
-    var urlParams = new URLSearchParams(urlString.searchParams.toString());
-    var postId = urlParams.get('pid');
-    var page = urlParams.get('page');
+    let postId = urlParams('pid'),
+        page = urlParams('page');
 
     $.post({
         url: '/get-replies',

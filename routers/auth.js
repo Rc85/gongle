@@ -113,7 +113,7 @@ app.post('/registration', function(req, resp) {
                     fs.mkdir('user_files/' + registerUser[0].user_id, (err) => {
                         if (err) { console.log(err); }
 
-                        fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
+                        fs.copyFile('images/profile_default.png', 'user_files/' + registerUser[0].user_id + '/profile_pic/' + registerUser[0].username + '_profile_pic.png', function(err) {
                             if (err) { console.log(err); }
 
                             resp.render('blocks/custom-response', {status: 'Success', message: 'Registration successful.'});
@@ -256,7 +256,7 @@ app.post('/login', (req, resp) => {
             loginUser.blocked_users = blockedUsers;
 
             req.session.user = loginUser;
-            console.log(req.session.user);
+            console.log(req.session);
 
             let referer = req.get('referer').split('/').pop();
             /* During a fail login or registration, the referer head is set to the POST URL, which users cannot get.

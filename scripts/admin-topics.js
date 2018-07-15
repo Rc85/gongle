@@ -1,6 +1,6 @@
 function createItem(obj, id, form) {
     $('#settings').append(
-        $('<div>').addClass('col').append(
+        $('<div>').addClass('col change-topic-status').append(
             $('<div>').addClass('w-5').text(obj.id),
             $('<div>').addClass('w-25').append(
                 $('<span>').addClass('subtopic-title').attr('data-belongs-to', obj.topic_id).text(obj.title).on('click', function() {
@@ -85,7 +85,24 @@ function createItem(obj, id, form) {
                 obj.status === 'Open' ? $('<span>').addClass('user-badge success-badge').text(obj.status) : '',
                 obj.status === 'Closed' ? $('<span>').addClass('user-badge error-badge').text(obj.status) : '',
                 obj.status === 'Removed' ? $('<span>').addClass('user-badge critical-badge').text(obj.status) : '',
-                $('<form>').addClass('w-50').attr({'method': 'POST', 'action': '/change-' + id + '-status'}).append(
+                $('<div>').addClass('admin-menu-container').append(
+                    $('<i>').addClass('admin-menu-button fas fa-lg fa-ellipsis-h'),
+                    $('<div>').addClass('admin-menu').append(
+                        $('<div>').html('Open').attr({'data-id': obj.id, 'data-status': 'Open'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Close').attr({'data-id': obj.id, 'data-status': 'Closed'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Remove').attr({'data-id': obj.id, 'data-status': 'Removed'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Delete').attr({'data-id': obj.id, 'data-status': 'Deleted'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        })
+                    )
+                )
+                /* $('<form>').addClass('w-50').attr({'method': 'POST', 'action': '/change-' + id + '-status'}).append(
                     $('<input>').attr({'type': 'hidden', 'name': 'id', 'value': obj.id}),
                     $('<select>').addClass('w-100').attr({'name': 'status'}).append(
                         $('<option>'),
@@ -148,7 +165,7 @@ function createItem(obj, id, form) {
                             }
                         }
                     });
-                })
+                }) */
             )
         )
     )
@@ -168,6 +185,69 @@ function createItem(obj, id, form) {
             $('.topic-select').val(resp.id);
         }
     });
+
+    menuHandler('admin-menu-button', 'admin-menu');
+}
+
+function handleChangeStatus(form, type) {
+    let status = $(form).attr('data-status'),
+        id = $(form).attr('data-id');
+
+    showLoading();
+
+    if ($(form).attr('data-status') === 'Removed') {
+        alertify.confirm('Are you sure you want to remove this?', function(e) {
+            e.preventDefault();
+
+            changeStatus();
+        },
+        function() {
+            hideLoading();
+            return false;
+        });
+    } else if ($(form).attr('data-status') === 'Deleted') {
+        alertify.confirm('Are you sure you want to delete this? This action cannot be reversed.', function(e) {
+            e.preventDefault();
+
+            changeStatus();
+        },
+        function() {
+            hideLoading();
+            return false;
+        });
+    } else {
+        changeStatus();
+    }
+
+    function changeStatus() {
+        $.post({
+            url: '/change-' + type + '-status',
+            data: {
+                status: status,
+                id: id
+            },
+            success: function(resp) {
+                hideLoading();
+
+                if (resp.status === 'success') {
+                    if (resp.subtopic_status === 'Open') {
+                        $(form).parents('.change-topic-status').find('.user-badge').removeClass().addClass('user-badge success-badge').text(resp.subtopic_status);
+                    } else if (resp.subtopic_status === 'Closed') {
+                        $(form).parents('.change-topic-status').find('.user-badge').removeClass().addClass('user-badge error-badge').text(resp.subtopic_status);
+                    } else if (resp.subtopic_status === 'Removed') {
+                        $(form).parents('.change-topic-status').find('.user-badge').removeClass().addClass('user-badge critical-badge').text(resp.subtopic_status);
+                    }
+                    
+                    alertify.success('Successful');
+                } else if (resp.status === 'deleted') {
+                    $(form).parents('.change-topic-status').remove();
+                    alertify.success('Deleted');
+                } else {
+                    alertify.error('An error occurred');
+                }
+            }
+        });
+    }
 }
 
 function createTopicForm(id, form) {

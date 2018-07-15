@@ -152,3 +152,82 @@
 .admin-post-row-title:hover {
     text-decoration: underline;
 }
+
+/* select {
+    border: 0;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+    background: $primary_color;
+    background: url('../images/option_button.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 50%;
+    cursor: pointer;
+
+    option {
+        border: 0;
+        background: red;
+    }
+} */
+
+#change-category-status-form, .admin-menu-container {
+    position: relative;
+}
+
+.status-option, .status-option-button, .admin-menu-button, .admin-menu div {
+    cursor: pointer;
+}
+
+.status-option-menu {
+    position: absolute;
+    display: none;
+    font-size: 0.8em;
+    z-index: 9999;
+    @include box-shadow;
+
+    .status-option {
+        text-align: center;
+        padding: 10px;
+        background: rgb(255, 255, 255);
+        border: 1px solid $light_border_color;
+
+        &:not(:first-child) {
+            border-top: 0;
+        }
+
+        &:hover {
+            background: $light_border_color;
+        }
+    }
+}
+
+
+.admin-menu-button {
+    background: transparent;
+    border: 0;
+}
+
+.admin-menu {
+    position: absolute;
+    display: none;
+    font-size: 0.8em;
+    right: 0;
+    z-index: 9999;
+    background: rgb(255, 255, 255);
+    @include box-shadow;
+
+    div {
+        padding: 10px;
+        border: 1px solid $light_border_color;
+
+        &:not(:first-child) {
+            border-top: 0;
+        }
+
+        &:hover {
+            background: $light_border_color;
+        }
+    }
+}

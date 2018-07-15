@@ -11,13 +11,15 @@ $(document).ready(function() {
         toggleButton($(this), 'New Post')
     });
 
-    $.get({
-        url: '/get-num-of-posts-in/' + subtopic + '/' + page,
-        success: function(resp) {
-            console.log(resp);
-            createPagination('.pagination-container', resp.total_posts, 25, resp.obj, location.href.split('?')[0]);
-        }
-    });
+    if (page) {
+        $.get({
+            url: '/get-num-of-posts-in/' + subtopic + '/' + page,
+            success: function(resp) {
+                console.log(resp);
+                createPagination('.pagination-container', resp.total_posts, 25, resp.obj, location.href.split('?')[0] + '?');
+            }
+        });
+    }
 
     $($('main').height).on('change', function() {
         console.log('changed');
@@ -92,4 +94,18 @@ $(document).ready(function() {
             }
         });
     });
+
+    function handleTabClick(id) {
+        $('#' + id + '-tab').on('click', function() {
+            $('#forum-body').children().hide();
+            $('#forum-navbar').children().removeClass('active');
+
+            $('#' + id + '-tab').addClass('active');
+            $('#' + id).show();
+        });
+    }
+
+    handleTabClick('popular');
+    handleTabClick('most-active');
+    handleTabClick('new-posts');
 });

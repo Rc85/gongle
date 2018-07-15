@@ -54,8 +54,8 @@ header {
 main {
   min-height: 100%;
   position: relative;
-  background-color: #196432;
   padding: 30px;
+  background: #196432;
   flex: 1;
 }
 
@@ -2326,7 +2326,7 @@ small {
 .section-container {
   background-color: white;
   border-radius: 3px;
-  padding: 10px 10px 10px 10px;
+  padding: 10px;
   margin-bottom: 15px;
   box-shadow: 0 3px 5px #444444;
 }
@@ -2522,9 +2522,14 @@ button[name=vote]:disabled {
   cursor: pointer;
 }
 
+.forum-post-details {
+  position: relative;
+}
+
 .mod-user-menu-container {
   position: relative;
   display: inline-block;
+  margin: 0 1px 0 1px;
 }
 .mod-user-menu-container button {
   border: 0;
@@ -2541,9 +2546,9 @@ button[name=vote]:disabled {
 .mod-user-menu {
   position: absolute;
   right: 0;
-  font-size: 12px;
   width: 200px;
   padding: 10px;
+  font-size: 1em;
   background: white;
   border: 1px solid #c8c8c8;
   z-index: 9999;
@@ -2553,13 +2558,15 @@ button[name=vote]:disabled {
 .mod-user-menu input[type=submit] {
   border: 0;
   background: transparent;
-  font-size: 12px;
   color: #199664;
   padding: 0;
 }
 .mod-user-menu input[type=submit]:hover {
   color: #19c896;
   text-decoration: underline;
+}
+.mod-user-menu small {
+  font-size: 0.85em;
 }
 
 span.fa-stack {

@@ -1,10 +1,9 @@
 .d-flex.mb-5
-    +vote(post)
-    .show-posts
-        a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
-        div
-            small 
-                +mod-user(post.post_user, post.user_id, post.last_login)
-                |  | #{post.post_created} |  
+    .mr-10
+        +vote(post)
+    .w-85
+        .show-posts
+            a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
+        .forum-post-details
+            small #{post.post_created} |  
                 a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
-    .text-right #{post.total_replies} Replies

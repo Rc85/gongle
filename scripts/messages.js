@@ -83,7 +83,7 @@ $(document).ready(function() {
         });
     });
 
-    let recipient = urlParams().get('u');
+    let recipient = urlParams('u')
 
     if (recipient) {
         $('#recipient-input').val(recipient);

@@ -1,11 +1,12 @@
 .col
     .w-10
         +vote(post)
-    .w-80.show-posts
-        a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
-        div
+    .w-80
+        .show-posts
+            a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
+        .forum-post-details
             small Posted by 
-                +mod-user(post.post_user, post.user_id, post.last_login)
+                +mod-user(post.post_user, post.user_id, post.last_login, post.user_level)
                 |  #{post.post_created} in 
                 a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
     .w-10.text-right #{post.total_replies} Replies

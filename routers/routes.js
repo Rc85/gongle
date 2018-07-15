@@ -143,9 +143,8 @@ app.get('/forums/:category', function(req, resp) {
         let title = fn.capitalize(req.params.category.replace('_', ' ')),
             moreQuery = " AND categories.category = '" + title + "'";
 
-        let categories = await client.query("SELECT topic_title, pt.last_posted, pt.post_user FROM topics LEFT JOIN categories ON categories.cat_id = topics.topic_category LEFT JOIN (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic) st ON topics.topic_id = st.belongs_to_topic LEFT JOIN (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id WHERE category = $1 ORDER BY subtopic_title LIKE '%General' DESC, subtopic_title", [title])
+        let categories = await client.query("SELECT topic_title, pt.last_posted, pt.post_user FROM topics LEFT JOIN categories ON categories.cat_id = topics.topic_category LEFT JOIN (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic) st ON topics.topic_id = st.belongs_to_topic LEFT JOIN (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id WHERE category = $1 ORDER BY topic_title LIKE '%General' DESC, subtopic_title", [title])
         .then((result) => {
-            done();
             if (result !== undefined) {
                 for (let i in result.rows) {
                     result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
@@ -346,7 +345,7 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
         
         console.log(topic, subtopic);
 
-        let getTopics = await client.query('SELECT subtopic_status, subtopic_id, topic_title, category FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE subtopic_title = $1 AND topic_title = $2', [subtopic, topic])
+        let getTopics = await client.query('SELECT subtopic_status, subtopic_id, topic_title, category, cat_status FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE subtopic_title = $1 AND topic_title = $2', [subtopic, topic])
         .then((result) => {
             if (result !== undefined && result.rows.length === 1) {
                 return result.rows;
@@ -360,11 +359,12 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
             fn.error(req, resp, 500);
         });
 
-        let page = req.query.page,
-            status = getTopics[0].subtopic_status,
+        let page = parseInt(req.query.page),
+            subtopicStatus = getTopics[0].subtopic_status,
             subtopic_id = getTopics[0].subtopic_id,
-            topic_title = getTopics[0].topic_title,
-            category = getTopics[0].category;
+            topicTitle = getTopics[0].topic_title,
+            category = getTopics[0].category,
+            categoryStatus = getTopics[0].cat_status;
 
         if (page > 1) {
             var limit = (page - 1) * 25;
@@ -374,7 +374,7 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
             var offset = 0;
         }
 
-        let posts = await client.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login, subtopics.subtopic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset])
+        let posts = await client.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login, subtopics.subtopic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, subtopics.subtopic_id, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset])
         .then((result) => {
             done();
             if (result !== undefined) {
@@ -392,7 +392,7 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
             fn.error(req, resp, 500);
         });
         
-        resp.render('forums/posts', {user: req.session.user, posts: posts, status: status, title: subtopic, topic_title: topic_title, subtopic_id: subtopic_id, category: category});
+        resp.render('forums/posts', {user: req.session.user, posts: posts, category_status: categoryStatus, subtopic_status: subtopicStatus, title: subtopic, topic_title: topicTitle, subtopic_id: subtopic_id, category: category});
     });
 
     /* db.query('SELECT subtopic_status, subtopic_id, topic_title, category FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE subtopic_title = $1', [subtopic], function(err, result) {
@@ -436,10 +436,20 @@ app.get('/forums/posts/post-details', function(req, resp) {
 
         let post_id = req.query.pid,
             reply_id = req.query.rid,
-            page = req.query.page,
+            page = parseInt(req.query.page),
             results = {};
 
-        let originalPost = await client.query("SELECT posts.*, topics.topic_title, subtopics.subtopic_title, subtopics.subtopic_status, users.user_id, users.last_login FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN users ON posts.post_user = users.username WHERE posts.post_id = $1 AND posts.post_status != 'Removed'", [post_id])
+        let originalPost = await client.query(`SELECT
+            posts.*,
+            topics.topic_title,
+            subtopics.subtopic_title, subtopics.subtopic_status,
+            users.user_id, users.last_login, users.user_status
+        FROM posts
+        LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+        LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic
+        LEFT JOIN users ON posts.post_user = users.username
+        WHERE posts.post_id = $1
+        AND posts.post_status != 'Removed'`, [post_id])
         .then((result) => {
             if (result !== undefined) {
                 result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
@@ -751,7 +761,13 @@ app.get('/admin-page/users', function(req, resp) {
                     }
                 }
 
-                let queryString = 'SELECT user_id, username, email, last_login, privilege, user_level, user_status, receive_email, show_online, avatar_url, user_created, user_confirmed FROM users WHERE user_id != 1' + paramString + ' ORDER BY username OFFSET $1 LIMIT 20';
+                let queryString = `SELECT
+                user_id, username, email, last_login, privilege, user_level, user_status, receive_email, show_online, avatar_url, user_created, user_confirmed 
+                FROM users 
+                WHERE user_level != 'Owner' AND privilege < 2 ${paramString}
+                ORDER BY username 
+                OFFSET $1 
+                LIMIT 20`;
 
                 let users = await client.query(queryString, params)
                 .then((result) => {
@@ -852,7 +868,23 @@ app.get('/admin-page/categories', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                let categories = await client.query('SELECT * FROM categories')
+                let offset,
+                    page = parseInt(req.query.page);
+
+                if (page > 1) {
+                    offset = (page - 1) * 25;
+                } else {
+                    offset = 0;
+                }
+
+                let categories = await client.query(
+                    `SELECT *
+                    FROM categories
+                    ORDER BY category
+                    LIMIT 25
+                    OFFSET $1`,
+                    [offset]
+                )
                 .then((result) => {
                     done();
                     if (result !== undefined) {

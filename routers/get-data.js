@@ -32,6 +32,31 @@ app.get('/get-categories', function(req, resp) {
     }); */
 });
 
+app.post('/get-category-count', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+
+        await client.query(
+            `SELECT COUNT(cat_id) AS count FROM categories`
+        )
+        .then((result) => {
+            done();
+            if (result !== undefined) {
+                let obj = {
+                    page: req.body.page
+                }
+
+                resp.send({status: 'success', count: result.rows[0].count, obj: obj});
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'error'});
+        });
+    });
+});
+
 app.post('/get-topics-by-category', function(req, resp) {
     if (req.body.category !== '') {
         db.connect(async function(err, client, done) {
@@ -149,7 +174,6 @@ app.post('/get-subtopic-details', function(req, resp) {
 
         let subtopicDetails = await client.query(queryString, params)
         .then((result) => {
-            done();
             if (result !== undefined && result.rows.length > 0) {
                 return result.rows;
             } else {
@@ -179,6 +203,7 @@ app.post('/get-subtopic-details', function(req, resp) {
                 subtopicDetails[i].created_on = moment(subtopicDetails[i].subtopic_created_on).format('MM/DD/YYYY @ hh:mm:ss A');
             }
 
+            done();
             resp.send({status: 'success', subtopics: obj, results: subtopicDetails});
         } else {
             if (req.body.topic !== '') {
@@ -348,7 +373,8 @@ app.post('/get-replies', function(req, resp) {
         .then((result) => {
             done();
             if (result !== undefined) {
-                let obj = {page: req.body.page}
+                let page = parseInt(req.body.page);
+                let obj = {page: page}
     
                 resp.send({status: 'success', replies: result.rows[0].num_of_replies, obj: obj});
             }
@@ -365,7 +391,7 @@ app.post('/get-user-posts', function(req, resp) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            let page = req.body.page;
+            let page = parseInt(req.body.page);
 
             if (page > 1) {
                 var offset = (page - 1) * 10;
@@ -410,16 +436,17 @@ app.post('/get-post-details', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                if (req.body.page > 1) {
-                    var limit = (req.body.page - 1) * 10;
-                    var offset = limit;
+                let page = parseInt(req.body.page),
+                    offset
+
+                if (page > 1) {
+                    offset = (page - 1) * 10;
                 } else {
-                    var limit = 10;
-                    var offset = 0;
+                    offset = 0;
                 }
 
                 let queryWhereClause = ['belongs_to_post_id IS NULL'];
-                let querySearchParams = [limit, offset];
+                let querySearchParams = [offset];
 
                 if (req.body.category !== '' && req.body.category !== undefined) {
                     querySearchParams.push(req.body.category);
@@ -464,7 +491,7 @@ app.post('/get-post-details', function(req, resp) {
                 }
 
                 var whereClause = 'WHERE ' + queryWhereClause.join(' AND ');
-                var queryString = 'SELECT (SELECT COUNT(post_id) AS total_posts FROM posts LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + '), posts.*, user_id, user_status FROM posts LEFT JOIN users ON users.username = posts.post_user LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + ' ORDER BY post_created DESC LIMIT $1 OFFSET $2';
+                var queryString = 'SELECT (SELECT COUNT(post_id) AS total_posts FROM posts LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + '), posts.*, user_id, user_status FROM posts LEFT JOIN users ON users.username = posts.post_user LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + ' ORDER BY post_created DESC LIMIT 10 OFFSET $1';
 
                 await client.query(queryString, querySearchParams)
                 .then((result) => {
@@ -531,10 +558,11 @@ app.post('/get-friends', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                let offset;
+                let offset
+                    page = parseInt(req.body.page);
 
-                if (req.body.page > 1) {
-                    offset = (req.body.page - 1) * 24;
+                if (page > 1) {
+                    offset = (page - 1) * 24;
                 } else {
                     offset = 0;
                 }
@@ -564,5 +592,41 @@ app.post('/get-friends', function(req, resp) {
         fn.error(req, resp, 403);
     }
 });
+
+/* app.post('/user-menu', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+
+        let userMenuQuery;
+        let queryParams;
+        let loggedIn = false;
+
+        if (req.session.user) {
+            userMenuQuery = 'SELECT user_id, username, last_login, user_status, user_level, avatar_url, online_status, fid FROM users LEFT JOIN (SELECT fid, befriend_with FROM friends WHERE friendly_user = $1 AND befriend_with = $2 AND friend_confirmed IS TRUE) AS friends ON users.username = friends.befriend_with WHERE username = $2';
+            queryParams = [req.session.user.username, req.body.username];
+            loggedIn = req.session.user.username;
+        } else {
+            userMenuQuery = 'SELECT user_id, username, last_login, user_status, user_level, avatar_url, online_status FROM users WHERE username =$1';
+            queryParams = [req.body.username];
+        }
+        
+        await client.query(userMenuQuery, queryParams)
+        .then((result) => {
+            done();
+            if (result !== undefined && result.rows.length === 1) {
+                result.rows[0].last_login = moment(result.rows[0].last_login).fromNow();
+
+                resp.send({status: 'success', user: result.rows[0], logged_in: loggedIn});
+            } else {
+                resp.send({status: 'failed'});
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'error'});
+        });
+    });
+}); */
 
 module.exports = app;

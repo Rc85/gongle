@@ -13,39 +13,41 @@ block content
                 section.section-container
                     form#create-category-form(action='/create-category', method='POST')
                         .col.mb-15.align-items-center
-                            label(for='category_name') Category:
+                            label.mr-10(for='category_name') Category:
                             input.w-100(type='text', name='category')
                         .text-right
                             input(type='submit', value='Create')
                 h2 Categories
                 section.section-container
+                    .pagination-container.mb-15
                     header.header.col
                         .w-5 ID
-                        .w-25 Category
-                        .w-20 Created On
-                        .w-25 Creatd By
-                        .w-10 Status
-                        .w-15 Actions
+                        .w-35 Category
+                        .w-30 Created On
+                        .w-15 Creatd By
+                        .w-10.text-center Status
+                        .w-5
                     each category, i in categories
                         .col
                             .w-5 #{category.cat_id}
-                            .w-25.category-title-container
+                            .w-35.category-title-container
                                 .category-title #{category.category}
                                 form.rename-category(action='/rename-category', method='post')
                                     input(type='hidden', name='cat_id', value=category.cat_id)
                                     .d-flex
                                         input(type='text', name='category')
                                         input.cancel-rename-category.ml-10(type='button', value='Cancel')
-                            .w-20 #{category.cat_created_on}
-                            .w-25 #{category.cat_created_by}
-                            .w-10
+                            .w-30 #{category.cat_created_on}
+                            .w-15 #{category.cat_created_by}
+                            .w-10.cat-status.text-center
                                 if category.cat_status === 'Open'
                                     span.user-badge.success-badge #{category.cat_status}
                                 else
                                     span.user-badge.error-badge #{category.cat_status}
-                            .w-15
-                                form#change-category-status-form(action='/change-category-status', method='post')
-                                    select(name='status')
-                                        option
-                                        option(value='Open') Open
-                                        option(value='Closed') Close
+                            .w-5.text-right
+                                .status-option-container
+                                    i.fas.fa-lg.fa-ellipsis-h.status-option-button
+                                    .status-option-menu
+                                        .status-option(data-cat-id=category.cat_id) Open
+                                        .status-option(data-cat-id=category.cat_id) Close
+                    .pagination-container.mt-15

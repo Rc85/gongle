@@ -59,4 +59,6 @@ $(document).ready(function() {
             hideLoading();
         });
     });
+
+    menuHandler('admin-menu-button', 'admin-menu');
 });

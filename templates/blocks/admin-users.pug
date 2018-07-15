@@ -69,7 +69,8 @@ block content
                                         option
                                         option(value='0', selected=userSelected) User
                                         option(value='1', selected=modSelected) Moderator
-                                        option(value='2', selected=adminSelected) Administrator
+                                        if user.privilege === 3
+                                            option(value='2', selected=adminSelected) Administrator
                                 form.change-user-status-form.mr-5(action='/change-user-status', method='POST')
                                     input(type='hidden', name='user_id', value=u.user_id)
                                     - var activateSelected = false

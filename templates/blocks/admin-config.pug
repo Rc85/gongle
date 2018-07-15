@@ -17,7 +17,12 @@ block content
                                 span#site-status.user-badge.success-badge #{config[1].status}
                             else
                                 span#site-status.user-badge.critical-badge #{config[1].status}
-                        form#change-site-status-form.change-config-form(action='/change-config', method='POST')
+                        .admin-menu-container
+                            i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
+                            .admin-menu
+                                .site-config-option(data-config-id='2', data-status='Open') Open
+                                .site-config-option(data-config-id='2', data-status='Closed') Close
+                        //form#change-site-status-form.change-config-form(action='/change-config', method='POST')
                             input(type='hidden', name='config_id', value='2')
                             select#change-site-status(name='status')
                                 option
@@ -30,7 +35,12 @@ block content
                                 span#registration-status.user-badge.success-badge #{config[0].status}
                             else
                                 span#registration-status.user-badge.critical-badge #{config[0].status}
-                        form#change-registration-status-form.change-config-form(action='/change-config', method='POST')
+                        .admin-menu-container
+                            i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
+                            .admin-menu
+                                .reg-config-option(data-config-id='1', data-status='Open') Open
+                                .reg-config-option(data-config-id='1', data-status='Closed') Close
+                        //form#change-registration-status-form.change-config-form(action='/change-config', method='POST')
                             input(type='hidden', name='config_id', value='1')
                             select#change-registration-status(name='status')
                                 option

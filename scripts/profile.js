@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var username = urlParams().get('u'),
+    let username = urlParams('u'),
         postsLoaded = false,
         repliesLoaded = false,
         followedPostsLoaded = false,
@@ -18,7 +18,7 @@ $(document).ready(function() {
 
     function populatePosts(parent, obj, show_body, is_reply) {
         //if (is_reply) {
-            var url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&page=1';
+            let url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&page=1';
         //} else {
             //var url = '/forums/posts/post-details?pid=' + obj.post_id + '&tid=' + obj.post_topic + '&page=1';
         //}
@@ -208,12 +208,51 @@ $(document).ready(function() {
         return color;
     }
 
+    let dateObj = new Date();
+    let year = dateObj.getUTCFullYear();
+    let monthInt = dateObj.getUTCMonth() + 1;
+    let month;
+    let day;
+
+    if (month < 10) {
+        month = '0' + monthInt;
+    } else {
+        month = monthInt;
+    }
+
+    let dayInt = dateObj.getUTCDate();
+
+    if (day < 10) {
+        day = '0' + dayInt;
+    } else {
+        day = dayInt;
+    }
+
+    let startDate = year + '-' + month + '-' + day;
+    let endDate;
+
+    let oddMonths = [1, 3, 5, 7, 8, 10, 12];
+
+    if (oddMonths.indexOf(monthInt)) {
+        endDate = year + '-' + month + '-31';
+    } else {
+        if (monthInt === 2) {
+            if (year % 4 === 0) {
+                endDate = year + '-' + month + '-29'; 
+            } else {
+                endDate = year + '-' + month + '-28'; 
+            }
+        } else {
+            endDate = year + '-' + month + '-30';
+        }
+    }
+
     $.post({
         url: '/get-post-freq',
         data: {
             username: username,
-            start_date: '2018-05-01',
-            end_date: '2018-05-31'
+            start_date: startDate,
+            end_date: endDate
         },
         success: function(resp) {
             if (resp.status === 'error') {

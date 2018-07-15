@@ -29,7 +29,7 @@
 .section-container {
     background-color: rgb(255, 255, 255);
     border-radius: 3px;
-    padding: 10px 10px 10px 10px;
+    padding: 10px;
     margin-bottom: 15px;
     @include box-shadow;
 
@@ -231,9 +231,14 @@ button[name=vote]:disabled {
     cursor: pointer;
 }
 
+.forum-post-details {
+    position: relative;
+}
+
 .mod-user-menu-container {
     position: relative;
     display: inline-block;
+    margin: 0 1px 0 1px;
 
     button {
         border: 0;
@@ -252,9 +257,9 @@ button[name=vote]:disabled {
 .mod-user-menu {
     position: absolute;
     right: 0;
-    font-size: 12px;
     width: 200px;
     padding: 10px;
+    font-size: 1em;
     background: rgb(255, 255, 255);
     border: 1px solid $light_border_color;
     z-index: 9999;
@@ -264,7 +269,6 @@ button[name=vote]:disabled {
     input[type=submit] {
         border: 0;
         background: transparent;
-        font-size: 12px;
         color: $secondary_color;
         padding: 0;
 
@@ -272,6 +276,10 @@ button[name=vote]:disabled {
             color: $primary_color;
             text-decoration: underline;
         }
+    }
+
+    small {
+        font-size: 0.85em;
     }
 }
 

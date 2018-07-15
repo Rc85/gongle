@@ -16,8 +16,8 @@ block content
                         if posts.post.post_status === 'Closed'
                             span.user-badge.error-badge.ml-5 #{posts.post.post_status}
                     small Posted by 
-                        +mod-user(posts.post.post_user, posts.post.user_id, posts.post.last_login)
-                        |  #{posts.post.post_created} in 
+                        +mod-user(posts.post.post_user, posts.post.user_id, posts.post.last_login, posts.post.user_level)
+                        | #{posts.post.post_created} in 
                         a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
                         i.fas.fa-angle-right.ml-5.mr-5
                         a(href='/subforums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
@@ -56,9 +56,9 @@ block content
                             small Posted by 
                                 if post.post_user === posts.post.post_user
                                     mark
-                                        +mod-user(post.post_user, post.user_id, post.last_login)
+                                        +mod-user(post.post_user, post.user_id, post.last_login, post.user_level)
                                 else
-                                    +mod-user(post.post_user, post.user_id, post.last_login)
+                                    +mod-user(post.post_user, post.user_id, post.last_login, post.user_level)
                                 |  #{post.post_created} in  
                                 a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
                                 i.fas.fa-angle-right.ml-5.mr-5

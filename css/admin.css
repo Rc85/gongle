@@ -144,4 +144,75 @@
   text-decoration: underline;
 }
 
+/* select {
+    border: 0;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+    background: $primary_color;
+    background: url('../images/option_button.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 50%;
+    cursor: pointer;
+
+    option {
+        border: 0;
+        background: red;
+    }
+} */
+#change-category-status-form, .admin-menu-container {
+  position: relative;
+}
+
+.status-option, .status-option-button, .admin-menu-button, .admin-menu div {
+  cursor: pointer;
+}
+
+.status-option-menu {
+  position: absolute;
+  display: none;
+  font-size: 0.8em;
+  z-index: 9999;
+  box-shadow: 0 3px 5px #444444;
+}
+.status-option-menu .status-option {
+  text-align: center;
+  padding: 10px;
+  background: white;
+  border: 1px solid #c8c8c8;
+}
+.status-option-menu .status-option:not(:first-child) {
+  border-top: 0;
+}
+.status-option-menu .status-option:hover {
+  background: #c8c8c8;
+}
+
+.admin-menu-button {
+  background: transparent;
+  border: 0;
+}
+
+.admin-menu {
+  position: absolute;
+  display: none;
+  font-size: 0.8em;
+  right: 0;
+  z-index: 9999;
+  background: white;
+  box-shadow: 0 3px 5px #444444;
+}
+.admin-menu div {
+  padding: 10px;
+  border: 1px solid #c8c8c8;
+}
+.admin-menu div:not(:first-child) {
+  border-top: 0;
+}
+.admin-menu div:hover {
+  background: #c8c8c8;
+}
+
 /*# sourceMappingURL=css/admin.css.map */

@@ -32,7 +32,7 @@ mixin vote(post)
             span.vote-counter.justify-content-end #{postVotes}
             small Votes
             
-mixin mod-user(username, id, last_login)
+mixin mod-user(username, id, last_login, level)
     .mod-user-menu-container
         button.user-menu-button #{username}
         .mod-user-menu
@@ -81,7 +81,6 @@ mixin mod-user(username, id, last_login)
                 
 mixin postAction(op, reply)
     if user
-        | #{op.subtopic_status}
         if op.subtopic_status === 'Open'
             .text-right
                 if post.post_status !== 'Closed'

@@ -31,37 +31,7 @@ $(document).ready(function() {
         });
     });
 
-    $('body').on('click', function(e) {
-        if (e.target.className === 'user-menu-button') {
-            let menu = $(e.target).next();
-
-            if ($(menu).css('display') !== 'none') {
-                $(menu).hide();
-            } else if ($(menu).css('display') === 'none') {
-                $('.mod-user-menu').hide();
-                $(menu).show();
-            }
-        } else if ($(e.target).closest('.user-menu-button').length) {
-            let menu = $(e.target).parent().siblings('.mod-user-menu');
-
-            if ($(menu).css('display') === 'block') {
-                $(menu).hide();
-            } else if ($(menu).css('display') === 'none') {
-                $('.mod-user-menu').hide();
-                $(menu).show();
-            }
-        } else if (e.target.className === 'mod-user-menu' || $(e.target).closest('.mod-user-menu').length) {
-            return;
-        } else {
-            $('.mod-user-menu').hide();
-        }
-    });
-
-    /* $('.user-menu-button').on('click', function(e) {
-        e.preventDefault();
-
-        $(this).next().show();
-    })  */
+    menuHandler('user-menu-button', 'mod-user-menu');
 
     $('.issue-violation').on('submit', function(e) {
         e.preventDefault();
@@ -203,4 +173,102 @@ $(document).ready(function() {
             }
         });
     });
+
+    //let userMenuOpened = false;
+    
+    /* $('body').on('click', function(e) {
+        if (userMenuOpened === e.target) {
+            $('body').find('.mod-user-menu').remove();
+            userMenuOpened = false;
+        } else {
+            $('body').find('.mod-user-menu').remove();
+            userMenuOpened === e.target;
+        }
+    }); */
+
+    /* $('body').on('click', function(e) {
+        if (e.target.className === 'user-menu-button') {
+            let container = $(e.target).parent();
+            let username = $(e.target).attr('data-username');
+            
+            if (userMenuOpened !== e.target) {
+                userMenuOpened = e.target;
+                $('body').find('.mod-user-menu').remove();
+
+                $.post({
+                    url: '/user-menu',
+                    data: {
+                        username: username
+                    },
+                    success: function(resp) {
+                        console.log(resp);
+                        if (resp.status === 'success') {
+                            let menuOptions = $('<div>').append(
+                                resp.user.fid === null ?
+                                $('<form>').addClass('add-friend').attr({'action': '/add-friend', 'method': 'POST'}).append(
+                                    $('<input>').attr({'type': 'hidden', 'name': 'username', 'value': resp.user.username}),
+                                    $('<button>').attr('type', 'submit').append(
+                                        $('<i>').addClass('fas fa-lg fa-user-plus')
+
+                                    )
+                                ).on('submit', function(e) {
+                                    e.preventDefault();
+                                    let form = $(this);
+                            
+                                    $.post({
+                                        url: '/add-friend',
+                                        data: $(form).serialize(),
+                                        success: function(resp) {
+                                            if (resp.status === 'success') {
+                                                alertify.success('Friend request sent');
+                                            } else if (resp.status === 'error') {
+                                                alertify.error('An error occurred');
+                                            } else if (resp.status === 'requested') {
+                                                alertify.error('Request already sent');
+                                            }
+                                        }
+                                    });
+                                }) :
+                                $('<span>').addClass('user-badge success-badge').text('Friend')
+                            )
+
+                            let menu = $('<div>').addClass('mod-user-menu').append(
+                                $('<div>').addClass('d-flex').append(
+                                    $('<div>').addClass('mr-5').append(
+                                        $('<a>').attr('href', '/profile?u=' + resp.user.username).append(
+                                            $('<img>').addClass('profile-pic').attr('src', resp.user.avatar_url)
+                                        )
+                                    ),
+                                    $('<div>').append(
+                                        $('<div>').append(
+                                            $('<a>').attr('href', '/profile?u=' + resp.user.username).text(resp.user.username)
+                                        ),
+                                        $('<div>').append(
+                                            $('<small>').text('Last seen ' + resp.user.last_login),
+                                            $('<hr>'),
+                                            resp.logged_in && resp.logged_in !== username ?
+                                            menuOptions :
+                                            ''
+                                        )
+                                    )
+                                )
+                            )
+            
+                            $(container).append(
+                                menu
+                            )
+                        }
+                    }
+                })
+            } else {
+                $('body').find('.mod-user-menu').remove();
+                userMenuOpened = false;
+            }
+        } else if (e.target.className === 'mod-user-menu' || $(e.target).closest('.mod-user-menu').length) {
+            return;
+        } else {
+            $('body').find('.mod-user-menu').remove();
+            userMenuOpened = false;
+        }
+    }); */
 });

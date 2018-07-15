@@ -44,4 +44,41 @@
   display: none;
 }
 
+#most-active, #new-posts {
+  display: none;
+}
+
+#forum-navbar {
+  display: flex;
+}
+#forum-navbar .active {
+  background: #c8c8c8 !important;
+}
+#forum-navbar .forum-nav-tabs {
+  background: white;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  padding: 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+#forum-navbar .forum-nav-tabs h4 {
+  margin: 0;
+}
+#forum-navbar a {
+  color: #199664;
+}
+#forum-navbar a:hover {
+  color: #19c896;
+  text-decoration: underline;
+}
+
+#forum-body {
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  border-top-right-radius: 3px;
+  background: #c8c8c8;
+  padding: 10px;
+}
+
 /*# sourceMappingURL=css/forums.css.map */

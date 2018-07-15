@@ -11,7 +11,9 @@ block content
                 i.fas.fa-lg.fa-angle-right.mr-10.ml-10
             | #{title}
         if user
-            if status === 'Open' && user.user_status === 'Active'
+            if subtopic_status === 'Closed' || category_status === 'Closed'
+                .error.mb-15 This category/subtopic is currently closed and is read only. Please check back later.
+            else
                 .post-control
                     button#new-post-button.mb-15(type='button') NEW POST
                 form#post-form.mb-15(action='/post', method='POST')
@@ -24,12 +26,9 @@ block content
                     .text-right
                         input.mr-5(type='submit', name='submit_button', value='Submit')
                         input(type='reset', value='Clear')
-            else
-                .error.mb-15 This subtopic is currently closed and is read only. Please check back later.
         if posts.length > 0
             section
-                if posts.length > 25
-                    .pagination-container.mb-15
+                .pagination-container.mb-15
                 each post, i in posts
                     .col.forum-post-row
                         .w-10
@@ -40,11 +39,10 @@ block content
                                 span.user-badge.error-badge.ml-5 #{post.post_status}
                             div
                                 small Posted by 
-                                    +mod-user(post.post_user, post.user_id, post.last_login)
+                                    +mod-user(post.post_user, post.user_id, post.last_login, post.user_level)
                                     |  #{post.post_created}
                         .w-10.text-right #{post.total_replies} Replies
                         //-.w-15.d-flex.align-items-start
                             +mod-user(post.post_user, post.user_id, post.last_login)
                         //-.w-15.text-right #{post.post_created}
-                if posts.length > 25
-                    .pagination-container.mt-15
+                .pagination-container.mt-15

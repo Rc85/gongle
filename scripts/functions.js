@@ -108,6 +108,15 @@ function getPostDetails(form, page, obj) {
     });
 }
 
+/**
+ * 
+ * @param {Element} appendTo The element, usually a class name, to append the page numbers to.
+ * @param {Number} totalItem Total number of items.
+ * @param {Number} itemPerPage Items per page.
+ * @param {Object} obj Should contain a 'page' variable passed from the server.
+ * @param {String|Boolean} link A link for the page numbers to go to.
+ * @param {Function|Boolean} func If link is false, a function is required for the page number to execute. If a link is provided, this is false.
+ */
 function createPagination(appendTo, totalItem, itemPerPage, obj, link, func) {
     let calc = parseInt(totalItem) / itemPerPage; // get number of pages
     let totalNumPages = Math.ceil(calc); // round up the number of pages
@@ -190,32 +199,33 @@ function toggleButton(button, buttonLabel) {
     }
 }
 
-function changePostStatus(form, option, search) {
-    if (option === 'Open') {
-        var successMessage = 'Post opened';
-    } else if (option === 'Closed') {
-        var successMessage = 'Post closed';
-    } else if (option === 'Removed') {
-        var successMessage = 'Post removed';
-    }
-
+function changePostStatus(form, search) {
+    let postId = $(form).attr('data-post-id'),
+        status = $(form).attr('data-status');
     showLoading();
-    console.log($(form).parents(search));
 
     $.post({
         url: '/change-post-status',
-        data: $(form).serialize(),
+        data: {
+            post_id: postId,
+            status: status
+        },
         success: function(resp) {
             hideLoading();
 
             if (resp.status === 'success') {
                 let postStatus = $(form).parents(search).find('.post-status');
+                console.log(postStatus)
+                let successMessage;
                 if (resp.post_status === 'Open') {
                     $(postStatus).removeClass('error-badge critical-badge').addClass('success-badge').text('Open');
+                    successMessage = 'Post opened';
                 } else if (resp.post_status === 'Closed') {
                     $(postStatus).removeClass('success-badge critical-badge').addClass('error-badge').text('Closed');
+                    successMessage = 'Post closed';
                 } else if (resp.post_status === 'Removed') {
                     $(postStatus).removeClass('success-badge error-badge').addClass('critical-badge').text('Removed');
+                    successMessage = 'Post removed';
                 }
             
                 alertify.success(successMessage);
@@ -324,66 +334,66 @@ function adminPostRow(obj, isInDetails) {
                 obj.post_status === 'Removed' ? $('<span>').addClass('post-status user-badge critical-badge').text('Removed') : '',
             ),
             $('<div>').addClass('w-5 text-center').append(
-                $('<div>').addClass('mod-user-menu-container').append(
-                    $('<button>').addClass('mod-user-button').append(
+                $('<div>').addClass('admin-menu-container').append(
+                    $('<button>').addClass('admin-menu-button').append(
                         $('<i>').addClass('fas fa-lg fa-ellipsis-h')
                     ),
-                    $('<div>').addClass('mod-user-menu text-left').append(
-                        $('<form>').addClass('open-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
+                    $('<div>').addClass('admin-menu text-left').append(
+                        /* $('<form>').addClass('open-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
                             $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Open'}),
-                            $('<a>').attr({'href': '#'}).html('Open Post').on('click', function(e) {
+                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Open'}), */
+                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Open'}).html('Open').on('click', function(e) {
                                 e.preventDefault();
-                                let form = $(this).parent();
+                                let form = $(this);
     
                                 $(this).parent().on('submit', function(e) {
                                     e.preventDefault();
 
-                                    changePostStatus(form, $(form).children('input[name=status]').val(), '.admin-post-row');
+                                    changePostStatus(form, '.admin-post-row');
                                 });
 
                                 $(form).submit();
                                 $(form).off('submit');
                             }),
-                            $('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Makes post visible and accessible')
-                        ),
+                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Makes post visible and accessible')
+                        //),
                         obj.belongs_to_post_id === null ?
-                        $('<form>').addClass('close-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
+                        /* $('<form>').addClass('close-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
                             $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Closed'}),
-                            $('<a>').attr({'href': '#'}).html('Close Post').on('click', function(e) {
+                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Closed'}), */
+                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Closed'}).html('Close').on('click', function(e) {
                                 e.preventDefault();
-                                let form = $(this).parent();
+                                let form = $(this);
     
                                 $(this).parent().on('submit', function(e) {
                                     e.preventDefault();
 
-                                    changePostStatus(form, $(form).children('input[name=status]').val(), '.admin-post-row');
+                                    changePostStatus(form, '.admin-post-row');
+                                });
+
+                                $(form).submit();
+                                $(form).off('submit');
+                            })
+                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Changes post to read-only')
+                        /* ) */ : '',
+                        /* $('<form>').addClass('remove-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
+                            $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
+                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Removed'}), */
+                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Removed'}).html('Remove').on('click', function(e) {
+                                e.preventDefault();
+                                let form = $(this);
+    
+                                $(this).parent().on('submit', function(e) {
+                                    e.preventDefault();
+
+                                    changePostStatus(form, '.admin-post-row');
                                 });
 
                                 $(form).submit();
                                 $(form).off('submit');
                             }),
-                            $('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Changes post to read-only')
-                        ) : '',
-                        $('<form>').addClass('remove-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
-                            $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Removed'}),
-                            $('<a>').attr({'href': '#'}).html('Remove Post').on('click', function(e) {
-                                e.preventDefault();
-                                let form = $(this).parent();
-    
-                                $(this).parent().on('submit', function(e) {
-                                    e.preventDefault();
-
-                                    changePostStatus(form, $(form).children('input[name=status]').val(), '.admin-post-row');
-                                });
-
-                                $(form).submit();
-                                $(form).off('submit');
-                            }),
-                            $('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Hides post and makes it inaccessible')
-                        )
+                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Hides post and makes it inaccessible')
+                        //)
                     )
                 )
             )
@@ -394,9 +404,54 @@ function adminPostRow(obj, isInDetails) {
     return row;
 }
 
-function urlParams() {
-    var urlString = new URL(window.location.href),
-        urlParams = new URLSearchParams(urlString.searchParams.toString());
+function urlParams(p) {
+    let urlString = new URL(window.location.href),
+        urlParams = new URLSearchParams(urlString.searchParams.toString()),
+        param = urlParams.get(p);
 
-    return urlParams;
+    return param;
+}
+
+function menuHandler(buttonClass, menuClass) {
+    $('body').on('click', function(e) {
+        if (e.target.className === buttonClass) {
+            return;
+            /* let menu = $(e.target).next();
+            console.log($(menu).css('display'))
+
+            if ($(menu).css('display') !== 'none') {
+                $(menu).hide();
+            } else if ($(menu).css('display') === 'none') {
+                $('.mod-user-menu').hide();
+                $(menu).show();
+            } */
+        } else if ($(e.target).closest('.' + buttonClass).length) {
+            let menu = $(e.target).parent().siblings('.' + menuClass);
+
+            if ($(menu).css('display') === 'block') {
+                $(menu).hide();
+            } else if ($(menu).css('display') === 'none') {
+                $('.' + menuClass).hide();
+                $(menu).show();
+            }
+        } else if (e.target.className === menuClass || $(e.target).closest('.' + menuClass).length) {
+            return;
+        } else {
+            $('.' + menuClass).hide();
+        }
+    });
+
+    $('.' + buttonClass).on('click', function(e) {
+        e.preventDefault();
+
+        let menu = $(e.target).next();
+        console.log($(menu).css('display'))
+
+        if ($(menu).css('display') !== 'none') {
+            $(menu).hide();
+        } else if ($(menu).css('display') === 'none') {
+            $('.' + menuClass).hide();
+            $(menu).show();
+        }
+    });
 }

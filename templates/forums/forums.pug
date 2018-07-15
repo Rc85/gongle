@@ -1,18 +1,26 @@
 extends ../forum-layout
 
 block content
-    #popular.section-container
-        h2 POPULAR POSTS
-        //-include ../inc/sub-topics-header
-        each post, i in popular
-            include ../inc/lg-post
-    #most-active.section-container
-        h2 MOST ACTIVE POSTS
-        //-include ../inc/sub-topics-header
-        each post, i in active
-            include ../inc/lg-post
-    #new-posts.section-container
-        h2 NEW POSTS
-        //-include ../inc/sub-topics-header
-        each post, i in new_posts
-            include ../inc/lg-post
+    #forum-navbar
+        #popular-tab.forum-nav-tabs.active
+            a(href='#')
+                h4 POPULAR
+        #most-active-tab.forum-nav-tabs
+            a(href='#')
+                h4 MOST ACTIVE
+        #new-posts-tab.forum-nav-tabs
+            a(href='#')
+                h4 NEW
+    #forum-body
+        #popular.section-container
+            h2 POPULAR POSTS
+            each post, i in popular
+                include ../inc/lg-post
+        #most-active.section-container
+            h2 MOST ACTIVE POSTS
+            each post, i in active
+                include ../inc/lg-post
+        #new-posts.section-container
+            h2 NEW POSTS
+            each post, i in new_posts
+                include ../inc/lg-post

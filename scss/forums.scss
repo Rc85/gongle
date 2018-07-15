@@ -51,3 +51,45 @@
 #post-form, #reply-post-form, .reply-form {
     display: none;
 }
+
+#most-active, #new-posts {
+    display: none;
+}
+
+#forum-navbar {
+    display: flex;
+
+    .active {
+        background: $light_border_color !important;
+    }
+
+    .forum-nav-tabs {
+        background: rgb(255, 255, 255);
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+        padding: 10px;
+        margin-right: 5px;
+        cursor: pointer;
+        
+        h4 {
+            margin: 0;
+        }
+    }
+
+    a {
+        color: $secondary_color;
+    }
+
+    a:hover {
+        color: $primary_color;
+        text-decoration: underline;
+    }
+}
+
+#forum-body {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-top-right-radius: 3px;
+    background: $light_border_color;
+    padding: 10px;
+}

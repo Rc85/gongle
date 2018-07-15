@@ -237,7 +237,7 @@ app.post('/change-subtopic-status', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 0) {
             db.connect(async function(err, client, done) {
-                if (req.body.status !== 'Delete') {
+                if (req.body.status !== 'Deleted') {
                     if (err) { console.log(err); }
 
                     await client.query('UPDATE subtopics SET subtopic_status = $1 WHERE subtopic_id = $2 RETURNING subtopic_status AS status', [req.body.status, req.body.id])
@@ -252,7 +252,7 @@ app.post('/change-subtopic-status', function(req, resp) {
                         done();
                         resp.send({status: 'error'});
                     });
-                } else if (req.body.status === 'Delete') {
+                } else if (req.body.status === 'Deleted') {
                     if (err) { console.log(err); }
 
                     if (req.session.user.privilege > 1) {
@@ -269,7 +269,8 @@ app.post('/change-subtopic-status', function(req, resp) {
                             resp.send({status: 'error'});
                         });
                     } else {
-                        resp.send({status: 'authorized'});
+                        done();
+                        resp.send({status: 'unauthorized'});
                     }
                 }
             });
@@ -285,7 +286,7 @@ app.post('/change-topic-status', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 0) {
             db.connect(async function(err, client, done) {
-                if (req.body.status !== 'Delete') {
+                if (req.body.status !== 'Deleted') {
                     if (err) { console.log(err); }
     
                     await client.query('UPDATE topics SET topic_status = $1 WHERE topic_id = $2 RETURNING topic_status AS status', [req.body.status, req.body.id])
@@ -300,7 +301,7 @@ app.post('/change-topic-status', function(req, resp) {
                         done();
                         resp.send({status: 'error'});
                     });
-                } else if (req.body.status === 'Delete') {
+                } else if (req.body.status === 'Deleted') {
                     if (err) { console.log(err); }
     
                     if (req.session.user.privilege > 1) {
@@ -576,6 +577,36 @@ app.post('/rename-category', function(req, resp) {
     } else {
         resp.send({status: 'unauthorized'});
     }
-})
+});
+
+app.post('/change-category-status', function(req, resp) {
+    console.log(req.body);
+    if (req.session.user) {
+        if (req.session.user.privilege > 1) {
+            db.connect(async function(err, client, done) {
+                if (err) { console.log(err); }
+
+                await client.query('UPDATE categories SET cat_status = $1 WHERE cat_id = $2 RETURNING cat_status', [req.body.status, req.body.cat_id])
+                .then((result) => {
+                    done();
+                    if (result !== undefined && result.rowCount === 1) {
+                        resp.send({status: 'success', cat_status: result.rows[0].cat_status});
+                    } else {
+                        resp.send({status: 'failed'});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                });
+            });
+        } else {
+            fn.error(req, resp, 401);
+        }
+    } else {
+        fn.error(req, resp, 403);
+    }
+});
 
 module.exports = app;
