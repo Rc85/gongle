@@ -1,8 +1,12 @@
 {
-  "name": "yappaholic",
+  "name": "gongle",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=10.0.0",
+    "npm": ">=6.0.0"
+  },
   "scripts": {
     "start": "node ."
   },
@@ -15,7 +19,6 @@
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
     "fs": "0.0.1-security",
-    "hoek": "^5.0.3",
     "jquery": "^3.3.1",
     "moment": "^2.22.2",
     "moment-timezone": "^0.5.17",
