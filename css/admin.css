@@ -144,24 +144,6 @@
   text-decoration: underline;
 }
 
-/* select {
-    border: 0;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    text-indent: 1px;
-    text-overflow: '';
-    background: $primary_color;
-    background: url('../images/option_button.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 50%;
-    cursor: pointer;
-
-    option {
-        border: 0;
-        background: red;
-    }
-} */
 #change-category-status-form, .admin-menu-container {
   position: relative;
 }

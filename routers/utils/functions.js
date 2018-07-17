@@ -18,7 +18,22 @@ module.exports = {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
             
-            let popular = await client.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, (post_upvote + post_downvote) AS votes, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY votes DESC, CASE WHEN votes = 0 THEN post_created END DESC LIMIT $1", [show])
+            let popular = await client.query(`
+            SELECT *
+            FROM (
+                SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, (post_upvote + post_downvote) AS votes, SUM(replies) AS total_replies, post_user, last_login, topic_title, post_type
+                FROM posts
+                LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                LEFT JOIN users ON users.username = posts.post_user
+                LEFT JOIN categories ON categories.cat_id = topics.topic_category
+                WHERE post_status != 'Removed' AND reply_to_post_id IS NULL ${moreWhereClause}
+                GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title
+            )
+            AS vote_table
+            ORDER BY votes DESC, CASE WHEN votes = 0 THEN post_created END DESC
+            LIMIT $1`,
+            [show])
             .then((result) => {
                 if (result !== undefined) {
                     for (let i in result.rows) {
@@ -34,7 +49,18 @@ module.exports = {
                 done();
             });
 
-            let newPosts = await client.query("SELECT post_id, post_title, subtopic_title, user_id, user_status, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, post_user, last_login, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + " GROUP BY subtopics.subtopic_title, posts.post_id, users.user_id, topics.topic_title ORDER BY post_created DESC LIMIT $1", [show])
+            let newPosts = await client.query(`
+            SELECT post_id, post_title, subtopic_title, user_id, user_status, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, post_user, last_login, topic_title, post_type
+            FROM posts
+            LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+            LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+            LEFT JOIN users ON users.username = posts.post_user
+            LEFT JOIN categories ON categories.cat_id = topics.topic_category
+            WHERE post_status != 'Removed' AND reply_to_post_id IS NULL ${moreWhereClause}
+            GROUP BY subtopics.subtopic_title, posts.post_id, users.user_id, topics.topic_title
+            ORDER BY post_created DESC
+            LIMIT $1`,
+            [show])
             .then((result) => {
                 if (result !== undefined) {
                     for (let i in result.rows) {
@@ -50,7 +76,21 @@ module.exports = {
                 done();
             });
 
-            let mostActive = await client.query("SELECT * FROM (SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, last_login, post_user, topic_title FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN users ON users.username = posts.post_user LEFT JOIN categories ON categories.cat_id = topics.topic_category WHERE post_status != 'Removed' AND reply_to_post_id IS NULL" + moreWhereClause + "  GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title) AS vote_table ORDER BY total_replies DESC, CASE WHEN total_replies = 0 THEN post_created END DESC LIMIT $1", [show])
+            let mostActive = await client.query(`
+            SELECT *
+            FROM (
+                SELECT subtopic_title, user_id, user_status, post_id, post_title, post_topic, post_created, post_upvote, post_downvote, SUM(replies) AS total_replies, last_login, post_user, topic_title, post_type
+                FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                LEFT JOIN users ON users.username = posts.post_user
+                LEFT JOIN categories ON categories.cat_id = topics.topic_category
+                WHERE post_status != 'Removed' AND reply_to_post_id IS NULL ${moreWhereClause}
+                GROUP BY subtopics.subtopic_title, users.user_id, posts.post_id, topics.topic_title
+            )
+            AS vote_table
+            ORDER BY total_replies DESC, CASE WHEN total_replies = 0 THEN post_created END DESC
+            LIMIT $1`,
+            [show])
             .then((result) => {
                 done();
                 if (result !== undefined) {

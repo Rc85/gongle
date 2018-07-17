@@ -5,51 +5,53 @@ const fn = require('./utils/functions');
 
 app.post('/post', function(req, resp) {
     if (req.session.user) {
-        db.connect(async function(err, client, done) {
-            if (err) { console.log(err); }
+        let checkPost = /^(<p>(\s*|<br>)<\/p>)*$/
+        
+        if (checkPost.test(req.body.post_body)) {
+            resp.send({status: 'invalid post'});
+        } else {
+            db.connect(async function(err, client, done) {
+                if (err) { console.log(err); }
 
-            let userStatus = await client.query('SELECT user_status FROM users WHERE user_id = $1', [req.session.user.user_id])
-            .then((result) => {
-                if (result !== undefined && result.rows.length === 1) {
-                    return result.rows;
-                } else {
-                    fn.error(req, resp, 401, message);
-                }
-            })
-            .catch((err) => {
-                console.log(err);
-                done();
-                fn.error(req, resp, 500);
-            });
-
-            if (userStatus[0].user_status === 'Suspended') {
-                done();
-                fn.error(req, resp, 401, 'You\'re temporary banned.');
-            } else if (userStatus[0].user_status === 'Banned') {
-                done();
-                fn.error(req, resp, 401, 'You\'re permanently banned.');
-            } else if (userStatus.length === 0) {
-                done();
-                fn.error(req, resp, 404, 'User not found.');
-            } else {
-                await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6);', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id])
+                let userStatus = await client.query('SELECT user_status FROM users WHERE user_id = $1', [req.session.user.user_id])
                 .then((result) => {
-                    done();
-                    if (result !== undefined && result.rowCount === 1) {
-                        let link = req.headers.referer;
-                
-                        resp.render('blocks/response', {user: req.session.user, status: 'Success', message: 'Post successfully created.', from: link})
-                    } else {
-                        fn.error(req, resp, 500);
+                    if (result !== undefined) {
+                        return result.rows;
                     }
                 })
                 .catch((err) => {
                     console.log(err);
                     done();
-                    fn.error(req, resp, 500);
+                    resp.send({status: 'error'});
                 });
-            }      
-        });
+
+                if (userStatus[0].user_status === 'Suspended') {
+                    done();
+                    resp.send({status: 'banned'});
+                } else if (userStatus[0].user_status === 'Banned') {
+                    done();
+                    resp.send({status: 'banned'});
+                } else if (userStatus.length === 0) {
+                    done();
+                    resp.send({status: 'user not found'});
+                } else {
+                    await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6, $7)', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id, req.body.tag])
+                    .then((result) => {
+                        done();
+                        if (result !== undefined && result.rowCount === 1) {
+                            resp.send({status: 'success'});
+                        } else {
+                            resp.send({status: 'failed'});
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                        resp.send({status: 'error'});
+                    });
+                }      
+            });
+        }
     } else {
         fn.error(req, resp, 401);
     }

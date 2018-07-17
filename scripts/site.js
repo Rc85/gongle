@@ -271,4 +271,9 @@ $(document).ready(function() {
             userMenuOpened = false;
         }
     }); */
+
+    $('.post-type-button input').on('click', function() {
+        $('.post-type-button').removeClass('active');
+        $(this).parent().addClass('active');
+    });
 });

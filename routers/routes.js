@@ -593,6 +593,8 @@ app.get('/edit-post', function(req, resp) {
             .then((result) => {
                 done();
                 if (result !== undefined && result.rows.length === 1) {
+                    result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
+
                     return result.rows[0];
                 }
             })

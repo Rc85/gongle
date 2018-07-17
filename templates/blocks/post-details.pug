@@ -42,7 +42,7 @@ block content
                                 button(type='submit', name='follow')
                                     i.far.fa-lg.fa-star
                                     |  Follow
-            section.post-body #{posts.post.post_body}
+            section.post-body.ql-editor !{posts.post.post_body}
             footer
                 +postAction(posts.post, posts.post)
         section.replies
@@ -82,7 +82,7 @@ block content
                                         i.fa.fa-angle-double-right
                                 i.fas.fa-lg.fa-angle-down
                             section.quote-body #{post.p2_post_body}
-                        section.post-body.mb-15 #{post.post_body}
+                        section.post-body.ql-editor.mb-15 !{post.post_body}
                     footer
                         +postAction(posts.post, post)
             if posts.replies.length > 0

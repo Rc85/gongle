@@ -16,16 +16,31 @@ block content
             else
                 .post-control
                     button#new-post-button.mb-15(type='button') NEW POST
-                form#post-form.mb-15(action='/post', method='POST')
+                form#post-form(action='/post', method='POST')
                     input(type='hidden', name='subtopic_id', value=subtopic_id)
-                    label(for='title') Title
-                    .d-flex.mb-15
+                    .d-flex.align-items-center.mb-15
+                        label(for='title').mr-15 Title
                         input.w-100(type='text', name='title', required)
-                    .mb-15
-                        textarea.w-100(name='post_body', rows='10', required, minlength='10')
+                    .d-flex.align-items-center.mb-15
+                        label(for='tag').mr-15 Tag
+                        label.post-type-button.mr-15
+                            input(type='radio', name='tag', value='Discussion' required)
+                            span Discussion
+                                i.ml-10.fas.fa-check
+                        label.post-type-button.mr-15
+                            input(type='radio', name='tag', value='Question')
+                            span Question
+                                i.ml-10.fas.fa-check
+                        label.post-type-button.mr-15
+                            input(type='radio', name='tag', value='Rant')
+                            span Rant
+                                i.ml-10.fas.fa-check
+                    .post-editor.mb-15
+                        //-textarea.w-100(name='post_body', rows='10', required, minlength='10')
                     .text-right
                         input.mr-5(type='submit', name='submit_button', value='Submit')
                         input(type='reset', value='Clear')
+                    hr.mt-15.mb-15
         if posts.length > 0
             section
                 .pagination-container.mb-15
@@ -34,6 +49,7 @@ block content
                         .w-10
                             +vote(post)
                         .w-80.show-posts
+                            span.user-badge.pending-badge.mr-5 #{post.post_type}
                             a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
                             if post.post_status === 'Closed'
                                 span.user-badge.error-badge.ml-5 #{post.post_status}

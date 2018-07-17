@@ -108,4 +108,31 @@ $(document).ready(function() {
     handleTabClick('popular');
     handleTabClick('most-active');
     handleTabClick('new-posts');
+
+    $('#post-form, .reply-post-form').on('submit', function(e) {
+        e.preventDefault();
+
+        let postBody = $(this).find('.ql-editor').html();
+        let data = $(this).serialize() + '&post_body=' + postBody;
+
+        $.post({
+            url: '/post',
+            data: data,
+            success: function(resp) {
+                if (resp.status === 'success') {
+                    location.reload();
+                } else if (resp.status === 'error') {
+                    alertify.error('An error occurred');
+                } else if (resp.status === 'failed') {
+                    alertify.error('Failed to post');
+                } else if (resp.status === 'user not found') {
+                    alertify.error('Are you logged in?');
+                } else if (resp.status === 'banned') {
+                    alertify.error('Your account is banned');
+                } else if (resp.status == 'invalid post') {
+                    alertify.error('Cannot submit blank post')
+                }
+            }
+        })
+    })
 });

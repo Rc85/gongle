@@ -18,7 +18,7 @@ $(document).ready(function() {
     });
 
     $('.reply-post-button').on('click', function() {
-        $(this).next().slideToggle();
+        $(this).parent().next().slideToggle();
         
         toggleButton(this, 'Reply');
     });

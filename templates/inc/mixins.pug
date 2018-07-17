@@ -82,21 +82,23 @@ mixin mod-user(username, id, last_login, level)
 mixin postAction(op, reply)
     if user
         if op.subtopic_status === 'Open'
-            .text-right
-                if post.post_status !== 'Closed'
-                    if reply.post_user !== user.username
+            if post.post_status !== 'Closed'
+                if reply.post_user !== user.username
+                    .text-right
                         button.ml-auto.reply-post-button(type='button') Reply
-                        form.reply-post-form.mt-15(action='/post', method='post')
-                            input(type='hidden', name='belongs_to_post_id', value=reply.post_id)
-                            input(type='hidden', name='reply_to_post_id', value=reply.post_id)
-                            input(type='hidden', name='subtopic_id', value=reply.post_topic)
-                            .mb-15
-                                input.w-100(type='text', name='title', value=reply.post_title)
-                            .mb-15
-                                textarea.w-100(name='post_body', rows='10')
-                            .text-right
-                                input.mr-5(type='submit', value='Submit')
-                    else
+                    form.reply-post-form.mt-15(action='/post', method='post')
+                        input(type='hidden', name='belongs_to_post_id', value=reply.post_id)
+                        input(type='hidden', name='reply_to_post_id', value=reply.post_id)
+                        input(type='hidden', name='subtopic_id', value=reply.post_topic)
+                        input(type='hidden', name='tag', value='Reply')
+                        .mb-15
+                            input.w-100(type='text', name='title', value=reply.post_title)
+                        .post-editor.mb-15
+                            //-textarea.w-100(name='post_body', rows='10')
+                        .text-right
+                            input.mr-5(type='submit', value='Submit')
+                else
+                    .text-right
                         button.ml-auto.edit-post-button(type='button', data-edit-post-id=reply.post_id, onClick='javascript:location.href="/edit-post?pid=' + reply.post_id + '"') Edit
             .d-flex.mt-15
                 form.user-report.mr-10(action='/user-report', method='post')

@@ -2345,6 +2345,7 @@ small {
 }
 
 .show-posts {
+  height: 20px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -2524,6 +2525,34 @@ button[name=vote]:disabled {
 
 .forum-post-details {
   position: relative;
+}
+
+.post-editor {
+  height: 300px !important;
+}
+
+.post-type-button {
+  cursor: pointer;
+  font-size: 12px;
+}
+.post-type-button input {
+  position: absolute;
+  z-index: 10;
+}
+.post-type-button span {
+  border: 1px solid #007de1;
+  padding: 5px;
+  border-radius: 3px;
+}
+.post-type-button input, .post-type-button i {
+  opacity: 0;
+}
+
+.post-type-button.active span {
+  background: #007de1;
+}
+.post-type-button.active i {
+  opacity: 1;
 }
 
 .mod-user-menu-container {

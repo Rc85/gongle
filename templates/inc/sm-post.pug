@@ -3,6 +3,7 @@
         +vote(post)
     .w-85
         .show-posts
+            span.user-badge.pending-badge.mr-5 #{post.post_type}
             a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
         .forum-post-details
             small #{post.post_created} |  

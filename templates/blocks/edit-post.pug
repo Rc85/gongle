@@ -1,19 +1,53 @@
 extends ../layout
 
+block header
+    script.
+        var postBody = !{JSON.stringify(post.post_body)}
+    script(src='/scripts/edit-post.js')
+
 block content
     section.section-container.w-100
         h2 EDIT POST
         form#edit-post-form(action='/edit-post', method='post')
             input(type='hidden', name='post_id', value=post.post_id)
-            .mb-15
-                label(for='title') Title:
+            .d-flex.align-items-center.mb-15
+                label(for='title').mr-15 Title:
                 input.w-100(type='text', name='title', required, value=post.post_title)
-            .mb-15
-                small Posted on #{post.post_created.toDateString()} | 
-                    a(href='/subtopics/' + post.post_topic) #{post.subtopic_title}
-            .mb-15
-                textarea.w-100(name='post_body', rows='10') #{post.post_body}
+            if post.post_type !== 'Reply'
+                - var discussionLabelCheck = ''
+                - var discussionRadioCheck = 'false'
+                - var questionLabelCheck = ''
+                - var questionRadioCheck = 'false'
+                - var rantLabelCheck = ''
+                - var rantRadioCheck = 'false'
+                if post.post_type = 'Discussion'
+                    - discussionLabelCheck = 'active'
+                    - discussionRadioCheck = 'true'
+                else if post.post_type = 'Question'
+                    - questionLabelCheck = 'active'
+                    - questionRadioCheck = 'true'
+                else if post.post_type = 'Rant'
+                    - rantLabelCheck = 'active'
+                    - rantRadioCheck = 'true'
+                .d-flex.align-items-center.mb-15
+                    label(for='tag').mr-15 Tag
+                    label.post-type-button.mr-15(class=discussionLabelCheck)
+                        input(type='radio', name='tag', value='Discussion', required, checked=discussionRadioCheck)
+                        span Discussion
+                            i.ml-10.fas.fa-check
+                    label.post-type-button.mr-15(class=questionLabelCheck)
+                        input(type='radio', name='tag', value='Question', checked=questionRadioCheck)
+                        span Question
+                            i.ml-10.fas.fa-check
+                    label.post-type-button.mr-15(class=rantLabelCheck)
+                        input(type='radio', name='tag', value='Rant', checked=rantRadioCheck)
+                        span Rant
+                            i.ml-10.fas.fa-check
+            .post-editor.mb-15
+                //-textarea.w-100(name='post_body', rows='10') #{post.post_body}
             .text-right
                 input.mr-5(type='submit', value='Submit')
                 input.mr-5(type='reset', value='Clear')
                 input(type='button', value='Cancel', onClick='javascript:history.go(-1)')
+            script.
+                let editor = document.getElementsByClassName('.ql-editor')
