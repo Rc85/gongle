@@ -12,30 +12,46 @@ block content
                 if location === 'compose'
                     form.compose-message(action='/send-message', method='post')
                         .mb-15
-                            label To:
+                            label
+                                i.far.fa-address-book.mr-5
+                                | To:
                             input#recipient-input.w-100(type='text', name='username')
                         .mb-15
-                            label Subject:
+                            label
+                                i.far.fa-comment.mr-5
+                                | Subject:
                             input.w-100(type='text', name='subject')
                         .mb-15
-                            label Message:
+                            label
+                                i.far.fa-comment-alt.mr-5
+                                | Message:
                             textarea.w-100(name='message', rows='10')
                         .text-right
-                            input.mr-5(type='submit', value='Send')
-                            input(type='reset', value='Clear')
+                            button(type='submit').mr-5
+                                i.far.fa-share-square.mr-5
+                                | Send
+                            button(type='reset')
+                                i.fas.fa-times.mr-5
+                                | Clear
                 else
                     section.section-container
                         .mb-15.d-flex
                             .w-90
                                 .mb-10.d-flex
-                                    label.w-10 From: 
+                                    label.w-10
+                                        i.fas.fa-user.mr-5
+                                        | From: 
                                     span
                                         a(href='/profile?u=' + message.sender) #{message.sender}
                                 .mb-10.d-flex
-                                    label.w-10 Subject: 
+                                    label.w-10
+                                        i.far.fa-comment.mr-5
+                                        | Subject: 
                                     span #{message.subject}
                                 .mb-10.d-flex
-                                    label.w-10 Date: 
+                                    label.w-10
+                                        i.far.fa-calendar-alt.mr-5
+                                        | Date: 
                                     span #{message.message_date}
                             .w-10.d-flex.justify-content-end.align-items-center
                                 +deleteMessage(message, 'message')
@@ -43,7 +59,9 @@ block content
                         .mb-15 !{message.message}
                         if location !== 'outbox'
                             .mb-15.text-right
-                                button#reply-button(type='button') Reply
+                                button#reply-button(type='button')
+                                    i.fas.fa-reply.mr-5
+                                    | Reply
                         form.reply-form(action='/send-message', method='POST')
                             input(type='hidden', name='username', value=message.sender)
                             if message.original_message !== null

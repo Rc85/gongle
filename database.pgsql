@@ -80,9 +80,66 @@ $_$;
 
 ALTER FUNCTION public.post_reply(title character varying, puser character varying, topic integer, body text, reply_to integer, belongs_to integer) OWNER TO postgres;
 
+--
+-- Name: post_reply(character varying, character varying, integer, text, integer, integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION post_reply(title character varying, puser character varying, topic integer, body text, reply_to integer, belongs_to integer, type character varying) RETURNS void
+    LANGUAGE plpgsql
+    AS $_$
+DECLARE belongs_to_id INTEGER;
+DECLARE reply_to_id INTEGER;
+BEGIN
+INSERT INTO posts (post_title, post_user, post_topic, post_body, reply_to_post_id, belongs_to_post_id, post_type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING belongs_to_post_id, reply_to_post_id INTO belongs_to_id, reply_to_id;
+IF belongs_to_id IS NOT NULL THEN IF belongs_to_id = reply_to_id THEN UPDATE posts SET replies = replies + 1 WHERE post_id = belongs_to_id;
+ELSEIF belongs_to_id != reply_to_id THEN UPDATE posts SET replies = replies + 1 WHERE post_id IN (belongs_to_id, reply_to_id);
+END IF;
+END IF;
+END;
+$_$;
+
+
+ALTER FUNCTION public.post_reply(title character varying, puser character varying, topic integer, body text, reply_to integer, belongs_to integer, type character varying) OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
+
+--
+-- Name: blocked_users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE blocked_users (
+    blocked_id integer NOT NULL,
+    blocking_user character varying,
+    blocked_user character varying,
+    blocked_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE blocked_users OWNER TO postgres;
+
+--
+-- Name: blocked_users_blocked_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE blocked_users_blocked_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE blocked_users_blocked_id_seq OWNER TO postgres;
+
+--
+-- Name: blocked_users_blocked_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE blocked_users_blocked_id_seq OWNED BY blocked_users.blocked_id;
+
 
 --
 -- Name: categories; Type: TABLE; Schema: public; Owner: postgres
@@ -94,6 +151,7 @@ CREATE TABLE categories (
     cat_created_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     cat_created_by character varying,
     cat_status character varying DEFAULT 'Open'::character varying,
+    cat_icon character varying,
     CONSTRAINT check_cat_status CHECK (((cat_status)::text = ANY ((ARRAY['Open'::character varying, 'Closed'::character varying, 'Removed'::character varying])::text[])))
 );
 
@@ -158,6 +216,42 @@ ALTER SEQUENCE config_config_id_seq OWNED BY config.config_id;
 
 
 --
+-- Name: deleted_messages; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE deleted_messages (
+    deleted_msg_id integer NOT NULL,
+    msg_deleted_by character varying,
+    deleted_msg integer,
+    msg_deleted_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE deleted_messages OWNER TO postgres;
+
+--
+-- Name: deleted_messages_deleted_msg_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE deleted_messages_deleted_msg_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE deleted_messages_deleted_msg_id_seq OWNER TO postgres;
+
+--
+-- Name: deleted_messages_deleted_msg_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE deleted_messages_deleted_msg_id_seq OWNED BY deleted_messages.deleted_msg_id;
+
+
+--
 -- Name: followed_posts; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -194,6 +288,43 @@ ALTER SEQUENCE followed_posts_followed_id_seq OWNED BY followed_posts.followed_i
 
 
 --
+-- Name: friends; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE friends (
+    fid integer NOT NULL,
+    friendly_user character varying,
+    befriend_with character varying,
+    became_friend_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    friend_confirmed boolean DEFAULT false
+);
+
+
+ALTER TABLE friends OWNER TO postgres;
+
+--
+-- Name: friends_fid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE friends_fid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE friends_fid_seq OWNER TO postgres;
+
+--
+-- Name: friends_fid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE friends_fid_seq OWNED BY friends.fid;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -204,7 +335,9 @@ CREATE TABLE messages (
     message_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     message text,
     message_status character varying DEFAULT 'Unread'::character varying NOT NULL,
-    message_saved_status boolean DEFAULT false
+    subject character varying NOT NULL,
+    original_message integer,
+    CONSTRAINT check_message_status CHECK (((message_status)::text = ANY ((ARRAY['Unread'::character varying, 'Read'::character varying, 'Deleted'::character varying])::text[])))
 );
 
 
@@ -250,6 +383,7 @@ CREATE TABLE posts (
     reply_to_post_id integer,
     belongs_to_post_id integer,
     replies integer DEFAULT 0 NOT NULL,
+    post_type character varying NOT NULL,
     CONSTRAINT check_post_status CHECK (((post_status)::text = ANY ((ARRAY['Open'::character varying, 'Closed'::character varying, 'Removed'::character varying])::text[])))
 );
 
@@ -291,6 +425,42 @@ CREATE VIEW replies AS
 
 
 ALTER TABLE replies OWNER TO postgres;
+
+--
+-- Name: saved_messages; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE saved_messages (
+    saved_msg_id integer NOT NULL,
+    saved_msg integer,
+    msg_saved_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    msg_saved_by character varying
+);
+
+
+ALTER TABLE saved_messages OWNER TO postgres;
+
+--
+-- Name: saved_messages_saved_msg_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE saved_messages_saved_msg_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE saved_messages_saved_msg_id_seq OWNER TO postgres;
+
+--
+-- Name: saved_messages_saved_msg_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE saved_messages_saved_msg_id_seq OWNED BY saved_messages.saved_msg_id;
+
 
 --
 -- Name: subtopics; Type: TABLE; Schema: public; Owner: postgres
@@ -341,7 +511,8 @@ CREATE TABLE topics (
     topic_created_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     topic_category integer NOT NULL,
     topic_created_by character varying,
-    topic_status character varying DEFAULT 'Open'::character varying
+    topic_status character varying DEFAULT 'Open'::character varying,
+    topic_icon character varying
 );
 
 
@@ -510,6 +681,13 @@ CREATE TABLE vote_tracking (
 ALTER TABLE vote_tracking OWNER TO postgres;
 
 --
+-- Name: blocked_users blocked_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY blocked_users ALTER COLUMN blocked_id SET DEFAULT nextval('blocked_users_blocked_id_seq'::regclass);
+
+
+--
 -- Name: categories cat_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -524,10 +702,24 @@ ALTER TABLE ONLY config ALTER COLUMN config_id SET DEFAULT nextval('config_confi
 
 
 --
+-- Name: deleted_messages deleted_msg_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY deleted_messages ALTER COLUMN deleted_msg_id SET DEFAULT nextval('deleted_messages_deleted_msg_id_seq'::regclass);
+
+
+--
 -- Name: followed_posts followed_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY followed_posts ALTER COLUMN followed_id SET DEFAULT nextval('followed_posts_followed_id_seq'::regclass);
+
+
+--
+-- Name: friends fid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY friends ALTER COLUMN fid SET DEFAULT nextval('friends_fid_seq'::regclass);
 
 
 --
@@ -542,6 +734,13 @@ ALTER TABLE ONLY messages ALTER COLUMN message_id SET DEFAULT nextval('messages_
 --
 
 ALTER TABLE ONLY posts ALTER COLUMN post_id SET DEFAULT nextval('posts_post_id_seq'::regclass);
+
+
+--
+-- Name: saved_messages saved_msg_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY saved_messages ALTER COLUMN saved_msg_id SET DEFAULT nextval('saved_messages_saved_msg_id_seq'::regclass);
 
 
 --
@@ -580,20 +779,29 @@ ALTER TABLE ONLY violations ALTER COLUMN v_id SET DEFAULT nextval('violations_v_
 
 
 --
+-- Data for Name: blocked_users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY blocked_users (blocked_id, blocking_user, blocked_user, blocked_on) FROM stdin;
+\.
+
+
+--
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY categories (cat_id, category, cat_created_on, cat_created_by, cat_status) FROM stdin;
-1	Health	2018-06-10 18:43:58.64452	rogerchin85	Open
-5	Fitness	2018-06-10 20:32:01.812118	rogerchin85	Open
-3	Entertainment	2018-06-10 20:30:25.023665	rogerchin85	Open
-4	Sports	2018-06-10 20:31:47.647811	rogerchin85	Open
-6	Computers	2018-06-15 01:37:00.504568	rogerchin85	Open
-7	Electronics	2018-06-23 06:28:24.104601	rogerchin85	Open
-2	Automotives	2018-06-10 19:36:31.564292	rogerchin85	Open
-8	Fashion	2018-06-23 06:57:16.864407	rogerchin85	Open
-9	Intellectual	2018-06-23 07:35:39.622054	rogerchin85	Open
-10	Miscellaneous	2018-06-23 07:35:45.300872	rogerchin85	Open
+COPY categories (cat_id, category, cat_created_on, cat_created_by, cat_status, cat_icon) FROM stdin;
+11	Pets	2018-07-14 16:31:28.865749	admin	Open	<i class="fas fa-paw mr-5"></i>
+9	Intellectual	2018-06-23 07:35:39.622054	rogerchin85	Closed	<i class="far fa-lightbulb mr-5"></i>
+10	Miscellaneous	2018-06-23 07:35:45.300872	rogerchin85	Closed	<i class="fas fa-th mr-5"></i>
+2	Automotives	2018-06-10 19:36:31.564292	rogerchin85	Open	<i class="fas fa-car mr-5"></i>
+6	Computers	2018-06-15 01:37:00.504568	rogerchin85	Open	<i class="fas fa-laptop mr-5"></i>
+7	Electronics	2018-06-23 06:28:24.104601	rogerchin85	Open	<i class="fas fa-headphones mr-5"></i>
+3	Entertainment	2018-06-10 20:30:25.023665	rogerchin85	Open	<i class="fas fa-film mr-5"></i>
+1	Health	2018-06-10 18:43:58.64452	rogerchin85	Open	<i class="far fa-plus-square mr-5"></i>
+5	Fitness	2018-06-10 20:32:01.812118	rogerchin85	Open	<i class="fas fa-heartbeat mr-5"></i>
+4	Sports	2018-06-10 20:31:47.647811	rogerchin85	Open	<i class="fas fa-football-ball mr-5"></i>
+8	Fashion	2018-06-23 06:57:16.864407	rogerchin85	Open	<i class="fas fa-tshirt mr-5"></i>
 \.
 
 
@@ -608,11 +816,39 @@ COPY config (config_id, config_name, status) FROM stdin;
 
 
 --
+-- Data for Name: deleted_messages; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY deleted_messages (deleted_msg_id, msg_deleted_by, deleted_msg, msg_deleted_on) FROM stdin;
+15	testuser	6	2018-07-11 17:33:26.359177
+16	testuser	7	2018-07-11 17:33:26.359177
+\.
+
+
+--
 -- Data for Name: followed_posts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY followed_posts (followed_id, followed_post, followed_on, user_following) FROM stdin;
 1	1	2018-06-24 17:00:27.805	testuser2
+16	23	2018-07-04 10:51:19.493576	rogerchin85
+17	21	2018-07-04 10:52:50.494362	niceuser
+18	18	2018-07-04 10:58:35.245039	niceuser
+30	23	2018-07-08 14:33:29.174635	niceuser
+31	56	2018-07-13 15:56:57.944361	niceuser
+\.
+
+
+--
+-- Data for Name: friends; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY friends (fid, friendly_user, befriend_with, became_friend_on, friend_confirmed) FROM stdin;
+2	niceuser	rogerchin85	2018-07-11 12:02:24.87673	t
+1	rogerchin85	niceuser	2018-07-11 12:02:24.878807	t
+4	testuser	niceuser	2018-07-11 17:57:34.284237	t
+3	niceuser	testuser	2018-07-11 17:57:34.292469	t
+6	niceuser	testuser2	2018-07-13 21:50:36.688594	f
 \.
 
 
@@ -620,7 +856,20 @@ COPY followed_posts (followed_id, followed_post, followed_on, user_following) FR
 -- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY messages (message_id, sender, recipient, message_date, message, message_status, message_saved_status) FROM stdin;
+COPY messages (message_id, sender, recipient, message_date, message, message_status, subject, original_message) FROM stdin;
+1	niceuser	testuser	2018-07-11 10:34:44.091372	If you read this, it should not be bold	Read	Hello	\N
+2	niceuser	testuser	2018-07-11 10:40:19.627861	If you click this, it should not be bold	Read	Testing this again	\N
+3	niceuser	testuser	2018-07-11 10:41:51.726893	lalalalla	Read	Again!	\N
+5	niceuser	rogerchin85	2018-07-11 12:02:24.879812	<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>niceuser has accepted your friend request and has been added to your friends list.</p>	Unread	Friend Request Accepted	\N
+6	niceuser	testuser	2018-07-11 16:33:14.200721	delete this inside message content	Read	delete this	\N
+7	niceuser	testuser	2018-07-11 16:34:11.867544	or you will die	Unread	don't delete this by itself	\N
+9	niceuser	testuser	2018-07-11 16:34:53.399519	to see if all message will select	Read	click the check button	\N
+8	niceuser	testuser	2018-07-11 16:34:29.70662	to delete all	Read	grouping this	\N
+4	rogerchin85	niceuser	2018-07-11 12:02:15.51381	<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a id='accept-friend' href='/accept-friend-request?id=1'>Accept Friend Request</a></p>	Read	You have a friend request from rogerchin85	\N
+11	testuser	niceuser	2018-07-11 17:57:34.29334	<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>testuser has accepted your friend request and has been added to your friends list.</p>	Unread	Friend Request Accepted	\N
+10	niceuser	testuser	2018-07-11 17:57:27.284062	<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a id='accept-friend' href='/accept-friend-request?id=3'>Accept Friend Request</a></p>	Read	You have a friend request from niceuser	\N
+13	niceuser	testuser2	2018-07-13 21:50:36.695791	<p><i><b>*** This message is sent by the system on behalf of the requesting user. ***</i></b></p><p>If you would like to accept this friend request, click on the link below.</p><p><a id='accept-friend' href='/accept-friend-request?id=6'>Accept Friend Request</a></p>	Unread	You have a friend request from niceuser	\N
+12	testuser	niceuser	2018-07-11 17:57:38.788557	<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>testuser has accepted your friend request and has been added to your friends list.</p>	Read	Friend Request Accepted	\N
 \.
 
 
@@ -628,44 +877,77 @@ COPY messages (message_id, sender, recipient, message_date, message, message_sta
 -- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY posts (post_id, post_title, post_user, post_created, post_modified, post_topic, post_status, post_body, post_upvote, post_downvote, reply_to_post_id, belongs_to_post_id, replies) FROM stdin;
-1	My chest is fucking hairy	rogerchin85	2018-05-25 05:38:13.736038	2018-06-09 19:37:49.769	22	Open	Are there permanent hair removal?\r\n\r\nWill pay someone to help me remove my chest hair permanently. Offering $1,000.\r\n\r\nEdit - $2,000 now\r\n\r\nEdit - $,3000 now!\r\n\r\nEdit - $4,000 now!\r\n\r\nEdit - $5,000!\r\n\r\nEdit - $6,000!	3	-1	\N	\N	3
-2	RE: My chest is fucking hairy	testuser	2018-05-25 05:38:49.805255	2018-05-25 10:28:41.964	22	Removed	Haha, your dad fucked an ape and gave birth to you.\r\n\r\nEdit - I apologize.	1	-3	1	1	0
-18	I'm losing a lot of hair, fast	rogerchin85	2018-05-29 11:07:30.243947	\N	2	Open	Help me please!	4	0	\N	\N	0
-19	I need a way to enlarge my penis	rogerchin85	2018-05-29 11:08:06.979974	\N	41	Open	Help please	1	-2	\N	\N	0
-17	My penis is too big	rogerchin85	2018-05-27 17:17:20.459765	\N	41	Open	I need a way to shrink it. Anyone know a way?	1	-2	\N	\N	0
-3	RE: My chest is fucking hairy	testuser	2018-05-25 05:39:22.293655	\N	22	Open	I apologize, that was kinda rude.	3	-1	1	1	1
-40	post #7	rogerchin85	2018-06-20 18:22:48.885639	\N	22	Open	this is a test	0	0	\N	\N	0
-41	post #8	rogerchin85	2018-06-20 18:22:57.620158	\N	22	Open	this is a test	0	0	\N	\N	0
-42	post #9	rogerchin85	2018-06-20 18:23:10.319848	\N	22	Open	this is a test	0	0	\N	\N	0
-33	My chest is fucking hairy	niceuser	2018-06-18 19:02:56.664325	\N	22	Open	Posting again to test the back link	0	0	1	1	0
-43	My chest is fucking hairy	niceuser	2018-06-23 04:48:00.963415	\N	22	Open	test	0	0	1	1	0
-4	RE: My chest is fucking hairy	rogerchin85	2018-05-25 05:39:51.511191	\N	22	Open	Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia, aperiam nihil. Laborum soluta molestias maiores non! Pariatur iste maxime maiores reprehenderit modi quia quo officia! Vero consequuntur praesentium necessitatibus recusandae?\n                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum quia ipsa labore voluptate, magni quidem unde consequatur? Commodi deserunt provident sint eos ipsum perspiciatis, cupiditate placeat nam? Earum, sed fuga?	3	0	3	1	0
-44	My chest is fucking hairy	niceuser	2018-06-23 04:48:11.691564	\N	22	Open	testing pagination!	0	0	1	1	0
-45	My chest is fucking hairy	niceuser	2018-06-23 04:48:24.150522	\N	22	Open	need more replies!	0	0	1	1	0
-21	My chest hurts	rogerchin85	2018-06-10 19:09:37.647915	\N	22	Open	help me please, it's hurting a lot.	2	0	\N	\N	0
-30	2018 Honda Accord Spec	testuser	2018-06-17 20:45:39.839512	\N	49	Open	What is the spec of the new Honda Accord?	1	0	\N	\N	0
-23	2018 Honda Accord	rogerchin85	2018-06-14 22:23:21.352413	\N	49	Open	The new Honda Accord is sick, especially the turbo charged one. Can't believe it beats the 2017 v6 in a drag race.	1	0	\N	\N	0
-31	My chest is fucking hairy	niceuser	2018-06-18 18:58:30.084233	\N	22	Open	It's okay, everyone is different. Some people actually find body hair as being masculine.	0	0	1	1	0
-32	My chest is fucking hairy	niceuser	2018-06-18 19:00:17.791328	\N	22	Open	But to answer your question, there is no permanent solution to removing body hair.	0	0	1	1	0
-34	post #1	rogerchin85	2018-06-20 18:19:10.145006	\N	22	Open	this is a test	0	0	\N	\N	0
-35	post #2	rogerchin85	2018-06-20 18:19:18.900874	\N	22	Open	this is a test	0	0	\N	\N	0
-36	post #3	rogerchin85	2018-06-20 18:19:26.628848	\N	22	Open	this is a test	0	0	\N	\N	0
-37	post #4	rogerchin85	2018-06-20 18:21:04.84707	\N	22	Open	this is a test	0	0	\N	\N	0
-38	post #5	rogerchin85	2018-06-20 18:21:11.738902	\N	22	Open	this is a test	0	0	\N	\N	0
-39	post #6	rogerchin85	2018-06-20 18:22:35.202979	\N	22	Open	this is a test	0	0	\N	\N	0
-46	My chest is fucking hairy	niceuser	2018-06-23 04:48:37.07909	\N	22	Open	2 more to go	0	0	1	1	0
-47	My chest is fucking hairy	niceuser	2018-06-23 04:48:42.842566	\N	22	Open	1 more to go	0	0	1	1	0
-48	My chest is fucking hairy	niceuser	2018-06-23 04:48:50.218432	\N	22	Open	this should be on second page	1	0	1	1	0
-49	I'm losing a lot of hair, fast	niceuser	2018-06-23 04:58:21.65659	\N	2	Open	It's not curable	0	0	18	18	0
-51	hyundai price	testuser	2018-06-24 00:28:40.228254	\N	97	Open	replying to see if this increments the replies column	0	0	50	50	0
-50	hyundai price	rogerchin85	2018-06-24 00:15:49.887056	\N	97	Open	why are they so cheap???	0	0	\N	\N	2
-53	hyundai price	rogerchin85	2018-06-24 00:30:24.055695	\N	97	Open	post #52 should have 1 reply	0	0	52	52	0
-52	hyundai price	testuser	2018-06-24 00:29:48.370944	\N	97	Open	replying again and replies should be at 2 now	0	0	50	50	1
-54	android is the best	rogerchin85	2018-06-24 01:46:40.360021	\N	157	Open	because it's cheap hahahaha	0	0	\N	\N	0
-55	Can i post here?	testuser2	2018-06-27 18:55:27.540144	\N	90	Open	does this work or not?	0	0	\N	\N	0
-56	can i post?	testuser2	2018-06-27 19:00:51.748872	\N	144	Open	I am temporary banned	0	0	\N	\N	0
-57	trying again	testuser2	2018-06-27 19:02:10.512727	\N	144	Open	Added condition to posting	0	0	\N	\N	0
+COPY posts (post_id, post_title, post_user, post_created, post_modified, post_topic, post_status, post_body, post_upvote, post_downvote, reply_to_post_id, belongs_to_post_id, replies, post_type) FROM stdin;
+2	RE: My chest is fucking hairy	testuser	2018-05-25 05:38:49.805255	2018-05-25 10:28:41.964	22	Removed	Haha, your dad fucked an ape and gave birth to you.\r\n\r\nEdit - I apologize.	1	-3	1	1	0	Discussion
+18	I'm losing a lot of hair, fast	rogerchin85	2018-05-29 11:07:30.243947	\N	2	Open	Help me please!	4	0	\N	\N	0	Discussion
+1	My chest is fucking hairy	rogerchin85	2018-05-25 05:38:13.736038	2018-06-09 19:37:49.769	22	Open	Are there permanent hair removal?\r\n\r\nWill pay someone to help me remove my chest hair permanently. Offering $1,000.\r\n\r\nEdit - $2,000 now\r\n\r\nEdit - $,3000 now!\r\n\r\nEdit - $4,000 now!\r\n\r\nEdit - $5,000!\r\n\r\nEdit - $6,000!	4	-1	\N	\N	3	Discussion
+19	I need a way to enlarge my penis	rogerchin85	2018-05-29 11:08:06.979974	\N	41	Open	Help please	1	-2	\N	\N	0	Discussion
+17	My penis is too big	rogerchin85	2018-05-27 17:17:20.459765	\N	41	Open	I need a way to shrink it. Anyone know a way?	1	-2	\N	\N	0	Discussion
+3	RE: My chest is fucking hairy	testuser	2018-05-25 05:39:22.293655	\N	22	Open	I apologize, that was kinda rude.	3	-1	1	1	1	Discussion
+40	post #7	rogerchin85	2018-06-20 18:22:48.885639	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+33	My chest is fucking hairy	niceuser	2018-06-18 19:02:56.664325	\N	22	Open	Posting again to test the back link	0	0	1	1	0	Discussion
+43	My chest is fucking hairy	niceuser	2018-06-23 04:48:00.963415	\N	22	Open	test	0	0	1	1	0	Discussion
+4	RE: My chest is fucking hairy	rogerchin85	2018-05-25 05:39:51.511191	\N	22	Open	Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia, aperiam nihil. Laborum soluta molestias maiores non! Pariatur iste maxime maiores reprehenderit modi quia quo officia! Vero consequuntur praesentium necessitatibus recusandae?\n                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum quia ipsa labore voluptate, magni quidem unde consequatur? Commodi deserunt provident sint eos ipsum perspiciatis, cupiditate placeat nam? Earum, sed fuga?	3	0	3	1	0	Discussion
+44	My chest is fucking hairy	niceuser	2018-06-23 04:48:11.691564	\N	22	Open	testing pagination!	0	0	1	1	0	Discussion
+45	My chest is fucking hairy	niceuser	2018-06-23 04:48:24.150522	\N	22	Open	need more replies!	0	0	1	1	0	Discussion
+73	new post here hhahaha	niceuser	2018-07-14 16:12:24.927548	\N	22	Open	new post here hhahaha	0	-1	\N	\N	0	Discussion
+76	Testing Quill	niceuser	2018-07-16 15:08:32.48255	\N	22	Open	<p><strong>test</strong></p>	0	0	\N	\N	0	Discussion
+57	trying again	testuser2	2018-06-27 19:02:10.512727	\N	144	Open	Added condition to posting	1	0	\N	\N	0	Discussion
+31	My chest is fucking hairy	niceuser	2018-06-18 18:58:30.084233	\N	22	Open	It's okay, everyone is different. Some people actually find body hair as being masculine.	0	0	1	1	0	Discussion
+32	My chest is fucking hairy	niceuser	2018-06-18 19:00:17.791328	\N	22	Open	But to answer your question, there is no permanent solution to removing body hair.	0	0	1	1	0	Discussion
+34	post #1	rogerchin85	2018-06-20 18:19:10.145006	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+35	post #2	rogerchin85	2018-06-20 18:19:18.900874	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+36	post #3	rogerchin85	2018-06-20 18:19:26.628848	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+37	post #4	rogerchin85	2018-06-20 18:21:04.84707	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+38	post #5	rogerchin85	2018-06-20 18:21:11.738902	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+39	post #6	rogerchin85	2018-06-20 18:22:35.202979	\N	22	Open	this is a test	0	0	\N	\N	0	Discussion
+46	My chest is fucking hairy	niceuser	2018-06-23 04:48:37.07909	\N	22	Open	2 more to go	0	0	1	1	0	Discussion
+47	My chest is fucking hairy	niceuser	2018-06-23 04:48:42.842566	\N	22	Open	1 more to go	0	0	1	1	0	Discussion
+48	My chest is fucking hairy	niceuser	2018-06-23 04:48:50.218432	\N	22	Open	this should be on second page	1	0	1	1	0	Discussion
+51	hyundai price	testuser	2018-06-24 00:28:40.228254	\N	97	Open	replying to see if this increments the replies column	0	0	50	50	0	Discussion
+58	I love web dev	niceuser	2018-07-13 14:52:16.624893	\N	144	Open	It's awesome	0	0	\N	\N	0	Discussion
+41	post #8	rogerchin85	2018-06-20 18:22:57.620158	\N	22	Open	this is a test	0	-1	\N	\N	0	Discussion
+53	hyundai price	rogerchin85	2018-06-24 00:30:24.055695	\N	97	Open	post #52 should have 1 reply	0	0	52	52	0	Discussion
+52	hyundai price	testuser	2018-06-24 00:29:48.370944	\N	97	Open	replying again and replies should be at 2 now	0	0	50	50	1	Discussion
+49	I'm losing a lot of hair, fast	niceuser	2018-06-23 04:58:21.65659	\N	2	Open	It's not curable	1	0	18	18	0	Discussion
+59	new post	niceuser	2018-07-14 16:11:12.160674	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+54	android is the best	rogerchin85	2018-06-24 01:46:40.360021	\N	157	Open	because it's cheap hahahaha	0	-1	\N	\N	0	Discussion
+60	new post here hhahaha	niceuser	2018-07-14 16:11:16.167791	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+61	new post here hhahaha	niceuser	2018-07-14 16:11:20.367421	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+23	2018 Honda Accord	rogerchin85	2018-06-14 22:23:21.352413	\N	49	Open	The new Honda Accord is sick, especially the turbo charged one. Can't believe it beats the 2017 v6 in a drag race.	2	0	\N	\N	0	Discussion
+62	new post here hhahaha	niceuser	2018-07-14 16:11:24.145156	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+77	Testing Quill	niceuser	2018-07-16 15:09:22.667203	\N	22	Open	<p><strong>test</strong></p>	0	0	\N	\N	0	Discussion
+63	new post here hhahaha	niceuser	2018-07-14 16:11:27.855907	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+64	new post here hhahaha	niceuser	2018-07-14 16:11:32.511039	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+65	new post here hhahaha	niceuser	2018-07-14 16:11:53.35021	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+66	new post here hhahaha	niceuser	2018-07-14 16:11:57.087785	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+67	new post here hhahaha	niceuser	2018-07-14 16:12:00.777033	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+68	new post here hhahaha	niceuser	2018-07-14 16:12:04.358882	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+21	My chest hurts	rogerchin85	2018-06-10 19:09:37.647915	\N	22	Open	help me please, it's hurting a lot.	3	0	\N	\N	0	Discussion
+69	new post here hhahaha	niceuser	2018-07-14 16:12:08.22327	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+42	post #9	rogerchin85	2018-06-20 18:23:10.319848	\N	22	Open	this is a test	1	0	\N	\N	0	Discussion
+70	new post here hhahaha	niceuser	2018-07-14 16:12:12.198032	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+55	Can i post here?	testuser2	2018-06-27 18:55:27.540144	\N	90	Open	does this work or not?	1	0	\N	\N	0	Discussion
+71	new post here hhahaha	niceuser	2018-07-14 16:12:16.328103	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+56	can i post?	testuser2	2018-06-27 19:00:51.748872	\N	144	Open	I am temporary banned	1	0	\N	\N	0	Discussion
+72	new post here hhahaha	niceuser	2018-07-14 16:12:20.295489	\N	22	Open	new post here hhahaha	0	0	\N	\N	0	Discussion
+79	Testing Quill	niceuser	2018-07-16 15:18:44.837769	\N	22	Open	<p><strong>This is a test</strong></p><p><em>This is a test</em></p><p><u>This is a test</u></p><p><s>This is a test</s></p><blockquote>This is a test</blockquote><pre class="ql-syntax" spellcheck="false">This is a test\n</pre><ol><li>This is a test</li></ol><ul><li>This is a test</li></ul><p>This is a test<sub>This is a test</sub></p><p>This is a test<sup>This is a test</sup></p><p><span class="ql-size-small">This is a test</span></p><p><span class="ql-size-large">This is a test</span></p><p><span class="ql-size-huge">This is a test</span></p><h1>This is a test</h1><h2>This is a test</h2><p><span style="color: rgb(230, 0, 0);">This is a test</span></p><p class="ql-align-right">This is a test</p><p class="ql-align-center">This is a test</p>	0	0	\N	\N	0	Discussion
+50	hyundai price	rogerchin85	2018-06-24 00:15:49.887056	\N	97	Closed	why are they so cheap???	1	0	\N	\N	2	Discussion
+30	2018 Honda Accord Spec	testuser	2018-06-17 20:45:39.839512	\N	49	Closed	What is the spec of the new Honda Accord?	1	-1	\N	\N	0	Discussion
+81	Testing Tags	niceuser	2018-07-16 16:16:36.289999	\N	97	Open	<p>This is a question post.</p>	0	0	\N	\N	0	Question
+82	Testing Body	niceuser	2018-07-16 16:20:11.157237	\N	97	Open	<p><br></p>	0	0	\N	\N	0	Rant
+83	testing body again	niceuser	2018-07-16 16:28:28.156119	\N	97	Open	<p>         </p>	0	0	\N	\N	0	Question
+84	testing break inserts	niceuser	2018-07-16 16:31:44.609342	\N	97	Open	<p>              </p><p>                 </p>	0	0	\N	\N	0	Discussion
+85	error	niceuser	2018-07-16 16:37:35.230745	\N	97	Closed	<p>                              </p><p>         </p><p><br></p><p> </p><p><br></p><p> </p><p> </p><p> </p><p> </p>	0	0	\N	\N	0	Question
+\.
+
+
+--
+-- Data for Name: saved_messages; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY saved_messages (saved_msg_id, saved_msg, msg_saved_on, msg_saved_by) FROM stdin;
+1	8	2018-07-11 17:24:53.193155	testuser
 \.
 
 
@@ -751,7 +1033,6 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 66	Chrysler	2018-06-11 02:06:34.014306	42	Open	rogerchin85
 11	Elbow	2018-05-16 16:57:39.68139	2	Open	rogerchin85
 15	Finger	2018-05-16 16:57:39.68139	2	Open	rogerchin85
-10	Bicep/Tricep	2018-05-16 16:57:39.68139	2	Open	rogerchin85
 19	Ankle	2018-05-16 16:57:39.68139	2	Open	rogerchin85
 14	Hand	2018-05-16 16:57:39.68139	2	Open	rogerchin85
 16	Thigh	2018-05-16 16:57:39.68139	2	Open	rogerchin85
@@ -763,8 +1044,6 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 105	Trance	2018-06-23 05:29:58.480914	55	Open	rogerchin85
 106	R & B	2018-06-23 05:35:22.28216	55	Open	rogerchin85
 107	Rap	2018-06-23 05:36:01.135009	55	Open	rogerchin85
-108	K-Pop	2018-06-23 05:36:44.096278	55	Open	rogerchin85
-109	C-Pop	2018-06-23 05:37:52.3326	55	Open	rogerchin85
 110	Pop	2018-06-23 05:38:07.766621	55	Open	rogerchin85
 111	Hip Hop	2018-06-23 05:38:19.823624	55	Open	rogerchin85
 112	Jazz	2018-06-23 05:38:41.986618	55	Open	rogerchin85
@@ -776,6 +1055,9 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 118	Sitcoms	2018-06-23 05:42:02.047349	44	Open	rogerchin85
 120	MOBA	2018-06-23 05:47:13.97547	74	Open	rogerchin85
 90	Computer General	2018-06-17 14:41:40.58131	72	Open	rogerchin85
+109	C-pop	2018-06-23 05:37:52.3326	55	Open	rogerchin85
+108	K-pop	2018-06-23 05:36:44.096278	55	Open	rogerchin85
+10	Upper Arm	2018-05-16 16:57:39.68139	2	Open	rogerchin85
 119	MMO	2018-06-23 05:46:49.884299	74	Open	rogerchin85
 121	FPS	2018-06-23 05:47:16.685567	74	Open	rogerchin85
 123	Action	2018-06-23 05:50:42.395431	74	Open	rogerchin85
@@ -820,9 +1102,7 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 174	Dash Cam	2018-06-23 06:37:30.837682	80	Open	rogerchin85
 175	Surveillance	2018-06-23 06:37:37.953922	80	Open	rogerchin85
 177	Video Recorder	2018-06-23 06:38:47.909478	80	Open	rogerchin85
-179	Headphone	2018-06-23 06:39:51.420116	83	Open	rogerchin85
 180	Musical Instruments	2018-06-23 06:40:18.118465	83	Open	rogerchin85
-181	Hi-Fi	2018-06-23 06:40:19.278552	83	Open	rogerchin85
 178	Home Theater Speaker	2018-06-23 06:39:48.154246	83	Open	rogerchin85
 182	Samsung	2018-06-23 06:41:38.916622	82	Open	rogerchin85
 183	Sony	2018-06-23 06:41:40.060777	82	Open	rogerchin85
@@ -879,6 +1159,8 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 137	Speaker	2018-06-23 06:22:34.753072	90	Open	rogerchin85
 139	Webcam	2018-06-23 06:22:45.017127	90	Open	rogerchin85
 141	Tower Case	2018-06-23 06:23:20.89672	90	Open	rogerchin85
+181	Hi-fi	2018-06-23 06:40:19.278552	83	Open	rogerchin85
+179	Headphone	2018-06-23 06:39:51.420116	83	Closed	rogerchin85
 228	Chicago Cubs	2018-06-23 07:01:40.546062	60	Open	rogerchin85
 229	Cincinnati Reds	2018-06-23 07:01:48.443087	60	Open	rogerchin85
 230	Colorado Rockies	2018-06-23 07:01:53.961804	60	Open	rogerchin85
@@ -1044,6 +1326,9 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 390	Washington Wizards	2018-06-23 07:23:39.676682	88	Open	rogerchin85
 391	Other	2018-06-23 07:23:40.759183	88	Open	rogerchin85
 392	Celebrities	2018-06-23 07:32:01.582423	44	Open	rogerchin85
+396	Intellectual General	2018-07-13 15:30:21.744429	93	Open	rogerchin85
+398	Christian	2018-07-13 15:30:38.751268	91	Open	rogerchin85
+399	Catholic	2018-07-13 15:30:45.572883	91	Open	rogerchin85
 \.
 
 
@@ -1051,46 +1336,49 @@ COPY subtopics (subtopic_id, subtopic_title, subtopic_created_on, belongs_to_top
 -- Data for Name: topics; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY topics (topic_id, topic_title, topic_created_on, topic_category, topic_created_by, topic_status) FROM stdin;
-1	Head	2018-05-15 22:00:23.012621	1	\N	Open
-2	Limbs	2018-05-15 22:00:23.012621	1	\N	Open
-3	Body	2018-05-15 22:00:23.012621	1	\N	Open
-4	Organs	2018-05-15 22:00:23.012621	1	\N	Open
-40	Japanese	2018-06-10 19:55:05.878358	2	rogerchin85	Open
-41	German	2018-06-10 19:55:07.766218	2	rogerchin85	Open
-42	American	2018-06-10 19:55:11.080824	2	rogerchin85	Open
-43	Korean	2018-06-10 19:55:13.358202	2	rogerchin85	Open
-75	Hardware	2018-06-23 06:15:56.739462	6	rogerchin85	Open
-55	Music	2018-06-11 02:48:56.398731	3	rogerchin85	Open
-76	Software	2018-06-23 06:16:04.75261	6	rogerchin85	Open
-57	Hockey	2018-06-11 02:51:29.966126	4	rogerchin85	Open
-58	Football	2018-06-11 02:55:34.099154	4	rogerchin85	Open
-59	Soccer	2018-06-11 02:56:09.522884	4	rogerchin85	Open
-60	Baseball	2018-06-11 03:09:13.122194	4	rogerchin85	Open
-5	Genitals	2018-05-16 17:05:08.660227	1	\N	Open
-77	Programming	2018-06-23 06:20:42.628204	6	rogerchin85	Open
-72	Computer General	2018-06-17 14:41:28.53617	6	rogerchin85	Open
-78	Electronics General	2018-06-23 06:28:37.33657	7	rogerchin85	Open
-79	Mobile Device	2018-06-23 06:29:20.524612	7	rogerchin85	Open
-80	Camera	2018-06-23 06:29:23.068553	7	rogerchin85	Open
-66	Health General	2018-06-15 00:34:10.142797	1	rogerchin85	Open
-68	Automotive General	2018-06-15 01:21:43.047175	2	rogerchin85	Open
-69	Fitness General	2018-06-15 01:22:48.650739	5	rogerchin85	Open
-70	Entertainment General	2018-06-15 01:23:05.704303	3	rogerchin85	Open
-71	Sports General	2018-06-15 01:23:22.330048	4	rogerchin85	Open
-82	Television	2018-06-23 06:30:40.509871	7	rogerchin85	Open
-44	Movies & TV Shows	2018-06-10 20:33:39.382978	3	rogerchin85	Open
-73	Mixed Martial Arts	2018-06-23 05:46:24.943014	4	rogerchin85	Open
-74	Video Games	2018-06-23 05:46:37.465444	3	rogerchin85	Open
-84	Wearable	2018-06-23 06:31:40.645898	7	rogerchin85	Open
-83	Audio	2018-06-23 06:30:42.215895	7	rogerchin85	Open
-81	Appliance	2018-06-23 06:29:29.219859	7	rogerchin85	Open
-67	Training	2018-06-15 01:07:28.609232	5	rogerchin85	Open
-85	Diet & Supplement	2018-06-23 06:49:01.993639	5	rogerchin85	Open
-86	Clothing	2018-06-23 06:57:27.127006	8	rogerchin85	Open
-87	Accessories	2018-06-23 06:57:28.83861	8	rogerchin85	Open
-88	Basketball	2018-06-23 06:59:40.587826	4	rogerchin85	Open
-90	Peripheral	2018-06-29 18:10:24.255764	6	rogerchin85	Open
+COPY topics (topic_id, topic_title, topic_created_on, topic_category, topic_created_by, topic_status, topic_icon) FROM stdin;
+1	Head	2018-05-15 22:00:23.012621	1	\N	Open	\N
+2	Limbs	2018-05-15 22:00:23.012621	1	\N	Open	\N
+3	Body	2018-05-15 22:00:23.012621	1	\N	Open	\N
+4	Organs	2018-05-15 22:00:23.012621	1	\N	Open	\N
+40	Japanese	2018-06-10 19:55:05.878358	2	rogerchin85	Open	\N
+41	German	2018-06-10 19:55:07.766218	2	rogerchin85	Open	\N
+42	American	2018-06-10 19:55:11.080824	2	rogerchin85	Open	\N
+43	Korean	2018-06-10 19:55:13.358202	2	rogerchin85	Open	\N
+75	Hardware	2018-06-23 06:15:56.739462	6	rogerchin85	Open	\N
+55	Music	2018-06-11 02:48:56.398731	3	rogerchin85	Open	\N
+76	Software	2018-06-23 06:16:04.75261	6	rogerchin85	Open	\N
+57	Hockey	2018-06-11 02:51:29.966126	4	rogerchin85	Open	\N
+58	Football	2018-06-11 02:55:34.099154	4	rogerchin85	Open	\N
+59	Soccer	2018-06-11 02:56:09.522884	4	rogerchin85	Open	\N
+60	Baseball	2018-06-11 03:09:13.122194	4	rogerchin85	Open	\N
+5	Genitals	2018-05-16 17:05:08.660227	1	\N	Open	\N
+77	Programming	2018-06-23 06:20:42.628204	6	rogerchin85	Open	\N
+79	Mobile Device	2018-06-23 06:29:20.524612	7	rogerchin85	Open	\N
+80	Camera	2018-06-23 06:29:23.068553	7	rogerchin85	Open	\N
+82	Television	2018-06-23 06:30:40.509871	7	rogerchin85	Open	\N
+44	Movies & TV Shows	2018-06-10 20:33:39.382978	3	rogerchin85	Open	\N
+73	Mixed Martial Arts	2018-06-23 05:46:24.943014	4	rogerchin85	Open	\N
+74	Video Games	2018-06-23 05:46:37.465444	3	rogerchin85	Open	\N
+84	Wearable	2018-06-23 06:31:40.645898	7	rogerchin85	Open	\N
+83	Audio	2018-06-23 06:30:42.215895	7	rogerchin85	Open	\N
+81	Appliance	2018-06-23 06:29:29.219859	7	rogerchin85	Open	\N
+67	Training	2018-06-15 01:07:28.609232	5	rogerchin85	Open	\N
+85	Diet & Supplement	2018-06-23 06:49:01.993639	5	rogerchin85	Open	\N
+86	Clothing	2018-06-23 06:57:27.127006	8	rogerchin85	Open	\N
+87	Accessories	2018-06-23 06:57:28.83861	8	rogerchin85	Open	\N
+88	Basketball	2018-06-23 06:59:40.587826	4	rogerchin85	Open	\N
+90	Peripheral	2018-06-29 18:10:24.255764	6	rogerchin85	Open	\N
+91	Religion	2018-07-13 15:18:51.425537	9	rogerchin85	Open	\N
+92	Science	2018-07-13 15:18:53.292572	9	rogerchin85	Open	\N
+78	Electronics General	2018-06-23 06:28:37.33657	7	rogerchin85	Open	\N
+69	Fitness General	2018-06-15 01:22:48.650739	5	rogerchin85	Open	\N
+70	Entertainment General	2018-06-15 01:23:05.704303	3	rogerchin85	Open	\N
+71	Sports General	2018-06-15 01:23:22.330048	4	rogerchin85	Open	\N
+72	Computer General	2018-06-17 14:41:28.53617	6	rogerchin85	Open	\N
+93	Intellectual General	2018-07-13 15:30:12.909711	9	rogerchin85	Open	\N
+66	Health General	2018-06-15 00:34:10.142797	1	rogerchin85	Open	\N
+68	Automotive General	2018-06-15 01:21:43.047175	2	rogerchin85	Open	\N
 \.
 
 
@@ -1099,8 +1387,7 @@ COPY topics (topic_id, topic_title, topic_created_on, topic_category, topic_crea
 --
 
 COPY user_reports (r_id, reported_id, reported_by, reported_type, reported_on, report_action) FROM stdin;
-1	2	niceuser	forum	2018-06-18 18:52:58.605954	Pending
-4	3	niceuser	forum	2018-06-18 18:56:24.338525	Pending
+1	3	niceuser	forum post	2018-07-11 15:45:53.678354	Pending
 \.
 
 
@@ -1109,11 +1396,11 @@ COPY user_reports (r_id, reported_id, reported_by, reported_type, reported_on, r
 --
 
 COPY users (user_id, username, password, email, last_login, privilege, user_status, user_level, receive_email, show_online, avatar_url, user_created, user_confirmed, hide_email, online_status) FROM stdin;
-31	niceuser	$2b$10$q.QBUvuo3IgjQwJ9CkPRxOoeAeQfqjdUStOAdX7O51tr1UlXEmnqi	niceuser@nice.com	2018-06-23 04:59:26.669	0	Active	Newcomer	f	t	/files/31/profile_pic/niceuser_profile_pic.png	2018-06-18 17:34:10.107708	\N	f	Offline
-25	admin	$2b$10$22afMe/2BDqK2FiLLTaI7.IAL3q9lZgOaT3wJzu8saduWTKBQrPdy	admin@admin.com	2018-06-18 15:25:35.846	2	Active	Administrator	t	t	/files/25/profile_pic/admin_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	f	Offline
-30	testuser2	$2b$10$N5HlESSkpFcjkcuYkJDQ5et5sx55WoErZItvt/YhdVZpgKz.acXay	testuser2@test.com	2018-06-27 18:55:13.559	0	Suspended	Newcomer	f	t	/files/30/profile_pic/testuser2_profile_pic.png	2018-06-02 09:13:20.090973	\N	t	Offline
-4	testuser	$2b$10$HPI6rbATSc9Qys/4vqIEou8MZTBMLmHDjQSKTUg1rKbB0WovA9edm	test@test.com	2018-06-27 19:56:28.286	1	Active	Moderator	t	t	/files/4/profile_pic/testuser_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	f	Offline
-1	rogerchin85	$2b$10$bCHC5LvPX0bP41ZJ4pX7uOnlz5u.m.K1IkkPcB9dMIsJ0npA.ZKVO	rogerchin85@gmail.com	2018-06-29 18:09:51.354	3	Active	Owner	t	f	/files/1/profile_pic/rogerchin85_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	f	Offline
+31	niceuser	$2b$10$q.QBUvuo3IgjQwJ9CkPRxOoeAeQfqjdUStOAdX7O51tr1UlXEmnqi	niceuser@nice.com	2018-07-17 13:25:34.794	0	Active	Newcomer	t	f	/files/31/profile_pic/niceuser_profile_pic.png	2018-06-18 17:34:10.107708	\N	t	Offline
+1	rogerchin85	$2b$10$bCHC5LvPX0bP41ZJ4pX7uOnlz5u.m.K1IkkPcB9dMIsJ0npA.ZKVO	rogerchin85@gmail.com	2018-07-17 13:33:29.856	3	Active	Owner	t	f	/files/1/profile_pic/rogerchin85_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	f	Offline
+4	testuser	$2b$10$HPI6rbATSc9Qys/4vqIEou8MZTBMLmHDjQSKTUg1rKbB0WovA9edm	test@test.com	2018-07-14 15:28:21.855	1	Active	Moderator	t	t	/files/4/profile_pic/testuser_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	t	Offline
+30	testuser2	$2b$10$N5HlESSkpFcjkcuYkJDQ5et5sx55WoErZItvt/YhdVZpgKz.acXay	testuser2@test.com	2018-07-13 21:43:30.534	0	Active	Newcomer	f	t	/files/30/profile_pic/testuser2_profile_pic.png	2018-06-02 09:13:20.090973	\N	t	Offline
+25	admin	$2b$10$22afMe/2BDqK2FiLLTaI7.IAL3q9lZgOaT3wJzu8saduWTKBQrPdy	admin@admin.com	2018-07-14 16:24:44.794	2	Active	Administrator	t	t	/files/25/profile_pic/admin_profile_pic.png	2018-06-02 00:21:41.275662	2018-06-02 00:22:22.271999	f	Offline
 \.
 
 
@@ -1163,14 +1450,34 @@ COPY vote_tracking (voting_user_id, voting_post_id, vote) FROM stdin;
 31	3	up
 31	48	up
 31	18	up
+31	49	up
+31	23	up
+31	57	up
+31	54	down
+31	50	up
+31	21	up
+31	42	up
+31	55	up
+31	56	up
+31	30	down
+31	1	up
+31	41	down
+31	73	down
 \.
+
+
+--
+-- Name: blocked_users_blocked_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('blocked_users_blocked_id_seq', 1, false);
 
 
 --
 -- Name: category_cat_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('category_cat_id_seq', 10, true);
+SELECT pg_catalog.setval('category_cat_id_seq', 11, true);
 
 
 --
@@ -1181,45 +1488,66 @@ SELECT pg_catalog.setval('config_config_id_seq', 2, true);
 
 
 --
+-- Name: deleted_messages_deleted_msg_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('deleted_messages_deleted_msg_id_seq', 16, true);
+
+
+--
 -- Name: followed_posts_followed_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('followed_posts_followed_id_seq', 1, true);
+SELECT pg_catalog.setval('followed_posts_followed_id_seq', 31, true);
+
+
+--
+-- Name: friends_fid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('friends_fid_seq', 7, true);
 
 
 --
 -- Name: messages_message_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('messages_message_id_seq', 1, false);
+SELECT pg_catalog.setval('messages_message_id_seq', 13, true);
 
 
 --
 -- Name: posts_post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('posts_post_id_seq', 57, true);
+SELECT pg_catalog.setval('posts_post_id_seq', 85, true);
+
+
+--
+-- Name: saved_messages_saved_msg_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('saved_messages_saved_msg_id_seq', 3, true);
 
 
 --
 -- Name: subtopics_subtopic_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('subtopics_subtopic_id_seq', 392, true);
+SELECT pg_catalog.setval('subtopics_subtopic_id_seq', 399, true);
 
 
 --
 -- Name: topics_topic_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('topics_topic_id_seq', 90, true);
+SELECT pg_catalog.setval('topics_topic_id_seq', 94, true);
 
 
 --
 -- Name: user_reports_r_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('user_reports_r_id_seq', 4, true);
+SELECT pg_catalog.setval('user_reports_r_id_seq', 2, true);
 
 
 --
@@ -1234,6 +1562,14 @@ SELECT pg_catalog.setval('users_user_id_seq', 31, true);
 --
 
 SELECT pg_catalog.setval('violations_v_id_seq', 5, true);
+
+
+--
+-- Name: blocked_users blocked_users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY blocked_users
+    ADD CONSTRAINT blocked_users_pkey PRIMARY KEY (blocked_id);
 
 
 --
@@ -1253,11 +1589,27 @@ ALTER TABLE ONLY config
 
 
 --
+-- Name: deleted_messages deleted_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY deleted_messages
+    ADD CONSTRAINT deleted_messages_pkey PRIMARY KEY (deleted_msg_id);
+
+
+--
 -- Name: followed_posts followed_posts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY followed_posts
     ADD CONSTRAINT followed_posts_pkey PRIMARY KEY (followed_id);
+
+
+--
+-- Name: friends friends_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY friends
+    ADD CONSTRAINT friends_pkey PRIMARY KEY (fid);
 
 
 --
@@ -1277,6 +1629,14 @@ ALTER TABLE ONLY posts
 
 
 --
+-- Name: saved_messages saved_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY saved_messages
+    ADD CONSTRAINT saved_messages_pkey PRIMARY KEY (saved_msg_id);
+
+
+--
 -- Name: subtopics subtopics_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1290,6 +1650,38 @@ ALTER TABLE ONLY subtopics
 
 ALTER TABLE ONLY topics
     ADD CONSTRAINT topics_pkey PRIMARY KEY (topic_id);
+
+
+--
+-- Name: blocked_users unique_blocked_pair; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY blocked_users
+    ADD CONSTRAINT unique_blocked_pair UNIQUE (blocking_user, blocked_user);
+
+
+--
+-- Name: friends unique_pair; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY friends
+    ADD CONSTRAINT unique_pair UNIQUE (friendly_user, befriend_with);
+
+
+--
+-- Name: deleted_messages unique_pair_deleted_messages; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY deleted_messages
+    ADD CONSTRAINT unique_pair_deleted_messages UNIQUE (deleted_msg, msg_deleted_by);
+
+
+--
+-- Name: saved_messages unique_pair_save_messages; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY saved_messages
+    ADD CONSTRAINT unique_pair_save_messages UNIQUE (saved_msg, msg_saved_by);
 
 
 --
@@ -1357,11 +1749,43 @@ ALTER TABLE ONLY violations
 
 
 --
+-- Name: blocked_users blocked_users_blocked_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY blocked_users
+    ADD CONSTRAINT blocked_users_blocked_user_fkey FOREIGN KEY (blocked_user) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: blocked_users blocked_users_blocking_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY blocked_users
+    ADD CONSTRAINT blocked_users_blocking_user_fkey FOREIGN KEY (blocking_user) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: categories category_cat_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY categories
     ADD CONSTRAINT category_cat_created_by_fkey FOREIGN KEY (cat_created_by) REFERENCES users(username);
+
+
+--
+-- Name: deleted_messages deleted_messages_deleted_msg_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY deleted_messages
+    ADD CONSTRAINT deleted_messages_deleted_msg_fkey FOREIGN KEY (deleted_msg) REFERENCES messages(message_id);
+
+
+--
+-- Name: deleted_messages deleted_messages_msg_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY deleted_messages
+    ADD CONSTRAINT deleted_messages_msg_deleted_by_fkey FOREIGN KEY (msg_deleted_by) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1386,6 +1810,30 @@ ALTER TABLE ONLY followed_posts
 
 ALTER TABLE ONLY followed_posts
     ADD CONSTRAINT followed_posts_user_following_fkey FOREIGN KEY (user_following) REFERENCES users(username);
+
+
+--
+-- Name: friends friends_befriend_with_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY friends
+    ADD CONSTRAINT friends_befriend_with_fkey FOREIGN KEY (befriend_with) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: friends friends_friendly_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY friends
+    ADD CONSTRAINT friends_friendly_user_fkey FOREIGN KEY (friendly_user) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: messages messages_original_message_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY messages
+    ADD CONSTRAINT messages_original_message_fkey FOREIGN KEY (original_message) REFERENCES messages(message_id);
 
 
 --
@@ -1434,6 +1882,22 @@ ALTER TABLE ONLY posts
 
 ALTER TABLE ONLY posts
     ADD CONSTRAINT posts_reply_to_post_id_fkey FOREIGN KEY (reply_to_post_id) REFERENCES posts(post_id) ON DELETE CASCADE;
+
+
+--
+-- Name: saved_messages saved_messages_msg_saved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY saved_messages
+    ADD CONSTRAINT saved_messages_msg_saved_by_fkey FOREIGN KEY (msg_saved_by) REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: saved_messages saved_messages_saved_msg_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY saved_messages
+    ADD CONSTRAINT saved_messages_saved_msg_fkey FOREIGN KEY (saved_msg) REFERENCES messages(message_id);
 
 
 --

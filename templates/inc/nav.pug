@@ -11,8 +11,14 @@ else if title === 'Search'
 nav
     #nav-bar
         .nav-link-div(style=homeStyle)
-            a(href='/') HOME
+            a(href='/')
+                i.fas.fa-home.mr-5
+                | HOME
         .nav-link-div(style=forumsStyle)
-            a(href='/forums') FORUMS
+            a(href='/forums')
+                i.far.fa-comment-dots.mr-5
+                | FORUMS
         .nav-link-div(style=searchStyle)
-            a(href='/search') SEARCH
+            a(href='/search')
+                i.fas.fa-search.mr-5
+                | SEARCH

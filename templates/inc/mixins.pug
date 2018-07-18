@@ -85,7 +85,9 @@ mixin postAction(op, reply)
             if post.post_status !== 'Closed'
                 if reply.post_user !== user.username
                     .text-right
-                        button.ml-auto.reply-post-button(type='button') Reply
+                        button.ml-auto.reply-post-button(type='button')
+                            i.far.fa-comment-alt.mr-5
+                            | Reply
                     form.reply-post-form.mt-15(action='/post', method='post')
                         input(type='hidden', name='belongs_to_post_id', value=reply.post_id)
                         input(type='hidden', name='reply_to_post_id', value=reply.post_id)
@@ -99,26 +101,34 @@ mixin postAction(op, reply)
                             input.mr-5(type='submit', value='Submit')
                 else
                     .text-right
-                        button.ml-auto.edit-post-button(type='button', data-edit-post-id=reply.post_id, onClick='javascript:location.href="/edit-post?pid=' + reply.post_id + '"') Edit
+                        button.ml-auto.edit-post-button(type='button', data-edit-post-id=reply.post_id, onClick='javascript:location.href="/edit-post?pid=' + reply.post_id + '"')
+                            i.far.fa-edit.mr-5
+                            | Edit
             .d-flex.mt-15
                 form.user-report.mr-10(action='/user-report', method='post')
                     input(type='hidden', name='type', value='forum post')
                     input(type='hidden', name='id', value=reply.post_id)
                     a(href='#')
-                        small Report
+                        small
+                            i.fas.fa-exclamation-triangle.mr-5
+                            | Report
                 if user.privilege > 0
                     if post.post_status !== 'Open' && op === reply
                         form.open-post.mr-10(action='/change-post-status', method='POST')
                             input(type='hidden', name='post_id', value=op.post_id)
                             input(type='hidden', name='status', value='Open')
                             a(href='#')
-                                small Open Post
+                                small
+                                    i.fas.fa-comment.mr-5
+                                    | Open Post
                     if post.post_status !== 'Closed' && op === reply
                         form.close-post.mr-10(action='/change-post-status', method='POST')
                             input(type='hidden', name='post_id', value=op.post_id)
                             input(type='hidden', name='status', value='Closed')
                             a(href='#')
-                                small Close Post
+                                small
+                                    i.fas.fa-comment-slash.mr-5
+                                    | Close Post
                     if post.post_status !== 'Removed'
                         if op !== reply
                             - var postId = reply.post_id
@@ -128,7 +138,9 @@ mixin postAction(op, reply)
                             input(type='hidden', name='post_id', value=postId)
                             input(type='hidden', name='status', value='Removed')
                             a(href='#')
-                                small Remove Post
+                                small
+                                    i.fas.fa-trash-alt.mr-5
+                                    | Remove Post
 
 mixin adminSearchForm(action, bool)
     if bool

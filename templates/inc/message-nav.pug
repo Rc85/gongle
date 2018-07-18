@@ -11,7 +11,15 @@ else if location === 'starred'
 else if location === 'compose'
     - composeActive = 'active'
 .message-nav
-    a(href='/message/compose', class=composeActive) Compose
-    a(href='/messages/inbox?key=' + user.session_key, class=inboxActive) Inbox
-    a(href='/messages/outbox?key=' + user.session_key, class=outboxActive) Outbox
-    a(href='/messages/starred?key=' + user.session_key, class=starredActive) Starred
+    a(href='/message/compose', class=composeActive)
+        i.fas.fa-pen.mr-5
+        | Compose
+    a(href='/messages/inbox?key=' + user.session_key, class=inboxActive)
+        i.fas.fa-inbox.mr-5
+        | Inbox
+    a(href='/messages/outbox?key=' + user.session_key, class=outboxActive)
+        i.fas.fa-envelope-open.mr-5
+        | Outbox
+    a(href='/messages/starred?key=' + user.session_key, class=starredActive)
+        i.fas.fa-star.mr-5
+        | Starred

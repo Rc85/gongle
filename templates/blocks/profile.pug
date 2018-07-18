@@ -7,7 +7,9 @@ block header
 
 block content
     section.section-container
-        h2 Profile
+        h2
+            i.far.fa-user-circle.mr-5
+            | Profile
         section.profile-body
             .w-20
                 .profile-pic-div
@@ -21,13 +23,17 @@ block content
                             form#upload-profile-pic-form(action='/upload-profile-pic', method='POST', enctype='multipart/form-data')
                                 input#upload-profile-pic-input(type='file', name='profile_pic')
                                 button#upload-profile-pic-button.btn-round(type='button')
-                                    i.fas.fa-2x.fa-plus.m-5(aria-hidden=true)
-                h4 USERNAME:                        
+                                    i.fas.fa-lg.fa-plus.m-5(aria-hidden=true)
+                h4
+                    i.fas.fa-user.mr-5
+                    | USERNAME:                        
                 .profile-field #{viewing.username}
                 if viewing.hide_email
                     h4 EMAIL:
                     .profile-field #{viewing.email}
-                h4 STATUS:
+                h4
+                    i.fas.fa-plug.mr-5
+                    | STATUS:
                 .profile-field.capitalize
                     if viewing.user_status === 'Pending'
                         span.user-badge.warning-badge #{viewing.user_status}
@@ -37,43 +43,67 @@ block content
                         span.user-badge.error-badge #{viewing.user_status}
                     else if viewing.user_status === 'Deleted'
                         span.user-badge.critical-badge #{viewing.user_status}
-                h4 LAST LOGIN:
+                h4
+                    i.fas.fa-user-clock.mr-5
+                    | LAST LOGIN:
                 .profile-field #{viewing.last_login}
             section.tab-container
                 nav.tab-bar
                     a.tab-link-button.active(href='#', data-id='user-stats')
-                        h4 STATS
+                        h4
+                            i.fas.fa-chart-bar.mr-5
+                            | STATS
                     if user
                         if user.user_id === viewing.user_id
                             a#user-posts-button.tab-link-button(href='#', data-id='user-posts')
-                                h4 POSTS
+                                h4
+                                    i.far.fa-file-alt.mr-5
+                                    | POSTS
                             a#user-replies-button.tab-link-button(href='#', data-id='user-replies')
-                                h4 REPLIES
+                                h4
+                                    i.far.fa-comment-alt.mr-5
+                                    | REPLIES
                             a#user-followed-posts-button.tab-link-button(href='#', data-id='user-followed-posts')
-                                h4 FOLLOWED POSTS
+                                h4 
+                                    i.far.fa-star.mr-5
+                                    | FOLLOWED POSTS
                             a#user-friends-button.tab-link-button(href='#', data-id='user-friends')
-                                h4 FRIENDS
+                                h4
+                                    i.fas.fa-user-friends.mr-5
+                                    | FRIENDS
                 #user-stats.tab-content
                     section.col.mb-15
                         .section-container.w-25.mr-5.text-center
-                            h3 Total Honors
+                            h3
+                                i.fas.fa-trophy.mr-5
+                                | Total Honors
                             span.user-stats 0
                         .section-container.w-25.mr-5.text-center
-                            h3 Total Posts
+                            h3
+                                i.far.fa-file-alt.mr-5
+                                | Total Posts
                             span.user-stats #{viewing.posts_count}
                         .section-container.w-25.mr-5.text-center
-                            h3 Total Upvotes
+                            h3
+                                i.far.fa-thumbs-up.mr-5
+                                | Total Upvotes
                             span.user-stats #{Math.abs(viewing.upvotes)}
                         .section-container.w-25.text-center
-                            h3 Total Downvotes
+                            h3
+                                i.far.fa-thumbs-down.mr-5
+                                | Total Downvotes
                             span.user-stats #{Math.abs(viewing.downvotes)}
                     section#post-frequency.section-container
-                        h3 Post Frequency
+                        h3
+                            i.fas.fa-chart-line.mr-5
+                            | Post Frequency
                         canvas#post-frequency-chart.w-100(height='300')
                     if user
                         if user.user_id === viewing.user_id
                             section#violations.section-container
-                                h3 VIOLATION HISTORY
+                                h3
+                                    i.fas.fa-exclamation-triangle.mr-5
+                                    | VIOLATION HISTORY
                                 header.header.col
                                     .w-10 ID
                                     .w-50 Reason

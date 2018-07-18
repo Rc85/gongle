@@ -14,7 +14,9 @@ block content
                 .w-80
                     h2 #{posts.post.post_title}
                         if posts.post.post_status === 'Closed'
-                            span.user-badge.error-badge.ml-5 #{posts.post.post_status}
+                            span.user-badge.error-badge.ml-5
+                                i.fas.fa-comment-slash.mr-5
+                                | #{posts.post.post_status}
                     small Posted by 
                         +mod-user(posts.post.post_user, posts.post.user_id, posts.post.last_login, posts.post.user_level)
                         | #{posts.post.post_created} in 
@@ -81,7 +83,12 @@ block content
                                     button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&rid=' + post.p2_post_id + '"')
                                         i.fa.fa-angle-double-right
                                 i.fas.fa-lg.fa-angle-down
-                            section.quote-body #{post.p2_post_body}
+                            section.quote-body
+                                .text-left
+                                    i.fas.fa-quote-left
+                                .mx-auto.w-90 #{post.p2_post_body}
+                                .text-right
+                                    i.fas.fa-quote-right.ml-auto
                         section.post-body.ql-editor.mb-15 !{post.post_body}
                     footer
                         +postAction(posts.post, post)

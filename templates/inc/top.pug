@@ -39,12 +39,16 @@ else if checkTitle.test(title)
                 .d-flex
                     .form-group.mr-10
                         .mr-5
-                            label(for='email') Email:
+                            label(for='email')
+                                i.fas.fa-at.mr-5
+                                | Email:
                         div
                             input(type='email', name='email', maxlength='100', required)
                     .form-group
                         .mr-5
-                            label(for='password') Password:
+                            label(for='password')
+                                i.fas.fa-key.mr-5
+                                | Password:
                         div
                             input(type='password', name='password', minlength='6', maxlength='45', required)
                 .d-flex.justify-content-end.align-items-center
@@ -54,4 +58,6 @@ else if checkTitle.test(title)
                             |  | 
                             a(href='/forgot-password') Forgot Password
                     .text-right
-                        input(type='submit', value='Login')
+                        button(type='submit')
+                            i.fas.fa-sign-in-alt.mr-5
+                            | Login

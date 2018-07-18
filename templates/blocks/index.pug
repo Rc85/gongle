@@ -6,17 +6,19 @@ block header
 
 block content
     section.section-container
-        h2 Forums
+        h2
+            i.far.fa-comment-dots.mr-5
+            | Forums
         section#forum-list
             each category, cat in categories
                 section.category
                     .category-bar
                         a(href='/forums/' + cat.toLowerCase().replace(' ', '_').replace('/', ''))
-                            h3.category-title #{cat} 
+                            h3.category-title !{category.icon} #{cat}
                         i.fa.fa-lg.fa-angle-up
                     section.category-list-parent
                         section.category-list
-                            each topic, key in category
+                            each topic, key in category.topics
                                 section.topic-list
                                     - var keyCheck = /General$/
                                     if keyCheck.test(key)

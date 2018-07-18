@@ -3,7 +3,15 @@
         +vote(post)
     .w-80
         .show-posts
-            span.user-badge.pending-badge.mr-5 #{post.post_type}
+            if post.post_type === 'Discussion'
+                - var postIcon = 'far fa-comments mr-5'
+            else if post.post_type === 'Question'
+                - var postIcon = 'far fa-question-circle mr-5'
+            else if post.post_type === 'Rant'
+                - var postIcon = 'fas fa-exclamation-circle mr-5'
+            span.user-badge.pending-badge.mr-5 
+                i(class=postIcon)
+                | #{post.post_type}
             a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
         .forum-post-details
             small Posted by 

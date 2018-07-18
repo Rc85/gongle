@@ -35,7 +35,15 @@ $(document).ready(function() {
                             $('<a>').attr('href', url).append(
                                 $('<h3>').html(obj.post_title)
                             ),
-                            obj.post_status === 'Removed' ? $('<span>').addClass('ml-15 user-badge error-badge').text('Removed') : null
+                            obj.post_status === 'Removed' ?
+                            $('<span>').addClass('ml-15 user-badge critical-badge').append(
+                                $('<i>').addClass('fas fa-minus mr-5'),
+                                'Removed'
+                            ) :
+                            $('<span>').addClass('ml-15 user-badge error-badge').append(
+                                $('<i>').addClass('fas fa-comment-slash mr-5'),
+                                'Closed'
+                            )
                         ),
                         $('<small>').html('Posted in <a href="/subforums/' + obj.subtopic_title.toLowerCase().replace(' ', '_') + '">' + obj.subtopic_title + '</a> ' + obj.post_created + ' with ' + obj.replies + ' Replies')
                     )

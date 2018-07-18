@@ -40,7 +40,16 @@ app.get('/', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        let allTopics = await client.query("SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category FROM categories LEFT OUTER JOIN topics ON topics.topic_category = categories.cat_id LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic GROUP BY belongs_to_topic, subtopic_title, topic_title, category ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title = 'Other' ASC, subtopic_title")
+        let allTopics = await client.query(
+        `SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, cat_icon
+        FROM categories
+        LEFT OUTER JOIN topics ON topics.topic_category = categories.cat_id
+        LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
+        LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
+        GROUP BY belongs_to_topic, subtopic_title, topic_title, category, cat_icon
+        ORDER BY category, topic_title
+        LIKE '%General' DESC, topic_title, subtopic_title = 'Other' ASC, subtopic_title`
+        )
         .then((result) => {
             done();
             if (result !== undefined) {
@@ -62,32 +71,39 @@ app.get('/', function(req, resp) {
             }
         } */
 
+        console.log(allTopics);
+
         let category = {},
             last = '';
 
         for (let item of allTopics) {
-            category[item.category] = {}
+            category[item.category] = {
+            }
+            category[item.category]['icon'] = item.cat_icon;
+            category[item.category]['topics'] = {}
         }
 
         for (let item of allTopics) {
             if (item.topic_title !== last) {
                 if (item.category !== null && item.topic_title !== null) {
-                    category[item.category][item.topic_title] = {}
+                    category[item.category]['topics'][item.topic_title] = {}
                     if (item.subtopic_title !== null) {
-                        category[item.category][item.topic_title][item.subtopic_title] = {};
-                        category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
+                        category[item.category]['topics'][item.topic_title][item.subtopic_title] = {};
+                        category[item.category]['topics'][item.topic_title][item.subtopic_title] = item.post_count;
                     }
                 }
 
                 last = item.topic_title
             } else {
                 if (item.category !== null && item.topic_title !== null && item.subtopic_title !== null) {
-                    category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
+                    category[item.category]['topics'][item.topic_title][item.subtopic_title] = item.post_count;
                 }
 
                 last = item.topic_title
             }
         }
+
+        console.log(category);
 
         resp.render('blocks/index', {user: req.session.user, categories: category, title: 'Main'});
     });
@@ -439,17 +455,19 @@ app.get('/forums/posts/post-details', function(req, resp) {
             page = parseInt(req.query.page),
             results = {};
 
-        let originalPost = await client.query(`SELECT
-            posts.*,
-            topics.topic_title,
-            subtopics.subtopic_title, subtopics.subtopic_status,
-            users.user_id, users.last_login, users.user_status
+        let originalPost = await client.query(
+        `SELECT
+        posts.*,
+        topics.topic_title,
+        subtopics.subtopic_title, subtopics.subtopic_status,
+        users.user_id, users.last_login, users.user_status
         FROM posts
         LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
         LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic
         LEFT JOIN users ON posts.post_user = users.username
         WHERE posts.post_id = $1
-        AND posts.post_status != 'Removed'`, [post_id])
+        AND posts.post_status != 'Removed'`,
+        [post_id])
         .then((result) => {
             if (result !== undefined) {
                 result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
@@ -880,12 +898,12 @@ app.get('/admin-page/categories', function(req, resp) {
                 }
 
                 let categories = await client.query(
-                    `SELECT *
-                    FROM categories
-                    ORDER BY category
-                    LIMIT 25
-                    OFFSET $1`,
-                    [offset]
+                `SELECT *
+                FROM categories
+                ORDER BY category
+                LIMIT 25
+                OFFSET $1`,
+                [offset]
                 )
                 .then((result) => {
                     done();
