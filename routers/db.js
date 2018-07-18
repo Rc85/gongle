@@ -4,17 +4,14 @@ const url = require('url');
 let db;
 
 if (process.env.NODE_ENV == 'production') {
-    let params = url.parse(process.env.DATABASE_URL);
-    let auth = params.auth.split(':');
-
     db = new pg.Pool({
         //user: auth[0],
         //password: auth[1],
-        host: process.env.DATABASE_URL
+        connectionString: process.env.DATABASE_URL,
         //port: params.port,
         //database: params.pathname.split('/'[1]),
-        //max: 20,
-        //ssl: true
+        max: 20,
+        ssl: true
     });
 } else if (process.env.NODE_DEV === 'development') {
     db = new pg.Pool({
