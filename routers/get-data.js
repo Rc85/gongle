@@ -7,7 +7,10 @@ app.get('/get-categories', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        await client.query('SELECT * FROM categories ORDER BY category')
+        await client.query(`
+        SELECT *
+        FROM categories 
+        ORDER BY category`)
         .then((result) => {
             done();
             if (result !== undefined) {
@@ -19,26 +22,18 @@ app.get('/get-categories', function(req, resp) {
         .catch((err) => {
             console.log(err);
             done();
-            resp.send({status: 'fail'});
+            resp.send({status: 'error'});
         });
     });
-    /* db.query('SELECT * FROM categories ORDER BY category', function(err, result) {
-        if (err) {
-            console.log(err);
-            resp.send({status: 'fail'});
-        } else if (result !== undefined) {
-            resp.send({status: 'success', categories: result.rows});
-        }
-    }); */
 });
 
 app.post('/get-category-count', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        await client.query(
-            `SELECT COUNT(cat_id) AS count FROM categories`
-        )
+        await client.query(`
+        SELECT COUNT(category_id) AS count
+        FROM categories`)
         .then((result) => {
             done();
             if (result !== undefined) {
@@ -57,38 +52,35 @@ app.post('/get-category-count', function(req, resp) {
     });
 });
 
-app.post('/get-topics-by-category', function(req, resp) {
-    if (req.body.category !== '') {
-        db.connect(async function(err, client, done) {
-            if (err) { console.log(err); }
+app.post('/get-topics', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
 
-            await client.query('SELECT * FROM topics WHERE topic_category = $1 ORDER BY topic_title ASC', [req.body.category])
-            .then((result) => {
-                done();
-                if (result !== undefined) {
-                    resp.send({status: 'success', topics: result.rows});
-                } else {
-                    resp.send({status: 'fail'});
-                }
-            })
-            .catch((err) => {
-                console.log(err);
-                done();
-                resp.send({status: 'fail'});
-            });
-        });
-        /* db.query('SELECT * FROM topics WHERE topic_category = $1 ORDER BY topic_title ASC', [req.body.category], function(err, result) {
-            if (err) {
-                console.log(err);
-                resp.send({status: 'fail'});
-            }
+        let queryString;
+
+        if (req.body.category === undefined) {
+            queryString = `SELECT *
+            FROM topics
+            ORDER BY topic_title ASC`;
+        } else {
+            queryString = `SELECT * FROM topics WHERE topic_category = ${req.body.category} ORDER BY topic_title ASC`;
+        }
+
+        await client.query(queryString)
+        .then((result) => {
+            done();
             if (result !== undefined) {
                 resp.send({status: 'success', topics: result.rows});
+            } else {
+                resp.send({status: 'fail'});
             }
-        }); */
-    } else {
-        resp.send({status: 'success'});
-    }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'fail'});
+        });
+    });
 });
 
 app.post('/get-subtopics-by-topics', function(req, resp) {
@@ -124,7 +116,7 @@ app.post('/get-belongs-to', function(req, resp) {
         var param = [req.body.category];
         var id = req.body.topic;
     } else {
-        var queryString = 'SELECT cat_id AS id, category AS title FROM categories WHERE cat_id > $1 ORDER BY category';
+        var queryString = 'SELECT category_id AS id, category AS title FROM categories WHERE category_id > $1 ORDER BY category';
         var param = ['0'];
         var id = req.body.category;
     }
@@ -165,10 +157,18 @@ app.post('/get-subtopic-details', function(req, resp) {
         let queryString;
         let params;
         if (req.body.topic !== '') {
-            queryString = "SELECT subtopic_id AS id, subtopic_title AS title, subtopic_created_on AS created_on, belongs_to_topic AS belongs_to, subtopic_status AS status, subtopic_created_by AS created_by, topic_title AS parent_title, topic_id AS parent_id FROM subtopics JOIN topics ON subtopics.belongs_to_topic = topics.topic_id WHERE subtopics.belongs_to_topic = $1 ORDER BY subtopic_title";
+            queryString = `SELECT subtopic_id AS id, subtopic_title AS title, subtopic_created_on AS created_on, belongs_to_topic AS belongs_to, subtopic_status AS status, subtopic_created_by AS created_by, topic_title AS parent_title, topic_id AS parent_id
+            FROM subtopics
+            JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+            WHERE subtopics.belongs_to_topic = $1
+            ORDER BY subtopic_title`;
             params = [req.body.topic];
         } else {
-            queryString = "SELECT topic_id AS id, topic_title AS title, topic_created_on AS created_on, topic_category AS belongs_to, topic_status AS status, topic_created_by AS created_by, category AS parent_title, cat_id AS parent_id FROM topics JOIN categories ON topics.topic_category = categories.cat_id WHERE topics.topic_category = $1 ORDER BY topic_category, topic_title";
+            queryString = `SELECT topic_id AS id, topic_title AS title, topic_created_on AS created_on, topic_category AS belongs_to, topic_status AS status, topic_created_by AS created_by, category AS parent_title, category_id AS parent_id
+            FROM topics
+            JOIN categories ON topics.topic_category = categories.category_id
+            WHERE topics.topic_category = $1
+            ORDER BY topic_category, topic_title`;
             params = [req.body.category];
         }
 
@@ -210,7 +210,7 @@ app.post('/get-subtopic-details', function(req, resp) {
                 queryString = 'SELECT topic_id AS parent_id, topic_title AS parent_title FROM topics WHERE topic_id = $1';
                 params = [req.body.topic];
             } else {
-                queryString = 'SELECT cat_id AS parent_id, category AS parent_title FROM categories WHERE cat_id = $1';
+                queryString = 'SELECT category_id AS parent_id, category AS parent_title FROM categories WHERE category_id = $1';
                 params = [req.body.category];
             }
 
@@ -256,7 +256,7 @@ app.post('/get-subtopic-details', function(req, resp) {
                 var queryString = 'SELECT topic_id AS parent_id, topic_title AS parent_title FROM topics WHERE topic_id = $1';
                 var param = [req.body.topic];
             } else {
-                var queryString = 'SELECT cat_id AS parent_id, category AS parent_title FROM categories WHERE cat_id = $1';
+                var queryString = 'SELECT category_id AS parent_id, category AS parent_title FROM categories WHERE category_id = $1';
                 var param = [req.body.category];
             }
 
@@ -430,108 +430,12 @@ app.post('/get-user-posts', function(req, resp) {
     }
 });
 
-app.post('/get-post-details', function(req, resp) {
-    if (req.session.user) {
-        if (req.session.user.privilege > 1) {
-            db.connect(async function(err, client, done) {
-                if (err) { console.log(err); }
-
-                let page = parseInt(req.body.page),
-                    offset
-
-                if (page > 1) {
-                    offset = (page - 1) * 10;
-                } else {
-                    offset = 0;
-                }
-
-                let queryWhereClause = ['belongs_to_post_id IS NULL'];
-                let querySearchParams = [offset];
-
-                if (req.body.category !== '' && req.body.category !== undefined) {
-                    querySearchParams.push(req.body.category);
-                    let index = querySearchParams.indexOf(req.body.category) + 1;
-                    queryWhereClause.push('categories.cat_id = $' + index);
-
-                    if (req.body.topic !== '' && req.body.topic !== undefined) {
-                        querySearchParams.push(req.body.topic);
-                        let index = querySearchParams.indexOf(req.body.topic) + 1;
-                        queryWhereClause.push('topics.topic_id = $' + index);
-                    }
-                }
-
-                if (req.body.post_id !== '' && req.body.post_id !== undefined) {
-                    querySearchParams.push(req.body.post_id);
-                    let index = querySearchParams.indexOf(req.body.post_id) + 1;
-                    queryWhereClause.push('posts.post_id = $' + index);
-                }
-
-                if (req.body.subtopic !== '' && req.body.subtopic !== undefined) {
-                    querySearchParams.push(req.body.subtopic);
-                    let index = querySearchParams.indexOf(req.body.subtopic) + 1;
-                    queryWhereClause.push('posts.post_topic = $' + index);
-                }
-
-                if (req.body.username !== '' && req.body.username !== undefined) {
-                    querySearchParams.push(req.body.username);
-                    let index = querySearchParams.indexOf(req.body.username) + 1;
-                    queryWhereClause.push('posts.post_user = $' + index);
-                }
-
-                if (req.body.status !== '' && req.body.status !== undefined) {
-                    querySearchParams.push(req.body.status);
-                    let index = querySearchParams.indexOf(req.body.status) + 1;
-                    queryWhereClause.push('posts.post_status = $' + index);
-                }
-
-                if (req.body.title !== '' && req.body.title !== undefined) {
-                    querySearchParams.push(req.body.title);
-                    let index = querySearchParams.indexOf(req.body.title) + 1;
-                    queryWhereClause.push("posts.post_title LIKE '%' || $" + index + " || '%'");
-                }
-
-                var whereClause = 'WHERE ' + queryWhereClause.join(' AND ');
-                var queryString = 'SELECT (SELECT COUNT(post_id) AS total_posts FROM posts LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + '), posts.*, user_id, user_status FROM posts LEFT JOIN users ON users.username = posts.post_user LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id LEFT JOIN categories ON categories.cat_id = topics.topic_category ' + whereClause + ' ORDER BY post_created DESC LIMIT 10 OFFSET $1';
-
-                await client.query(queryString, querySearchParams)
-                .then((result) => {
-                    done();
-                    if (result !== undefined) {
-                        for (let i in result.rows) {
-                            result.rows[i].post_created = moment(result.rows[i].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
-                            result.rows[i].post_modified = moment(result.rows[i].post_modified).format('MM/DD/YYYY @ hh:mm:ss A');
-                        }
-    
-                        let obj = {
-                            page: req.body.page,
-                            category: req.body.category,
-                            topic: req.body.topic,
-                            subtopic: req.body.subtopic
-                        }
-    
-                        resp.send({status: 'success', posts: result.rows, obj: obj});
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    done();
-                    resp.send({status: 'error'});
-                });
-            });
-        } else {
-            fn.error(req, resp, 401);
-        }
-    } else {
-        fn.error(req, resp, 401);
-    }
-});
-
-app.get('/get-num-of-posts-in/:subtopic/:page', function(req, resp) {
+app.post('/get-post-count', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        let subtopic = req.params.subtopic;
-        let page = req.params.page;
+        let subtopic = req.body.from;
+        let page = req.body.page;
 
         client.query('SELECT COUNT(post_id) AS total_posts FROM posts LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic WHERE subtopics.subtopic_title = $1 AND posts.belongs_to_post_id IS NULL', [fn.capitalize(subtopic).replace('_', ' ')])
         .then((result) => {
@@ -628,5 +532,41 @@ app.post('/get-friends', function(req, resp) {
         });
     });
 }); */
+
+app.post('/admin-post-details/get-replies', function(req, resp) {
+    if (req.session.user && req.session.user.privilege > 1) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let replies = await client.query(`
+            SELECT post_id
+            FROM posts
+            WHERE belongs_to_post_id = $1
+            ORDER BY post_created DESC`,
+            [req.body.post_id])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].post_created = moment(result.rows[i].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
+                        result.rows[i].post_modified = moment(result.rows[i].post_modified).format('MM/DD/YYYY @ hh:mm:ss A');
+                    }
+
+                    let page = parseInt(req.body.page);
+                    let obj = {page: page}
+
+                    resp.send({status: 'success', replies: result.rows, obj: obj});
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+        });
+    } else {
+        resp.send({status: 'unauthorized'});
+    }
+});
 
 module.exports = app;

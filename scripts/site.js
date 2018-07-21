@@ -31,7 +31,15 @@ $(document).ready(function() {
         });
     });
 
-    menuHandler('user-menu-button', 'mod-user-menu');
+    $('.tooltip-button').on('mouseover', function() {
+        $(this).siblings('.tooltip').show();
+    });
+
+    $('.tooltip-button').on('mouseout', function() {
+        $(this).siblings('.tooltip').hide();
+    });
+
+    //Toggle.menu('user-menu-button', 'mod-user-menu');
 
     $('.issue-violation').on('submit', function(e) {
         e.preventDefault();
@@ -42,14 +50,14 @@ $(document).ready(function() {
             e.preventDefault();
             let data = $(form).serialize() + '&reason=' + val;
 
-            showLoading();
+            App.loading.show();
 
             $.post({
                 url: '/issue-violation',
                 data: data,
                 success: function(resp) {
                     console.log(resp);
-                    hideLoading();
+                    App.loading.hide();
                     if (resp.status === 'success') {
                         alertify.success('Violation sent');
                     } else if (resp.status === 'forbidden') {
@@ -83,13 +91,13 @@ $(document).ready(function() {
 
         alertify.confirm('Are you sure you want to send a report?', function(e) {
             e.preventDefault();
-            showLoading();
+            App.loading.show();
 
             $.post({
                 url: '/user-report',
                 data: $(form).serialize(),
                 success: function(resp) {
-                    hideLoading();
+                    App.loading.hide();
 
                     if (resp.status === 'success') {
                         alertify.success('Report sent');
@@ -119,13 +127,13 @@ $(document).ready(function() {
             var successMessage = 'Post removed';
         }
 
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/change-post-status',
             data: $(this).serialize(),
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
 
                 if (resp.status === 'success') {
                     let postStatus = $(form).parents('.admin-post-row').find('.post-status');

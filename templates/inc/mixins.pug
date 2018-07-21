@@ -1,4 +1,3 @@
-//- @param post {object} must contain post id and # of upvotes and downvotes
 mixin vote(post)
     - let postVotes = parseInt(post.post_upvote) + parseInt(post.post_downvote)
     if user
@@ -142,24 +141,24 @@ mixin postAction(op, reply)
                                     i.fas.fa-trash-alt.mr-5
                                     | Remove Post
 
-mixin adminSearchForm(action, bool)
-    if bool
+mixin adminSearchForm(url, searchPosts)
+    if searchPosts
         - var topicRequired = false
         - var width = 'w-33'
     else
         - var topicRequired = true
         - var width = 'w-48'
-    form#get-details-form.mb-15(action='/get-subtopic-details', method='POST')
+    form#admin-get-details-form.mb-15(action=url, method='GET')
         .search-form-fields
             div(class=width + ' d-flex justify-content-between align-items-center mb-15')
                 label(for='select-category') Category:
-                select#select-category.select-category.w-70(name='category', required)
+                select#select-category.w-70(name='category', required)
                     option
             div(class=width + ' d-flex justify-content-between align-items-center mb-15')
                 label(for='select-topic') Topic:
                 select#select-topic.w-70(name='topic')
                     option
-            if bool
+            if searchPosts
                 div(class=width + ' d-flex justify-content-between align-items-center mb-15')
                     label(for='select-subtopic') Subtopic:
                     select#select-subtopic.w-70(name='subtopic')
@@ -212,3 +211,43 @@ mixin deleteMessage(message, from)
         input(type='hidden', name='from', value=from)
         button(type='submit')
             i.far.fa-lg.fa-trash-alt
+
+mixin createPagination(totalItems, itemsPerPage, page, url)
+    - var pages = Math.ceil(totalItems / itemsPerPage)
+    - var lowestShownItem = 1
+    - var highestShownItem
+    - var i = 0
+
+    while i < pages
+        .link-div.mr-5
+            if page === (i + 1)
+                | #{i + 1}
+            else
+                a(href=url + '&page=' + (i + 1)) #{i + 1}
+        - i++
+
+mixin userStatus(u)
+    if u.user_status === 'Pending'
+        span.user-status.user-badge.pending-badge.mr-5 #{u.user_status}
+    else if u.user_status === 'Active'
+        span.user-status.user-badge.success-badge.mr-5 #{u.user_status}
+    else if u.user_status === 'Suspended'
+        span.user-status.user-badge.error-badge.mr-5 #{u.user_status}
+    else if u.user_status === 'Banned'
+        span.user-status.user-badge.critical-badge.mr-5 #{u.user_status}
+
+mixin userLevel(u)
+    if u.user_level === 'Newcomer'
+        span.user-badge.user-badge-newcomer.mr-5 #{u.user_level}
+    else if u.user_level === 'Regular'
+        span.user-badge.user-badge-regular.mr-5 #{u.user_level}
+    else if u.user_level === 'Contributor'
+        span.user-badge.user-badge-contrib.mr-5 #{u.user_level}
+    else if u.user_level === 'Moderator'
+        span.user-badge.user-badge-moderator.mr-5 #{u.user_level}
+    else if u.user_level === 'Administrator'
+        span.user-badge.user-badge-admin.mr-5 #{u.user_level}
+    else if u.user_level === 'Unreliable'
+        span.user-badge.user-badge-unreliable.mr-5 #{u.user_level}
+    else if u.user_level === 'Owner'
+        span.user-badge.user-badge-owner.mr-5 #{u.user_level}

@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    let username = urlParams('u'),
+    let username = App.url.param('u'),
         postsLoaded = false,
         repliesLoaded = false,
         followedPostsLoaded = false,
@@ -54,7 +54,7 @@ $(document).ready(function() {
     }
 
     function getUserPosts(page, type, appendDiv) {
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/get-user-posts',
@@ -63,7 +63,7 @@ $(document).ready(function() {
                 page: page
             },
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
                 if (type === 'posts') {
                     postsLoaded = true;
                 } else if (type === 'replies') {
@@ -98,7 +98,7 @@ $(document).ready(function() {
     }
 
     function getFriendsList(page) {
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/get-friends',
@@ -107,7 +107,7 @@ $(document).ready(function() {
                 page: page
             },
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
 
                 friendsListLoaded = true;
 
@@ -149,7 +149,7 @@ $(document).ready(function() {
                                     .confirm('Are you sure you want to unfriend this user?', function(e) {
                                         e.preventDefault();
 
-                                        showLoading();
+                                        App.loading.show();
 
                                         $.post({
                                             url: '/unfriend',
@@ -158,7 +158,7 @@ $(document).ready(function() {
                                             },
                                             success: function(resp) {
                                                 console.log(resp);
-                                                hideLoading();
+                                                App.loading.hide();
 
                                                 if (resp.status === 'success') {
                                                     friendDiv.remove();

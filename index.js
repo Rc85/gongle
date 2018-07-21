@@ -67,6 +67,127 @@ app.use(message);
 app.set('view engine', 'pug');
 app.set('views', ['templates', 'templates/inc', 'templates/blocks']);
 
+// global middleware
+app.post('/change-status', function(req, resp) {
+    console.log(req.body);
+    if (req.session.user && req.session.user.privilege > 1) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let queryString;
+
+            if (req.body.type === 'categories') {
+                queryString = `UPDATE categories SET category_status = $1 WHERE category_id = $2`;
+            } else if (req.body.type === 'topics') {
+                queryString = `UPDATE topics SET topic_status = $1 WHERE topic_id = $2`;
+            } else if (req.body.type === 'subtopics') {
+                queryString = `UPDATE subtopics SET subtopic_status = $1 WHERE subtopic_id = $2`;
+            } else if (req.body.type === 'posts') {
+                queryString = `UPDATE posts SET post_status = $1 WHERE post_id = $2`;
+            } else if (req.body.type === 'users') {
+                queryString = `UPDATE users SET user_status = $1 WHERE user_id = $2`;
+            }
+
+            await client.query(queryString, [req.body.status, req.body.id])
+            .then((result) => {
+                done();
+                if (result !== undefined && result.rowCount === 1) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'not found'});
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+        });
+    } else {
+        resp.send({status: 'unauthorized'});
+    }
+});
+
+app.post('/delete-all', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+
+        if (req.body.type === 'categories') {
+            if (req.session.user && req.session.user.privilege > 1) {
+                let catIds = req.body.ids.join(',');
+
+                await client.query(`DELETE FROM categories WHERE category_id IN (${catIds})`)
+                .then((result) => {
+                    done();
+                    if (result !== undefined && result.rowCount > 0) {
+                        resp.send({status: 'success'});
+                    } else {
+                        resp.send({status: 'failed'});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                })
+            }
+        } else if (req.body.type === 'messages') {
+            let messageIds;
+            
+            if (req.body.ids.length > 1) {
+                messageIds = req.body.ids.join(',');
+            } else if (req.body.ids.length === 1) {
+                messageIds = req.body.ids[0];
+            }
+
+            let authorizedUser = true;
+
+            if (req.body.ids.length > 0) {
+                let recipients = await client.query(`SELECT recipient FROM messages WHERE message_id IN (${messageIds})`)
+                .then((result) => {
+                    if (result !== undefined) {
+                        return result.rows;
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                });
+
+                for (let row of recipients) {
+                    if (req.session.user.username !== row.recipient) {
+                        authorizedUser = false;
+                        break;
+                    }
+                }
+
+                if (authorizedUser) {
+                    try {
+                        await client.query('BEGIN');
+                        await client.query('DELETE FROM saved_messages WHERE saved_msg IN (' + messageIds + ')');
+
+                        for (let i in req.body.ids) {
+                            await client.query('INSERT INTO deleted_messages (msg_deleted_by, deleted_msg) VALUES ($1, $2)', [req.session.user.username, req.body.ids[i]]);
+                        }
+
+                        await client.query('COMMIT');
+                        done();
+
+                        resp.send({status: 'success'});
+                    } catch (err) {
+                        await client.query('ROLLBACK');
+                        console.log(err);
+                        done();
+                        resp.send({status: 'error'});
+                    }
+                }
+            } else {
+                resp.send({status: 'nothing'});
+            }
+        }
+    })
+})
+
 // server initialization
 server.listen(port, function(err) {
     if (err) {

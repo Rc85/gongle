@@ -1,4 +1,4 @@
-function showLoading() {
+/* function showLoading() {
     $('body').css({'overflow-y': 'hidden'});
 
     $('body').prepend(
@@ -15,16 +15,16 @@ function hideLoading() {
     $('body').css({'overflow-y': ''});
 
     $('.loading-screen').remove();
-}
+} */
 
-function populateCategoriesSelect() {
+/* function populateSelect(selector) {
     $.get({
         url: '/get-categories',
         success: function(resp) {
             if (resp.status === 'success') {
                 for (let i in resp.categories) {
-                    $('.select-category').append(
-                        $('<option>').attr('value', resp.categories[i].cat_id).text(resp.categories[i].category)
+                    $(selector).append(
+                        $('<option>').attr('value', resp.categories[i].category_id).text(resp.categories[i].category)
                     )
                 }
             }
@@ -51,23 +51,9 @@ function populateCategoriesSelect() {
             }
         });
     });
-}
+} */
 
-function toggleCategories(toBeClicked, toBeToggled) {
-    $(toBeClicked).on('click', function() {
-        let header = $(this);
-        let topicsList = $(header).siblings(toBeToggled);
-        $(topicsList).slideToggle(function() {
-            if ($(topicsList).css('display') === 'none') {
-                $(header).children('i').removeClass('fa-angle-up').addClass('fa-angle-down');
-            } else {
-                $(header).children('i').removeClass('fa-angle-down').addClass('fa-angle-up');
-            }
-        });
-    });
-}
-
-function getPostDetails(form, page, obj) {
+/* function getPostDetails(form, page, obj) {
     if (form) {
         var data = $(form).serialize() + '&page=' + page;
     } else if (obj) {
@@ -79,7 +65,7 @@ function getPostDetails(form, page, obj) {
         data: data,
         success: function(resp) {
             console.log(resp);
-            hideLoading();
+            App.loading.hide();
 
             $('#post-settings').empty();
             $('.pagination-container').empty();
@@ -106,7 +92,7 @@ function getPostDetails(form, page, obj) {
             createPagination('.pagination-container', resp.posts[0].total_posts, 10, resp.obj, false, getPostDetails);
         }
     });
-}
+} */
 
 /**
  * 
@@ -118,19 +104,20 @@ function getPostDetails(form, page, obj) {
  * @param {Function|Boolean} func If link is false, a function is required for the page number to execute. If a link is provided, this is false.
  */
 function createPagination(appendTo, totalItem, itemPerPage, obj, link, func) {
-    let calc = parseInt(totalItem) / itemPerPage; // get number of pages
-    let totalNumPages = Math.ceil(calc); // round up the number of pages
-    let lowestShownPageNum = parseInt(obj.page) - totalNumPages;
-    let pagination = $('<div>').addClass('pagination text-right').append(
-        $('<b>').text('Page: ')
+    let calc = parseInt(totalItem) / itemPerPage, // get number of pages
+        totalNumPages = Math.ceil(calc), // round up the number of pages
+        lowestShownPageNum = parseInt(obj.page) - totalNumPages,
+        highestShownPageNum,
+        pagination = $('<div>').addClass('pagination text-right').append(
+        $('<b>').addClass('mr-5').text('Page:')
     )
     
     if (lowestShownPageNum < 1) {
         lowestShownPageNum = 1;
     }
-
+    
     if (lowestShownPageNum > 1) {
-        var highestShownPageNum = parseInt(obj.page) + totalNumPages / 2;
+        highestShownPageNum = parseInt(obj.page) + totalNumPages / 2;
 
         if (highestShownPageNum > totalNumPages) {
             highestShownPageNum = totalNumPages;
@@ -138,7 +125,7 @@ function createPagination(appendTo, totalItem, itemPerPage, obj, link, func) {
 
         createPageNum(pagination, 1, obj, link, 'First', func);
     } else {
-        var highestShownPageNum = totalNumPages;
+        highestShownPageNum = totalNumPages;
     }
 
     for (let i = lowestShownPageNum; i <= highestShownPageNum; i++) {
@@ -166,22 +153,24 @@ function createPagination(appendTo, totalItem, itemPerPage, obj, link, func) {
 }
 
 function createPageNum(parent, total, obj, link, label, func) {
+    let pageLabel;
+
     if (label) {
-        var pageLabel = label;
+        pageLabel = label;
     } else {
-        var pageLabel = total;
+        pageLabel = total;
     }
 
     if (link) {
         $(parent).append(
-            $('<a>').attr('href', link + '&page=' + total).append(
-                $('<span>').addClass('link-div mr-5').html(pageLabel)
+            $('<a>').addClass('link-div mr-5').attr('href', link + '&page=' + total).append(
+                $('<span>').html(pageLabel)
             )
         )
     } else {
         $(parent).append(
-            $('<a>').attr('href', '#').append(
-                $('<span>').addClass('link-div mr-5').html(pageLabel)
+            $('<a>').addClass('link-div mr-5').attr('href', '#').append(
+                $('<span>').html(pageLabel)
             ).on('click', function(e) {
                 e.preventDefault();
 
@@ -191,18 +180,30 @@ function createPageNum(parent, total, obj, link, label, func) {
     }
 }
 
-function toggleButton(button, buttonLabel) {
-    if ($(button).html() === 'Cancel') {
-        $(button).html(buttonLabel);
-    } else {
-        $(button).html('Cancel');
-    }
-}
+/* function handleTabClick(tabName, bodyId, navbarId) {
+    $('#' + tabName + '-tab').on('click', function(e) {
+        e.preventDefault();
+        
+        $(bodyId).children().hide();
+        $(navbarId).children().removeClass('active');
 
-function changePostStatus(form, search) {
-    let postId = $(form).attr('data-post-id'),
+        $('#' + tabName + '-tab').addClass('active');
+        $('#' + tabName).show();
+    });
+} */
+
+/* function toggleButton(buttonId, firstButtonText, secondButtonText) {
+    if ($(buttonId).html() === secondButtonText) {
+        $(buttonId).html(firstButtonText);
+    } else {
+        $(buttonId).html(secondButtonText);
+    }
+} */
+
+/* function changePostStatus(form, search) {
+    let postId = $(form).attr('data-id'),
         status = $(form).attr('data-status');
-    showLoading();
+    App.loading.show();
 
     $.post({
         url: '/change-post-status',
@@ -211,20 +212,28 @@ function changePostStatus(form, search) {
             status: status
         },
         success: function(resp) {
-            hideLoading();
+            App.loading.hide();
 
             if (resp.status === 'success') {
-                let postStatus = $(form).parents(search).find('.post-status');
-                console.log(postStatus)
-                let successMessage;
+                let postStatus = $(form).parents(search).find('.post-status'),
+                    successMessage;
+                
+                $(postStatus).empty();
+
                 if (resp.post_status === 'Open') {
-                    $(postStatus).removeClass('error-badge critical-badge').addClass('success-badge').text('Open');
+                    $(postStatus).append(
+                        $('<span>').addClass('user-badge success-badge').text(resp.post_status)
+                    );
                     successMessage = 'Post opened';
                 } else if (resp.post_status === 'Closed') {
-                    $(postStatus).removeClass('success-badge critical-badge').addClass('error-badge').text('Closed');
+                    $(postStatus).append(
+                        $('<span>').addClass('user-badge error-badge').text(resp.post_status)
+                    )
                     successMessage = 'Post closed';
                 } else if (resp.post_status === 'Removed') {
-                    $(postStatus).removeClass('success-badge error-badge').addClass('critical-badge').text('Removed');
+                    $(postStatus).append(
+                        $('<span>').addClass('user-badge critical-badge').text(resp.post_status)
+                    )
                     successMessage = 'Post removed';
                 }
             
@@ -238,9 +247,46 @@ function changePostStatus(form, search) {
             }
         }
     });
-}
+} */
 
-function changeUserStatus(form, option, search) {
+/* function changeCategoryStatus(option, searchIn) {
+    let catId = $(option).attr('data-id');
+    let status = $(option).attr('data-status');
+    console.log(catId)
+    
+    App.loading.show();
+
+    $.post({
+        url: '/change-category-status',
+        data: {
+            cat_id: catId,
+            status: status
+        },
+        success: function(resp) {
+            App.loading.hide();
+
+            if (resp.status === 'success') {
+                $('.status-option-menu').hide();
+                $(option).parent().parent().parent().siblings('.cat-status').empty();
+                $(option).parent().parent().parent().siblings('.cat-status').append(
+                    resp.category_status === 'Open' ?
+                    $('<span>').addClass('user-badge success-badge').html(resp.category_status) :
+                    $('<span>').addClass('user-badge error-badge').html(resp.category_status)
+                )
+                alertify.success('Category ' + resp.category_status.toLowerCase());
+            } else if (resp.status === 'failed') {
+                alertify.error('Failed to change status');
+            } else if (resp.status === 'error') {
+                alertify.error('An error occurred');
+            } else if (resp.status === 'deleted') {
+                $(option).parents(searchIn).remove();
+                alertify.success('Deleted')
+            }
+        }
+    });
+} */
+
+/* function changeUserStatus(form, option, search) {
     if (option === 'Active') {
         var confirmString = 'activate';
         var successString = 'User activated';
@@ -267,13 +313,13 @@ function changeUserStatus(form, option, search) {
         .cancelBtn('No')
         .confirm('Are you sure you want to ' + confirmString + ' this user?', function(e) {
             e.preventDefault();
-            showLoading();
+            App.loading.show();
 
             $.post({
                 url: '/change-user-status',
                 data: $(form).serialize(),
                 success: function(resp) {
-                    hideLoading();
+                    App.loading.hide();
 
                     if (resp.status === 'success') {
                         $(form).parents(search).find('.user-status').removeClass().addClass('user-status user-badge ml-5 mr-5 ' + badgeType).text(option);
@@ -290,12 +336,12 @@ function changeUserStatus(form, option, search) {
             });
         }, function(e) {
             e.preventDefault();
-            hideLoading();
+            App.loading.hide();
         });
     } else {
         alertify.error('User already ' + option.toLowerCase());
     }
-}
+} */
 
 function adminPostRow(obj, isInDetails) {
     let content = '';
@@ -342,7 +388,7 @@ function adminPostRow(obj, isInDetails) {
                         /* $('<form>').addClass('open-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
                             $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
                             $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Open'}), */
-                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Open'}).html('Open').on('click', function(e) {
+                            $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Open'}).html('Open').on('click', function(e) {
                                 e.preventDefault();
                                 let form = $(this);
     
@@ -361,7 +407,7 @@ function adminPostRow(obj, isInDetails) {
                         /* $('<form>').addClass('close-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
                             $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
                             $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Closed'}), */
-                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Closed'}).html('Close').on('click', function(e) {
+                            $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Closed'}).html('Close').on('click', function(e) {
                                 e.preventDefault();
                                 let form = $(this);
     
@@ -379,7 +425,7 @@ function adminPostRow(obj, isInDetails) {
                         /* $('<form>').addClass('remove-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
                             $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
                             $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Removed'}), */
-                            $('<div>').attr({'data-post-id': obj.post_id, 'data-status': 'Removed'}).html('Remove').on('click', function(e) {
+                            $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Removed'}).html('Remove').on('click', function(e) {
                                 e.preventDefault();
                                 let form = $(this);
     
@@ -404,19 +450,19 @@ function adminPostRow(obj, isInDetails) {
     return row;
 }
 
-function urlParams(p) {
+/* function urlParams(p) {
     let urlString = new URL(window.location.href),
         urlParams = new URLSearchParams(urlString.searchParams.toString()),
         param = urlParams.get(p);
 
     return param;
-}
+} */
 
-function menuHandler(buttonClass, menuClass) {
+/* function menuHandler(buttonClass, menuClass) {
     $('body').on('click', function(e) {
         if (e.target.className === buttonClass) {
             return;
-            /* let menu = $(e.target).next();
+            let menu = $(e.target).next();
             console.log($(menu).css('display'))
 
             if ($(menu).css('display') !== 'none') {
@@ -424,7 +470,7 @@ function menuHandler(buttonClass, menuClass) {
             } else if ($(menu).css('display') === 'none') {
                 $('.mod-user-menu').hide();
                 $(menu).show();
-            } */
+            }
         } else if ($(e.target).closest('.' + buttonClass).length) {
             let menu = $(e.target).parent().siblings('.' + menuClass);
 
@@ -452,6 +498,470 @@ function menuHandler(buttonClass, menuClass) {
         } else if ($(menu).css('display') === 'none') {
             $('.' + menuClass).hide();
             $(menu).show();
+        }
+    });
+} */
+
+function DeleteAllItems(itemList, url) {
+    $.post({
+        url: url,
+        data: {
+            items: itemList
+        },
+        success: function(resp) {
+            if (resp.status === 'success') {
+                location.reload();
+            } else {
+                alertify.error('An error occurred');
+            }
+        }
+    });
+}
+
+/* function createItem(obj, id, form, cb) {
+    $('#settings').append(
+        $('<div>').addClass('col change-topic-status').append(
+            $('<div>').addClass('w-5').append(
+                $('<input>').addClass('select-item').attr({'value': obj.id, 'type': 'checkbox'}).on('click', function() {
+                    cb($(this).attr('value'));
+                })
+            ),
+            $('<div>').addClass('w-5').text(obj.id),
+            $('<div>').addClass('w-25').append(
+                $('<span>').addClass('subtopic-title').attr('data-belongs-to', obj.topic_id).text(obj.title).on('click', function() {
+                    let parent = $(this).parent();
+                    let title = $(this);
+
+                    $(title).empty();
+                    let form = $('<form>').addClass('d-flex justify-content-around').attr({'method': 'POST', 'action': '/rename-' + id}).append(
+                        $('<input>').attr({'type': 'hidden', 'name': 'id', 'value': obj.id}),
+                        $('<input>').attr({'type': 'text', 'name': 'new_title', 'autofocus': 'true'}).css({'flex': '0.60'}),
+                        $('<input>').attr({'type': 'submit', 'value': 'Submit'}).css({'display': 'none'}),
+                        $('<input>').attr({'type': 'button', 'value': 'Cancel'}).css({'flex': '0.25'}).on('click', function() {
+                            $(title).text(obj.title);
+                            $(form).remove();
+                        })
+                    ).on('submit', function(e) {
+                        e.preventDefault();
+                        let form = $(this);
+                        
+                        $.post({
+                            url: '/rename-' + id,
+                            data: $(form).serialize(),
+                            success: function(resp) {
+                                if (resp.status === 'success') {
+                                    $(form).remove();
+                                    $(title).html(resp.new_title);
+                                    alertify.success('Renamed');
+                                } else {
+                                    alertify.error('An error occurred');
+                                }
+                            }
+                        });
+                    });
+                    
+                    $(parent).append(form);
+                })
+            ),
+            $('<div>').addClass('w-15').append(
+                $('<form>').attr({'method': 'POST', 'action': '/change-' + id + '-belong-to'}).append(
+                    $('<input>').attr({'type': 'hidden', 'name': 'id', 'value': obj.id}),
+                    $('<select>').attr({'name': 'topic_id'}).addClass('topic-select').append(
+                        $('<option>')
+                    ).on('change', function() {
+                        $(this).parent().submit();
+                    })
+                ).on('submit', function(e) {
+                    e.preventDefault();
+                    let form = $(this);
+
+                    if ($(form).children('select').val() !== '') {
+                        alertify
+                        .okBtn('Yes')
+                        .cancelBtn('No')
+                        .confirm('Are you sure you want to change the category of this topic?', function(e) {
+                            e.preventDefault();
+                            App.loading.show();
+
+                            $.post({
+                                url: '/change-' + id + '-belong-to',
+                                data: $(form).serialize(),
+                                success: function(resp) {
+                                    App.loading.hide();
+
+                                    if (resp.status === 'success') {
+                                        alertify.success('Category changed');
+                                        $(title).attr('data-belongs-to', resp.topic_id);
+                                    } else {
+                                        alertify.error('An error occurred');
+                                    }
+                                }
+                            });
+                        }, function(e) {
+                            e.preventDefault();
+                            App.loading.hide();
+                        });
+                    }
+                })
+            ),
+            $('<div>').addClass('w-15').text(obj.created_by),
+            $('<div>').addClass('w-20').text(obj.created_on),
+            $('<div>').addClass('w-15 d-flex justify-content-around align-items-start').append(
+                obj.status === 'Open' ? $('<span>').addClass('user-badge success-badge').text(obj.status) : '',
+                obj.status === 'Closed' ? $('<span>').addClass('user-badge error-badge').text(obj.status) : '',
+                obj.status === 'Removed' ? $('<span>').addClass('user-badge critical-badge').text(obj.status) : '',
+                $('<div>').addClass('admin-menu-container').append(
+                    $('<i>').addClass('admin-menu-button fas fa-lg fa-ellipsis-h'),
+                    $('<div>').addClass('admin-menu').append(
+                        $('<div>').html('Open').attr({'data-id': obj.id, 'data-status': 'Open'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Close').attr({'data-id': obj.id, 'data-status': 'Closed'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Remove').attr({'data-id': obj.id, 'data-status': 'Removed'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        }),
+                        $('<div>').html('Delete').attr({'data-id': obj.id, 'data-status': 'Deleted'}).on('click', function() {
+                            handleChangeStatus($(this), id);
+                        })
+                    )
+                )
+                $('<form>').addClass('w-50').attr({'method': 'POST', 'action': '/change-' + id + '-status'}).append(
+                    $('<input>').attr({'type': 'hidden', 'name': 'id', 'value': obj.id}),
+                    $('<select>').addClass('w-100').attr({'name': 'status'}).append(
+                        $('<option>'),
+                        $('<option>').attr('value', 'Open').text('Open'),
+                        $('<option>').attr('value', 'Closed').text('Close'),
+                        $('<option>').attr('value', 'Removed').text('Remove'),
+                        $('<option>').attr('value', 'Delete').text('Delete')
+                    ).on('change', function() {
+                        let form = $(this);
+
+                        if ($(form).val() === 'Removed') {
+                            alertify.confirm('Are you sure you want to remove this?', function(e) {
+                                e.preventDefault();
+
+                                $(form).parent().submit();
+                            }, function() {
+                                App.loading.hide();
+                            })
+                        } else if ($(form).val() === 'Delete') {
+                            alertify.confirm('Are you sure you want to delete this? This action cannot be reversed.', function(e) {
+                                e.preventDefault();
+                                App.loading.show();
+
+                                $(form).parent().submit();
+                            }, function() {
+                                App.loading.hide();
+                            });
+                        } else {
+                            $(this).parent().submit();
+                        }
+                    })
+                ).on('submit', function(e) {
+                    e.preventDefault();
+                    let form = $(this);
+                    App.loading.show();
+
+                    $.post({
+                        url: '/change-' + id + '-status',
+                        data: $(form).serialize(),
+                        success: function(resp) {
+                            App.loading.hide();
+
+                            if (resp.status === 'success') {
+                                $(form).children('select').prop('selectedIndex', 0);
+
+                                if (resp.subtopic_status === 'Open') {
+                                    $(form).siblings('.user-badge').removeClass().addClass('user-badge success-badge').text(resp.subtopic_status);
+                                } else if (resp.subtopic_status === 'Closed') {
+                                    $(form).siblings('.user-badge').removeClass().addClass('user-badge error-badge').text(resp.subtopic_status);
+                                } else if (resp.subtopic_status === 'Removed') {
+                                    $(form).siblings('.user-badge').removeClass().addClass('user-badge critical-badge').text(resp.subtopic_status);
+                                }
+                                
+                                alertify.success('Successful');
+                            } else if (resp.status === 'deleted') {
+                                $(form).parent().parent().remove();
+                                alertify.success('Deleted');
+                            } else {
+                                alertify.error('An error occurred');
+                            }
+                        }
+                    });
+                })
+            )
+        )
+    )
+
+    menuHandler('admin-menu-button', 'admin-menu');
+
+    $.post({
+        url: '/get-belongs-to',
+        data: $('#get-details-form').serialize(),
+        success: function(resp) {
+            $('.topic-select').empty();
+
+            for (let topic of resp.topics) {
+                $('.topic-select').append(
+                    $('<option>').attr('value', topic.id).text(topic.title)
+                )
+            }
+
+            $('.topic-select').val(resp.id);
+        }
+    });
+} */
+
+/* function handleChangeStatus(form, type) {
+    let status = $(form).attr('data-status'),
+        id = $(form).attr('data-id');
+
+    if ($(form).attr('data-status') === 'Removed') {
+        alertify.confirm('Are you sure you want to remove this?', function(e) {
+            e.preventDefault();
+
+            changeStatus();
+        },
+        function() {
+            App.loading.hide();
+            return false;
+        });
+    } else if ($(form).attr('data-status') === 'Deleted') {
+        alertify.confirm('Are you sure you want to delete this? This action cannot be reversed.', function(e) {
+            e.preventDefault();
+
+            changeStatus();
+        },
+        function() {
+            App.loading.hide();
+            return false;
+        });
+    } else {
+        changeStatus();
+    }
+
+    function changeStatus() {
+        App.loading.show();
+
+        $.post({
+            url: '/change-' + type + '-status',
+            data: {
+                status: status,
+                id: id
+            },
+            success: function(resp) {
+                App.loading.hide();
+
+                if (resp.status === 'success') {
+                    if (resp.subtopic_status === 'Open') {
+                        $(form).parents('.admin-topic-row').find('.user-badge').removeClass().addClass('user-badge success-badge').text(resp.subtopic_status);
+                    } else if (resp.subtopic_status === 'Closed') {
+                        $(form).parents('.admin-topic-row').find('.user-badge').removeClass().addClass('user-badge error-badge').text(resp.subtopic_status);
+                    } else if (resp.subtopic_status === 'Removed') {
+                        $(form).parents('.admin-topic-row').find('.user-badge').removeClass().addClass('user-badge critical-badge').text(resp.subtopic_status);
+                    }
+                    
+                    alertify.success('Successful');
+                } else if (resp.status === 'deleted') {
+                    $(form).parents('.change-topic-status').remove();
+                    alertify.success('Deleted');
+                } else {
+                    alertify.error('An error occurred');
+                }
+            }
+        });
+    }
+}
+
+function createTopicForm(id, form, cb) {
+    App.loading.show();
+
+    $.post({
+        url: '/create-' + id,
+        data: $(form).serialize(),
+        success: function(resp) {
+            App.loading.hide();
+
+            if (resp.status === 'success') {
+                alertify.success('Created');
+                createItem(resp.result, id, form, function(id) {
+                    cb(id);
+                });
+                if (id === 'topic') {
+                    $('#select-topic').append(
+                        $('<option>').attr('value', resp.result.id).text(resp.result.title)
+                    )
+                }
+
+                $(form).find('input[name=title]').val('');
+            } else {
+                alertify.error('An error occurred');
+            }
+        }
+    });
+}
+
+function getSettings(id, form, cb) {
+    App.loading.show();
+
+    $.post({
+        url: '/get-subtopic-details',
+        data: $(form).serialize(),
+        success: function(resp) {
+            App.loading.hide();
+            console.log(resp);
+
+            $('#settings').empty();
+
+            $('#settings').append(
+                $('<div>').append(
+                    $('<h3>').text('Create'),
+                    $('<div>').addClass('mb-15').html((id === 'subtopic' ? $('#select-category option:selected').text() + ' <i class="fas fa-angle-right"></i> ' : resp.results[0].parent_title) + $('#select-topic option:selected').text()),
+                    $('<form>').attr({'action': '/create-' + id, 'method': 'POST', 'id': 'create-' + id + '-form'}).append(
+                        $('<input>').attr({'type': 'hidden', 'value': resp.results[0].parent_id, 'name': 'parent'}),
+                        $('<div>').addClass('d-flex mb-15 justify-content-between align-items-center').append(
+                            $('<label>').text('Name: '),
+                            $('<input>').addClass('w-95').attr({'type': 'text', 'name': 'title'})
+                        ),
+                        $('<div>').addClass('text-right').append(
+                            $('<input>').attr({'type': 'submit', 'value': 'Create'})
+                        )
+                    ).on('submit', function(e) {
+                        e.preventDefault();
+                        let form = $(this);
+
+                        createTopicForm(id, form, function(id) {
+                            cb(id);
+                        });
+                    })
+                ),
+                $('<div>').addClass('mt-15 text-right').append(
+                    $('<button>').html('Delete').on('click', function() {
+                        cb($(this));
+                    })
+                ),
+                $('<header>').addClass('header col').append(
+                    $('<div>').addClass('w-5').append(
+                        $('<input>').addClass('select-all').attr('type', 'checkbox').on('click', function() {
+                            if ($(this).prop('checked')) {
+                                $('.select-item').each(function(i, item) {
+                                    $(item).prop('checked', 'true');
+                                    cb($(this).attr('value'));
+                                });
+                            }
+                        })
+                    ),
+                    $('<div>').addClass('w-5').text('ID'),
+                    $('<div>').addClass('w-25').css('position', 'relative').append(
+                        $('<div>').addClass('tooltip').html('Click a title to rename'),
+                        $('<i>').addClass('far fa-question-circle mr-5 tooltip-button').on('mouseover', function() {
+                            $(this).siblings('.tooltip').show();
+                        }).on('mouseout', function() {
+                            $(this).siblings('.tooltip').hide()
+                        }),
+                        'Title'
+                    ),
+                    $('<div>').addClass('w-15').text('Belongs To'),
+                    $('<div>').addClass('w-15').text('Created By'),
+                    $('<div>').addClass('w-20').text('Created On'),
+                    $('<div>').addClass('w-15').text('Status')
+                )
+            )
+
+            for (let subtopic of resp.results) {
+                if (subtopic.id) {
+                    createItem(subtopic, id, form, function(id) {
+                        cb(id);
+                    });
+                }
+            }
+        }
+    });
+} */
+
+/**
+ * 
+ * @param {String} data String of URL parameters
+ */
+function submitPost(data) {
+    $.post({
+        url: '/post',
+        data: data,
+        success: function(resp) {
+            if (resp.status === 'success') {
+                location.reload();
+            } else if (resp.status === 'error') {
+                alertify.error('An error occurred');
+            } else if (resp.status === 'failed') {
+                alertify.error('Failed to post');
+            } else if (resp.status === 'user not found') {
+                alertify.error('Are you logged in?');
+            } else if (resp.status === 'banned') {
+                alertify.error('Your account is banned');
+            } else if (resp.status == 'invalid post') {
+                alertify.error('Cannot submit blank post')
+            }
+        }
+    });
+}
+
+/**
+ * 
+ * @param {String} where Subtopic name
+ * @param {String|Number} page Page number use to calculate the offset for database query
+ * @param {Function} callback 
+ */
+function getNumberOfPosts(where, page, callback) {
+    $.post({
+        url: '/get-num-of-posts',
+        data: {
+            from: where,
+            page: page
+        },
+        success: function(resp) {
+            callback(resp);
+        }
+    });
+}
+
+/**
+ * 
+ * @param {String|Number} postId The ID of the post being viewed
+ * @param {String|Number} page Page number use to calculate the offset for database query
+ * @param {Function} callback 
+ */
+function getNumberOfReplies(postId, page, callback) {
+    $.post({
+        url: '/get-replies',
+        data: {
+            post_id: postId,
+            page: page
+        },
+        success: function(resp) {
+            if (resp.status === 'success') {
+                callback(resp);
+            }
+        }
+    });
+}
+
+function toggleSidebar(toggler, bar, sidebarParent, parentWidth, sidebarWidth, callback) {
+    $(toggler).on('click', function() {
+        let controlBar = $(bar);
+        if (forumSidebar === 'shown') {
+            $(sidebarParent).animate({'left': '-' + sidebarWidth + 'px'}, function() {
+                $(controlBar).children('i').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+            });                                
+            $('main').animate({'padding-left': parentWidth - sidebarWidth + 30});
+            callback('hidden')
+        } else {
+            $(sidebarParent).animate({'left': '0'}, function() {
+                $(controlBar).children('i').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
+            });
+            $('main').animate({'padding-left': parentWidth + 30});
+            callback('shown');
         }
     });
 }

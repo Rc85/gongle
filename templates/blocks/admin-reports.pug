@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     link(rel='stylesheet', href='/css/admin.css')
 
 block content
@@ -8,4 +8,7 @@ block content
         .d-flex
             include ../inc/admin-sidebar
             .admin-main
+                h2
+                    i.far.fa-file-alt.mr-5
+                    | Reports
                 .posts-table

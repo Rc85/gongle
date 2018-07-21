@@ -1,34 +1,15 @@
 $(document).ready(function() {
-    let postId = urlParams('pid'),
-        page = urlParams('page');
+    let postId = App.url.param('pid'),
+        page = App.url.param('page');
 
-    $.post({
-        url: '/get-replies',
-        data: {
-            post_id: postId,
-            page: page
-        },
-        success: function(resp) {
-            console.log(resp);
-            
-            if (resp.status === 'success') {
-                createPagination('.post-details-pagination', resp.replies, 10, resp.obj, '/forums/posts/post-details?pid=' + postId + '&page=1')
-            }
-        }
+    getNumberOfReplies(postId, page, function(resp) {
+        createPagination('.post-details-pagination', resp.replies, 10, resp.obj, '/forums/posts/post-details?pid=' + postId)
     });
 
     $('.reply-post-button').on('click', function() {
         $(this).parent().next().slideToggle();
         
-        toggleButton(this, 'Reply');
-    });
-
-    $('.reply-button').on('click', function() {
-        let id = $(this).attr('data-reply-id');
-
-        $('#post-reply-to-' + id + '-form').slideToggle();
-
-        toggleButton(this, 'Reply');
+        Toggle.button(this, 'Reply', 'Cancel');
     });
 
     $('#follow-post-form').on('submit', function(e) {
@@ -61,15 +42,5 @@ $(document).ready(function() {
         });
     });
 
-    $('.quote-header').on('click', function() {
-        $(this).siblings('.quote-body').slideToggle();
-
-        let arrow = $(this).children('i');
-
-        if ($(arrow).hasClass('fa-angle-down')) {
-            $(arrow).removeClass('fa-angle-down').addClass('fa-angle-up');
-        } else {
-            $(arrow).removeClass('fa-angle-up').addClass('fa-angle-down');
-        }
-    });
+    toggleContent('.quote-header', '.quote-body');
 });

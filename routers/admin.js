@@ -10,7 +10,17 @@ app.post('/change-user-privilege', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                await client.query('UPDATE users SET privilege = $1 WHERE user_id = $2', [req.body.privilege, req.body.user_id])
+                let privilege;
+
+                if (req.body.privilege === 'User') {
+                    privilege = 0;
+                } else if (req.body.privilege === 'Moderator') {
+                    privilege = 1;
+                } else if (req.body.privilege === 'Administrator') {
+                    privilege = 2;
+                }
+
+                await client.query('UPDATE users SET privilege = $1 WHERE user_id = $2', [privilege, req.body.user_id])
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
@@ -37,11 +47,11 @@ app.post('/change-user-status', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                await client.query('UPDATE users SET user_status = $1 WHERE user_id = $2 RETURNING user_id, user_status', [req.body.option, req.body.user_id])
+                await client.query('UPDATE users SET user_status = $1 WHERE user_id = $2 RETURNING user_id, user_status', [req.body.status, req.body.user_id])
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
-                        resp.send({status: 'success', user_id: result.rows[0].user_id, user_status: result.rows[0].user_status});
+                        resp.send({status: 'success'});
                     } else {
                         resp.send({status: 'not found'});
                     }
@@ -86,6 +96,48 @@ app.post('/change-post-status', function(req, resp) {
         }
     } else {
         resp.send({status: 'unauthorized'});
+    }
+});
+
+app.post('/delete-user', (req, resp) => {
+    if (req.session.user && req.session.user.privilege > 1) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let userLevel = await client.query(`SELECT privilege
+            FROM users
+            WHERE user_id = $1`,
+            [req.body.user_id])
+            .then((result) => {
+                if (result !== undefined) {
+                    return result.rows[0].privilege;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
+
+            if (userLevel < 2) {
+                await client.query(`DELETE FROM users
+                WHERE user_id = $1`,
+                [req.body.user_id])
+                .then((result) => {
+                    done();
+                    if (result !== undefined && result.rowCount === 1) {
+                        resp.send({status: 'success'});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                })
+            } else {
+                done();
+                resp.send({status: 'fail'});
+            }
+        });
     }
 });
 
@@ -556,7 +608,7 @@ app.post('/rename-category', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
                 
-                await client.query('UPDATE categories SET category = $1 WHERE cat_id = $2 RETURNING category', [req.body.category, req.body.cat_id])
+                await client.query('UPDATE categories SET category = $1 WHERE category_id = $2 RETURNING category', [req.body.category, req.body.cat_id])
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
@@ -586,20 +638,41 @@ app.post('/change-category-status', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                await client.query('UPDATE categories SET cat_status = $1 WHERE cat_id = $2 RETURNING cat_status', [req.body.status, req.body.cat_id])
-                .then((result) => {
-                    done();
-                    if (result !== undefined && result.rowCount === 1) {
-                        resp.send({status: 'success', cat_status: result.rows[0].cat_status});
-                    } else {
-                        resp.send({status: 'failed'});
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    done();
-                    resp.send({status: 'error'});
-                });
+                if (req.body.status !== 'Delete') {
+                    await client.query('UPDATE categories SET category_status = $1 WHERE category_id = $2 RETURNING category_status', [req.body.status, req.body.cat_id])
+                    .then((result) => {
+                        done();
+                        if (result !== undefined && result.rowCount === 1) {
+                            resp.send({status: 'success', category_status: result.rows[0].category_status});
+                        } else {
+                            resp.send({status: 'failed'});
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                        resp.send({status: 'error'});
+                    });
+                } else {
+                    await client.query(`
+                    DELETE FROM categories
+                    WHERE category_id = $1
+                    RETURNING category_id`,
+                    [req.body.cat_id])
+                    .then((result) => {
+                        done();
+                        if (result !== undefined && result.rowCount === 1) {
+                            resp.send({status: 'deleted', cat_id: result.rows[0].category_id});
+                        } else {
+                            resp.send({status: 'failed'});
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                        resp.send({status: 'error'});
+                    });
+                }
             });
         } else {
             fn.error(req, resp, 401);

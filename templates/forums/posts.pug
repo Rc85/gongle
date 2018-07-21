@@ -1,5 +1,13 @@
 extends ../forum-layout
 
+block subforum-header
+    script(src='/scripts/functions/posts.js')
+    link(rel='stylesheet', href='/css/vendor/quill.core.css')
+    link(rel='stylesheet', href='/css/vendor/quill.snow.css')
+    script(src='/scripts/vendor/quill.js')
+    script(src='/scripts/editor.js')
+    script(src='/scripts/posts.js')
+
 block content
     section.section-container
         h2 

@@ -3,13 +3,13 @@ $(document).ready(function() {
         e.preventDefault();
         let form = $(this);
 
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/send-message',
             data: $(form).serialize(),
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
 
                 if (resp.status === 'success') {
                     $(form).find('input[type=text], textarea').not('input[name=alt_subject]').val('');
@@ -29,13 +29,13 @@ $(document).ready(function() {
         e.preventDefault();
         let form = $(this);
 
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/star-message',
             data: $(form).serialize(),
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
 
                 if (resp.status === 'success') {
                     $(form).find('button').html('');
@@ -57,12 +57,12 @@ $(document).ready(function() {
         e.preventDefault();
         let url = $(this).attr('href');
 
-        showLoading();
+        App.loading.show();
 
         $.get({
             url: url,
             success: function(resp) {
-                hideLoading();
+                App.loading.hide();
 
                 if (resp.status === 'success') {
                     alertify.success('Friend accepted');
@@ -83,7 +83,7 @@ $(document).ready(function() {
         });
     });
 
-    let recipient = urlParams('u')
+    let recipient = App.url.param('u')
 
     if (recipient) {
         $('#recipient-input').val(recipient);
@@ -99,13 +99,13 @@ $(document).ready(function() {
         .confirm('Are you sure you want to delete this message?' , function(e) {
             e.preventDefault();
 
-            showLoading();
+            App.loading.show();
 
             $.post({
                 url: '/delete-message',
                 data: $(form).serialize(),
                 success: function(resp) {
-                    hideLoading();
+                    App.loading.hide();
                     console.log(resp);
 
                     if (resp.status === 'success') {
@@ -152,13 +152,14 @@ $(document).ready(function() {
 
             if (messages.length > 0) {
                 $.post({
-                    url: '/delete-all-messages',
+                    url: '/delete-all',
                     data: {
-                        messages: messages
+                        type: 'messages',
+                        ids: messages
                     },
                     success: function(resp) {
                         console.log(resp);
-                        hideLoading();
+                        App.loading.hide();
 
                         if (resp.status === 'success') {
                             location.reload();

@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     script(src='/scripts/admin-overview.js')
     link(rel='stylesheet', href='/css/admin.css')
 
@@ -11,11 +11,19 @@ block content
             section.admin-main
                 .d-flex.mb-15
                     .w-50.mr-10.section-container
-                        h3 Site Status
+                        h3
+                            i.fas.fa-stream.mr-5
+                            | Site Status
                         each config, i in configs
                             section.section-list
                                 .list-item
-                                    label #{config.config_name}
+                                    if config.config_name === 'Site'
+                                        - var icon = 'fas fa-bullseye mr-5'
+                                    else
+                                        - var icon = 'fas fa-book mr-5'
+                                    label 
+                                        i(class=icon)
+                                        | #{config.config_name}
                                     if config.status === 'Open'
                                         span.ok-status OPEN
                                     else
@@ -23,9 +31,9 @@ block content
                         each category, key in categories
                             section.categories-list.section-list
                                 header.header.categories-header.col
-                                    span #{key}
+                                    div !{category['icon']} #{key}
                                     i.fas.fa-lg.fa-angle-down
-                                each topic, key in category
+                                each topic, key in category['topics']
                                     section.topics-list.section-list
                                         header.topics-header.header.col
                                             span #{key}
@@ -36,7 +44,9 @@ block content
                                                     span #{key}
                                                     span #{subtopic} Posts
                     section.w-50.section-container
-                        h3 Notifications
+                        h3
+                            i.far.fa-bell.mr-5
+                            | Notifications
                         section.section-list
                             h4 June 1, 2018
                             .list-item

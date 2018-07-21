@@ -1,35 +1,50 @@
 $(document).ready(function() {
-    populateCategoriesSelect();
+    Fetch.categories(function(categories) {
+        for (let category of categories) {
+            $('#select-category').append(
+                $('<option>').attr('value', category.category_id).text(category.category)
+            )
+        }
 
-    $('#select-topic').on('change', function() {
-        $.post({
-            url: '/get-subtopics-by-topics',
-            data: {
-                topic: $(this).val()
-            },
-            success: function(resp) {
-                $('#select-subtopic').empty();
-                $('#select-subtopic').append(
-                    $('<option>')
-                );
+        $('#select-category').on('change', function() {
+            Fetch.topics($(this).val(), function(topics) {
+                $('#select-topic').empty();
+                $('#select-topic').append($('<option>'));
 
-                for (let subtopic of resp.subtopics) {
-                    $('#select-subtopic').append(
-                        $('<option>').attr('value', subtopic.subtopic_id).text(subtopic.subtopic_title)
+                for (let topic of topics) {
+                    $('#select-topic').append(
+                        $('<option>').attr('value', topic.topic_id).text(topic.topic_title)
                     )
                 }
-            }
+            });
         });
     });
 
-    $('#get-details-form').on('submit', function(e) {
+    /* $('#admin-get-details-form').on('submit', function(e) {
         e.preventDefault();
         showLoading();
+        console.log($(this).serialize());
 
-        getPostDetails($(this), 1);
+        //getPostDetails($(this), 1);
+        $.get({
+            url: '/posts?' + $(this).serialize(),
+            success: function(resp) {
+
+            }
+        })
+    }); */
+
+    $('.admin-menu div').on('click', function() {
+        let ele = $(this);
+
+        Admin.status.change(ele, 'posts', function(status) {
+            App.handle.response(status, function() {
+                Toggle.badge(ele, '.admin-post-row', '.post-status');
+            });
+        });
     });
 
-    $('.remove-post-form').on('submit', function(e) {
+    /* $('.remove-post-form').on('submit', function(e) {
         e.preventDefault();
         let form = $(this);
 
@@ -58,7 +73,5 @@ $(document).ready(function() {
             e.preventDefault();
             hideLoading();
         });
-    });
-
-    menuHandler('admin-menu-button', 'admin-menu');
+    }); */
 });

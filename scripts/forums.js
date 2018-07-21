@@ -1,30 +1,4 @@
 $(document).ready(function() {
-    let urlParts = location.href.split('/');
-    let subtopic = urlParts.pop().split('?')[0];
-    let url = new URL(location.href);
-    let urlSearchParams = new URLSearchParams(url.searchParams.toString());
-    let page = urlSearchParams.get('page');
-
-    $('#new-post-button').on('click', function() {
-        $('#post-form').slideToggle();
-
-        toggleButton($(this), 'New Post')
-    });
-
-    if (page) {
-        $.get({
-            url: '/get-num-of-posts-in/' + subtopic + '/' + page,
-            success: function(resp) {
-                console.log(resp);
-                createPagination('.pagination-container', resp.total_posts, 25, resp.obj, location.href.split('?')[0] + '?');
-            }
-        });
-    }
-
-    $($('main').height).on('change', function() {
-        console.log('changed');
-    })
-
     $(function() {
         $('.forum-sidebar-parent').css({'display': 'flex'});
 
@@ -33,12 +7,12 @@ $(document).ready(function() {
             success: function(resp) {
                 if (resp.status === 'success') {
                     for (let i in resp.menu) {
-                        var topics = $('<section>').addClass('mb-15');
+                        let topics = $('<section>').addClass('mb-15');
     
                         for (let key in resp.menu[i]) {
-                            let keyCheck = /General$/;
-                            let newKey = key;
-                            let newLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '');
+                            let keyCheck = /General$/,
+                                newKey = key,
+                                newLink = '/subforums/' + key.toLowerCase().replace(' ', '_').replace('/', '');
     
                             if (keyCheck.test(key)) {
                                 newKey = 'General';
@@ -64,75 +38,26 @@ $(document).ready(function() {
                 }
             },
             complete: function() {
+                // Adjust the sidebar to fit the parent div
                 setTimeout(function() {
-                    let forumSidebar = 'shown';
-                    let forumSidebarParentWidth = $('.forum-sidebar-parent').outerWidth();
-                    let forumsSidebarControlWidth = $('.forum-sidebar-control').outerWidth();
-                    let forumSidebarWidth = forumSidebarParentWidth - forumsSidebarControlWidth;
-                    let forumSidebarHeight = $('body').outerHeight(true) - ($('#top-bar').outerHeight(true) + $('#nav-bar').outerHeight(true) + $('#footer').outerHeight(true) - 1);
+                    let forumSidebar = 'shown',
+                        forumSidebarParentWidth = $('.forum-sidebar-parent').outerWidth(),
+                        forumsSidebarControlWidth = $('.forum-sidebar-control').outerWidth(),
+                        forumSidebarWidth = forumSidebarParentWidth - forumsSidebarControlWidth,
+                        forumSidebarHeight = $('body').outerHeight(true) - ($('#top-bar').outerHeight(true) + $('#nav-bar').outerHeight(true) + $('#footer').outerHeight(true) - 1);
 
                     $('.forum-sidebar-parent').css({'height': forumSidebarHeight, 'left': '0'});
                     $('main').css({'padding-left': forumSidebarParentWidth + 30});
 
-                    $('.forum-sidebar-control').on('click', function() {
-                        var sidebarToggler = $('.forum-sidebar-toggler');
-                        if (forumSidebar === 'shown') {
-                            $('.forum-sidebar-parent').animate({'left': '-' + forumSidebarWidth + 'px'}, function() {
-                                $(sidebarToggler).children('i').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
-                            });
-                            forumSidebar = 'hidden';
-                            $('main').animate({'padding-left': forumSidebarParentWidth - forumSidebarWidth + 30});
-                        } else {
-                            $('.forum-sidebar-parent').animate({'left': '0'}, function() {
-                                $(sidebarToggler).children('i').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
-                            });
-                            forumSidebar = 'shown';
-                            $('main').animate({'padding-left': forumSidebarParentWidth + 30});
-                        }
+                    toggleSidebar('.forum-sidebar-control', '.forum-sidebar-toggler', '.forum-sidebar-parent', forumSidebarParentWidth, forumSidebarWidth, function(value) {
+                        forumSidebar = value;
                     });
-                })
+                });
             }
         });
     });
 
-    function handleTabClick(id) {
-        $('#' + id + '-tab').on('click', function() {
-            $('#forum-body').children().hide();
-            $('#forum-navbar').children().removeClass('active');
-
-            $('#' + id + '-tab').addClass('active');
-            $('#' + id).show();
-        });
-    }
-
-    handleTabClick('popular');
-    handleTabClick('most-active');
-    handleTabClick('new-posts');
-
-    $('#post-form, .reply-post-form').on('submit', function(e) {
-        e.preventDefault();
-
-        let postBody = $(this).find('.ql-editor').html();
-        let data = $(this).serialize() + '&post_body=' + postBody;
-
-        $.post({
-            url: '/post',
-            data: data,
-            success: function(resp) {
-                if (resp.status === 'success') {
-                    location.reload();
-                } else if (resp.status === 'error') {
-                    alertify.error('An error occurred');
-                } else if (resp.status === 'failed') {
-                    alertify.error('Failed to post');
-                } else if (resp.status === 'user not found') {
-                    alertify.error('Are you logged in?');
-                } else if (resp.status === 'banned') {
-                    alertify.error('Your account is banned');
-                } else if (resp.status == 'invalid post') {
-                    alertify.error('Cannot submit blank post')
-                }
-            }
-        })
-    })
+    Toggle.tabs('popular', '#forum-body', '#forum-navbar');
+    Toggle.tabs('most-active', '#forum-body', '#forum-navbar');
+    Toggle.tabs('new-posts', '#forum-body', '#forum-navbar');
 });

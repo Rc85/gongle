@@ -182,6 +182,19 @@ button[name=vote]:disabled {
     @include badges($admin_color);
 }
 
+.user-badge-contrib {
+    @include badges($yellow);
+}
+
+.user-badge-regular {
+    @include badges(rgb(0, 255, 0));
+}
+
+.user-badge-unreliable {
+    @include badges($dark_border_color);
+    color: rgb(255, 255, 255);
+}
+
 .user-badge-owner {
     @include badges($notice_color);
 }
@@ -226,6 +239,25 @@ button[name=vote]:disabled {
         margin-bottom: 5px;
         padding-bottom: 5px;
     }
+}
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.tooltip {
+    position: absolute;
+    top: -20;
+    padding: 10px;
+    @include box-shadow;
+    text-transform: none;
+    font-weight: normal;
+    font-size: 0.8em;
+    background: rgb(255, 255, 255);
+    top: -250%;
+    display: none;
 }
 
 .mod-user-button {

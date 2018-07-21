@@ -1,7 +1,7 @@
 $(document).ready(function() {
-    $('.users-username').on('click', function() {
+    $('.admin-user-username').on('click', function() {
         let header = $(this);
-        let details = $(header).parent().siblings('.user-details');
+        let details = $(header).parents().siblings('.user-details');
 
         $(details).slideToggle(function() {
             if ($(details).css('display') === 'block') {
@@ -12,96 +12,54 @@ $(document).ready(function() {
         });
     });
 
-    $('.privilege-select').on('change', function() {
-        $(this).parent().submit();
+    $('.delete-user-profile-pic').on('click', function() {
+        let button = $(this),
+            user = {
+                id: $(button).attr('data-id'),
+                username: $(button).attr('data-username')
+            };
+
+        Admin.users.delete.profilePic(user, function(resp) {
+            App.handle.response(resp.status, function() {
+                alertify.success('User profile picture deleted');
+
+                $(button).siblings().children('.profile-pic').attr('src', '/images/profile_default.png');
+            });
+        });
     });
 
-    $('.user-privilege-form').on('submit', function(e) {
-        e.preventDefault();
-        let form = $(this);
+    $('.admin-user-privilege-menu .admin-menu div').on('click', function() {
+        let option = $(this),
+            userId = $(option).attr('data-id'),
+            privilege = $(option).attr('data-privilege');
 
-        alertify
-        .okBtn('Yes')
-        .cancelBtn('No')
-        .confirm('Are you sure you want to change this user\'s privilege?', function(e) {
-            e.preventDefault();
-            showLoading();
+        Admin.users.privilege.change(userId, privilege, (resp) => {
+            App.handle.response(resp.status, () => {
+                $(option).parents().siblings('.admin-user-privilege').text(privilege);
+            });
+        });
+    });
 
-            $.post({
-                url: '/change-user-privilege',
-                data: $(form).serialize(),
-                success: function(resp) {
-                    hideLoading();
+    $('.admin-user-status-menu .admin-menu div').on('click', function() {
+        let option = $(this),
+            userId = $(option).attr('data-id'),
+            status = $(option).attr('data-status');
 
-                    if (resp.status === 'success') {
-                        alertify.success('User\'s privilege changed');
-                    } else {
-                        alertify.error('An error occurred');
-                    }
+        if (status !== 'Delete') {
+            Admin.status.change(option, 'users', (resp) => {
+                App.handle.response(resp.status, () => {
+                    Toggle.badge(option, '.admin-user-row', '.admin-user-status');
+                });
+            });
+        } else {
+            Admin.users.delete.account(userId, (resp) => {
+                if (resp.status === 'success') {
+                    $(option).parents('.admin-user-row').remove();
+                    alertify.success('Deleted');
+                } else if (resp.status === 'error') {
+                    alertify.error('An error occurred');
                 }
             });
-        }, function(e) {
-            e.preventDefault();
-            hideLoading();
-        });
-    });
-
-    $('.status-select').on('change', function() {
-        $(this).parent().submit();
-    });
-
-    $('.change-user-status-form').on('submit', function(e) {
-        e.preventDefault();
-        let form = $(this);
-        let select = $(this).children('select');
-        
-        changeUserStatus(form, $(select).val(), '.user-section');
-    });
-
-    $('.delete-user-profile-pic-form').on('submit', function(e) {
-        e.preventDefault();
-        let form = $(this);
-
-        alertify
-        .defaultValue('Your profile picture violates the terms of service.')
-        .prompt('Another reason for deleting this user\'s profile picture?', function(val, e) {
-            e.preventDefault();
-            showLoading();
-
-            $.post({
-                url: '/delete-user-profile-pic',
-                data: $(form).serialize() + '&reason=' + val,
-                success: function(resp) {
-                    hideLoading();
-
-                    if (resp.status === 'success') {
-                        alertify.success('User profile picture deleted');
-
-                        $(form).siblings('.profile-pic').attr('src', '/images/profile_default.png');
-                    } else {
-                        alertify.success('An error occurred');
-                    }
-                }
-            }) 
-        }, function(e) {
-            e.preventDefault();
-            hideLoading();
-        });
-    });
-
-    $('.search-users-form').on('submit', function(e) {
-        e.preventDefault();
-
-        let paramString = '';
-        let searchParams = new URLSearchParams($(this).serialize());
-
-        for (let key of searchParams.keys()) {
-            if (searchParams.get(key) !== '') {
-                let newString = key + '=' + searchParams.get(key) + '&';
-                paramString += newString;
-            }
         }
-
-        location.href = '/admin-page/users?' + paramString;
-    })
+    });
 });

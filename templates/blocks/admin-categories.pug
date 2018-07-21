@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     script(src='/scripts/admin-categories.js')
     link(rel='stylesheet', href='/css/admin.css')
 
@@ -9,7 +9,9 @@ block content
         .d-flex
             include ../inc/admin-sidebar
             section.admin-main
-                h2 Create Category
+                h2 
+                    i.far.fa-plus-square.mr-5
+                    | Create Category
                 section.section-container
                     form#create-category-form(action='/create-category', method='POST')
                         .col.mb-15.align-items-center
@@ -17,37 +19,47 @@ block content
                             input.w-100(type='text', name='category')
                         .text-right
                             input(type='submit', value='Create')
-                h2 Categories
+                h2 
+                    i.fas.fa-align-justify.mr-5
+                    | Categories
                 section.section-container
-                    .pagination-container.mb-15
+                    .mb-15
+                        button.delete-button(type='button') Delete
                     header.header.col
+                        .w-5
+                            input#select-all(type='checkbox', name='select-all')
                         .w-5 ID
-                        .w-35 Category
-                        .w-30 Created On
-                        .w-15 Creatd By
+                        .w-35.category-header
+                            .tooltip Click a title to rename
+                            i.far.fa-question-circle.mr-5.tooltip-button
+                            | Category
+                        .w-15 Created By
+                        .w-25 Creatd On
                         .w-10.text-center Status
                         .w-5
                     each category, i in categories
-                        .col
-                            .w-5 #{category.cat_id}
+                        .col.category-row
+                            .w-5
+                                input.select-item(type='checkbox', name='select-item', data-id=category.category_id)
+                            .w-5 #{category.category_id}
                             .w-35.category-title-container
                                 .category-title #{category.category}
                                 form.rename-category(action='/rename-category', method='post')
-                                    input(type='hidden', name='cat_id', value=category.cat_id)
+                                    input(type='hidden', name='category_id', value=category.category_id)
                                     .d-flex
                                         input(type='text', name='category')
                                         input.cancel-rename-category.ml-10(type='button', value='Cancel')
-                            .w-30 #{category.cat_created_on}
                             .w-15 #{category.cat_created_by}
+                            .w-25 #{category.cat_created_on}
                             .w-10.cat-status.text-center
-                                if category.cat_status === 'Open'
-                                    span.user-badge.success-badge #{category.cat_status}
+                                if category.category_status === 'Open'
+                                    span.user-badge.success-badge #{category.category_status}
                                 else
-                                    span.user-badge.error-badge #{category.cat_status}
+                                    span.user-badge.error-badge #{category.category_status}
                             .w-5.text-right
-                                .status-option-container
-                                    i.fas.fa-lg.fa-ellipsis-h.status-option-button
-                                    .status-option-menu
-                                        .status-option(data-cat-id=category.cat_id) Open
-                                        .status-option(data-cat-id=category.cat_id) Close
-                    .pagination-container.mt-15
+                                .admin-menu-container
+                                    i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
+                                    .admin-menu
+                                        div(data-id=category.category_id, data-status='Open') Open
+                                        div(data-id=category.category_id, data-status='Closed') Close
+                                        div(data-id=category.category_id, data-status='Delete') Delete

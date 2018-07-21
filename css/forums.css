@@ -60,17 +60,14 @@
   border-top-right-radius: 3px;
   padding: 10px;
   margin-right: 5px;
+  color: #199664;
   cursor: pointer;
 }
 #forum-navbar .forum-nav-tabs h4 {
   margin: 0;
 }
-#forum-navbar a {
-  color: #199664;
-}
-#forum-navbar a:hover {
-  color: #19c896;
-  text-decoration: underline;
+#forum-navbar .forum-nav-tabs:hover {
+  background: #c8c8c8;
 }
 
 #forum-body {

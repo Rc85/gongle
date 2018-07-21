@@ -2474,6 +2474,19 @@ button[name=vote]:disabled {
   background: linear-gradient(200deg, #ff2fff, #c800c8);
 }
 
+.user-badge-contrib {
+  background: linear-gradient(200deg, #ffff66, yellow);
+}
+
+.user-badge-regular {
+  background: linear-gradient(200deg, #66ff66, lime);
+}
+
+.user-badge-unreliable {
+  background: linear-gradient(200deg, #979797, #646464);
+  color: white;
+}
+
 .user-badge-owner {
   background: linear-gradient(200deg, #ffb166, #ff7d00);
 }
@@ -2517,6 +2530,25 @@ button[name=vote]:disabled {
   justify-content: space-between;
   margin-bottom: 5px;
   padding-bottom: 5px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.tooltip {
+  position: absolute;
+  top: -20;
+  padding: 10px;
+  box-shadow: 0 3px 5px #444444;
+  text-transform: none;
+  font-weight: normal;
+  font-size: 0.8em;
+  background: white;
+  top: -250%;
+  display: none;
 }
 
 .mod-user-button {

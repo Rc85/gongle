@@ -3,3 +3,4 @@ node_modules/
 routers-backup/
 database.pgsql
 aws_commands.txt
+scripts-backup/

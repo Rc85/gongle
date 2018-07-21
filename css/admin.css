@@ -46,11 +46,7 @@
   padding-left: 20px;
 }
 
-.user-details-profile-pic {
-  position: relative;
-}
-
-.delete-user-profile-pic-form {
+.delete-user-profile-pic {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -60,17 +56,16 @@
   display: none;
 }
 
-.category-title-container {
-  position: relative;
+.user-details {
+  margin-left: 30px;
+  border-left: 5px solid #199664;
+  background: #c8c8c8;
+  font-size: 0.8em;
 }
 
 .rename-category {
   position: absolute;
   top: 0;
-}
-
-.users-username {
-  cursor: pointer;
 }
 
 .admin-post-form button {
@@ -109,10 +104,6 @@
   border: 1px solid #c8c8c8;
 }
 
-.topics-header, .categories-header {
-  cursor: pointer;
-}
-
 .user-fields {
   width: 75%;
   display: flex;
@@ -136,40 +127,16 @@
   background: #F0F0F0;
 }
 
-.admin-post-row-title {
-  cursor: pointer;
-}
-
 .admin-post-row-title:hover {
   text-decoration: underline;
 }
 
-#change-category-status-form, .admin-menu-container {
+#change-category-status-form, .admin-menu-container, .category-title-container, .category-header, .user-details-profile-pic {
   position: relative;
 }
 
-.status-option, .status-option-button, .admin-menu-button, .admin-menu div {
+.admin-menu-button, .admin-menu div, .admin-user-username, .admin-post-row-title, .topics-header, .categories-header, .user-details-profile-pic {
   cursor: pointer;
-}
-
-.status-option-menu {
-  position: absolute;
-  display: none;
-  font-size: 0.8em;
-  z-index: 9999;
-  box-shadow: 0 3px 5px #444444;
-}
-.status-option-menu .status-option {
-  text-align: center;
-  padding: 10px;
-  background: white;
-  border: 1px solid #c8c8c8;
-}
-.status-option-menu .status-option:not(:first-child) {
-  border-top: 0;
-}
-.status-option-menu .status-option:hover {
-  background: #c8c8c8;
 }
 
 .admin-menu-button {

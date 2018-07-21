@@ -13,7 +13,7 @@ if (process.env.NODE_ENV == 'production') {
         max: 20,
         ssl: true
     });
-} else if (process.env.NODE_DEV === 'development') {
+} else if (process.env.NODE_ENV === 'development') {
     db = new pg.Pool({
         user: process.env.PGSQL_USER,
         host: process.env.DATABASE_URL,

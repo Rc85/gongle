@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     script(src='/scripts/admin-users.js')
     link(rel='stylesheet', href='/css/admin.css')
 
@@ -9,7 +9,9 @@ block content
         .d-flex
             include ../inc/admin-sidebar
             section.admin-main
-                h2 Search
+                h2
+                    i.fas.fa-search.mr-5
+                    | Search
                 section.section-container
                     form.search-users-form.mb-15(action='/admin-page/users', method='get')
                         .col.mb-15
@@ -25,7 +27,8 @@ block content
                                     option(value='Unreliable') Unreliable
                                     option(value='Regular') Regular
                                     option(value='Moderator') Moderator
-                                    option(value='Administrator') Administrator
+                                    if user.privilege === 3
+                                        option(value='Administrator') Administrator
                             .w-33.d-flex.align-items-center
                                 label.mr-10 Status:
                                 select.w-100(name='user_status')
@@ -37,13 +40,109 @@ block content
                                     option(value='Deleted') Deleted
                         .text-right
                             input(type='submit', value='Search')
-                h2 Users
-                each u, i in users
-                    section.section-container.user-section(id='user-' + u.user_id)
-                        header.col
-                            h3.users-username [##{u.user_id}] #{u.username} 
+                h2
+                    i.fas.fa-users.mr-5
+                    | Users
+                if users.length > 0
+                    section.section-container
+                        header.header.col
+                            .w-5 ID
+                            .w-55 Username
+                            .w-10 Privilege
+                            .w-10
+                            .w-10 Status
+                            .w-10
+                        each u, i in users
+                            .admin-user-row
+                                .col
+                                    .w-5 #{u.user_id}
+                                    .w-55.d-flex
+                                        .admin-user-username
+                                            i.fas.fa-angle-down.mr-10
+                                            span #{u.username}
+                                    .w-10.d-flex.admin-user-privilege
+                                        if u.privilege === 0
+                                            | User
+                                        else if u.privilege === 1
+                                            | Moderator
+                                        else if u.privilege === 2
+                                            | Administrator
+                                        else if u.privilege === 3
+                                            | Owner
+                                    .w-10
+                                        .admin-user-privilege-menu.admin-menu-container.ml-5
+                                            i.fas.fa-ellipsis-h.admin-menu-button
+                                            .admin-menu
+                                                div(data-id=u.user_id, data-privilege='User') User
+                                                div(data-id=u.user_id, data-privilege='Moderator') Moderator
+                                                if user.privilege > 2
+                                                    div(data-id=u.user_id, data-privilege='Administrator') Administrator
+                                    .w-10.admin-user-status
+                                        +userStatus(u)
+                                    .w-10
+                                        .admin-user-status-menu.admin-menu-container.ml-5
+                                            i.fas.fa-ellipsis-h.admin-menu-button
+                                            .admin-menu
+                                                div(data-id=u.user_id, data-status='Active') Activate
+                                                div(data-id=u.user_id, data-status='Suspended') Temporary Ban
+                                                div(data-id=u.user_id, data-status='Banned') Permanent Ban
+                                                div(data-id=u.user_id, data-status='Delete') Delete
+                                section.user-details
+                                    .col.align-items-start
+                                        .w-15.user-details-profile-pic
+                                            a(href='/profile?u=' + u.username)
+                                                img.profile-pic.w-100(src=u.avatar_url)
+                                            button.delete-user-profile-pic(type='submit', data-id=u.user_id, data-username=u.username)
+                                                    i.fas.fa-lg.fa-times
+                                        .user-fields
+                                            .col.w-45
+                                                .w-40
+                                                    b Email:
+                                                .w-60 #{u.email}
+                                            .col.w-45
+                                                .w-40
+                                                    b Last Login: 
+                                                .w-60 #{u.last_login}
+                                            .col.w-45
+                                                .w-40
+                                                    b Email Notification: 
+                                                if u.receive_email
+                                                    .w-60 Yes
+                                                else
+                                                    .w-60 No
+                                            .col.w-45
+                                                .w-40
+                                                    b Show Online: 
+                                                if u.show_online
+                                                    .w-60 Yes
+                                                else
+                                                    .w-60 No
+                                            .col.w-45
+                                                .w-40
+                                                    b Title: 
+                                                .w-60
+                                                    if u.user_level === 'Newcomer'
+                                                        span.user-badge.user-badge-newcomer Newcomer
+                                                    else if u.user_level === 'Moderator'
+                                                        span.user-badge.user-badge-moderator Moderator
+                                                    else if u.user_level === 'Administrator'
+                                                        span.user-badge.user-badge-admin Administrator
+                                            .col.w-45
+                                                .w-40
+                                                    b Created On: 
+                                                .w-60 #{u.user_created}
+                                            if u.user_confirmed !== 'Invalid date'
+                                                .col.w-45
+                                                    .w-40
+                                                        b Confirmed On: 
+                                                    .w-60 #{u.user_confirmed}
+                            
+
+
+
+                            //-h3.users-username [##{u.user_id}] #{u.username} 
                                 i.fas.fa-lg.fa-angle-down
-                            .d-flex.align-items-start
+                            //-.d-flex.align-items-start
                                 if u.user_status === 'Pending'
                                     span.user-status.user-badge.pending-badge.mr-5 #{u.user_status}
                                 else if u.user_status === 'Active'
@@ -91,54 +190,55 @@ block content
                                         option(value='Suspended', selected=tempSelected) Temporary Ban
                                         option(value='Banned', selected=permSelected) Permanent Ban
                                         option(value='Deleted', selected=deleteSelected) Delete
-                        section.user-details
-                            .col.align-items-start
-                                .w-15.user-details-profile-pic
-                                    img.profile-pic.w-100(src=u.avatar_url)
-                                    form.delete-user-profile-pic-form(action='/delete-user-profile-pic', method='POST')
-                                        input(type='hidden', name='username', value=u.username)
-                                        input(type='hidden', name='user_id', value=u.user_id)
-                                        button(type='submit')
-                                            i.fas.fa-lg.fa-times
-                                .user-fields
-                                    .col.w-45
-                                        .w-40
-                                            b Email:
-                                        .w-60 #{u.email}
-                                    .col.w-45
-                                        .w-40
-                                            b Last Login: 
-                                        .w-60 #{u.last_login}
-                                    .col.w-45
-                                        .w-40
-                                            b Email Notification: 
-                                        if u.receive_email
-                                            .w-60 Yes
-                                        else
-                                            .w-60 No
-                                    .col.w-45
-                                        .w-40
-                                            b Show Online: 
-                                        if u.show_online
-                                            .w-60 Yes
-                                        else
-                                            .w-60 No
-                                    .col.w-45
-                                        .w-40
-                                            b Title: 
-                                        .w-60
-                                            if u.user_level === 'Newcomer'
-                                                span.user-badge.user-badge-newcomer Newcomer
-                                            else if u.user_level === 'Moderator'
-                                                span.user-badge.user-badge-moderator Moderator
-                                            else if u.user_level === 'Administrator'
-                                                span.user-badge.user-badge-admin Administrator
-                                    .col.w-45
-                                        .w-40
-                                            b Created On: 
-                                        .w-60 #{u.user_created}
-                                    if u.user_confirmed !== 'Invalid date'
-                                        .col.w-45
-                                            .w-40
-                                                b Confirmed On: 
-                                            .w-60 #{u.user_confirmed}
+                                //-section.user-details
+                                    .col.align-items-start
+                                        .w-15.user-details-profile-pic
+                                            a(href='/profile?u=' + u.username)
+                                                img.profile-pic.w-100(src=u.avatar_url)
+                                            form.delete-user-profile-pic-form(action='/delete-user-profile-pic', method='POST')
+                                                input(type='hidden', name='username', value=u.username)
+                                                input(type='hidden', name='user_id', value=u.user_id)
+                                                button(type='submit')
+                                                    i.fas.fa-lg.fa-times
+                                        .user-fields
+                                            .col.w-45
+                                                .w-40
+                                                    b Email:
+                                                .w-60 #{u.email}
+                                            .col.w-45
+                                                .w-40
+                                                    b Last Login: 
+                                                .w-60 #{u.last_login}
+                                            .col.w-45
+                                                .w-40
+                                                    b Email Notification: 
+                                                if u.receive_email
+                                                    .w-60 Yes
+                                                else
+                                                    .w-60 No
+                                            .col.w-45
+                                                .w-40
+                                                    b Show Online: 
+                                                if u.show_online
+                                                    .w-60 Yes
+                                                else
+                                                    .w-60 No
+                                            .col.w-45
+                                                .w-40
+                                                    b Title: 
+                                                .w-60
+                                                    if u.user_level === 'Newcomer'
+                                                        span.user-badge.user-badge-newcomer Newcomer
+                                                    else if u.user_level === 'Moderator'
+                                                        span.user-badge.user-badge-moderator Moderator
+                                                    else if u.user_level === 'Administrator'
+                                                        span.user-badge.user-badge-admin Administrator
+                                            .col.w-45
+                                                .w-40
+                                                    b Created On: 
+                                                .w-60 #{u.user_created}
+                                            if u.user_confirmed !== 'Invalid date'
+                                                .col.w-45
+                                                    .w-40
+                                                        b Confirmed On: 
+                                                    .w-60 #{u.user_confirmed}

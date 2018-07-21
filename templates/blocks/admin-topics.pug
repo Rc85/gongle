@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     script(src='/scripts/admin-topics.js')
     link(rel='stylesheet', href='/css/admin.css')
 
@@ -9,7 +9,59 @@ block content
         .d-flex
             include ../inc/admin-sidebar
             section.admin-main
+                h2
+                    i.fas.fa-search.mr-5
+                    | Search
                 section.section-container.subtopic-settings
-                    +adminSearchForm('/get-subtopic-details', false)
-                    #settings
-                        
+                    +adminSearchForm('/admin-page/topics', false)
+                    .topics-container
+                        if results.length > 0
+                            header.header.col
+                                .w-5
+                                    input#select-all(type='checkbox', name='select-all')
+                                .w-5 ID
+                                .w-25 Name
+                                .w-15 Belongs To
+                                .w-15 Created By
+                                .w-20 Created On
+                                .w-10 Status
+                                .w-5
+                            .create-topic.mb-15
+                                form.mb-15.create-topic-form(action='/create-topic', method='POST')
+                                    input(type='hidden', name='id', value=results[0].belongs_to_id)
+                                    input(type='hidden', name='type', value=type)
+                                    .d-flex.align-items-center
+                                        .w-25
+                                            if type === 'topic'
+                                                | Create in #{results[0].belongs_to}
+                                            else
+                                                | Create in #{results[0].category}
+                                                i.fas.fa-angle-right.mr-10.ml-10
+                                                | #{results[0].belongs_to}
+                                        input.w-75(type='text', name='title')
+                                        input.ml-10(type='submit', value='Create')
+                            .admin-topics
+                                each topic, i in results
+                                    .col.admin-topic-row
+                                        .w-5
+                                            input.select-item(type='checkbox', name='select-item')
+                                        .w-5 #{topic.id}
+                                        .w-25 #{topic.title}
+                                        .w-15 #{topic.belongs_to}
+                                        .w-15 #{topic.created_by}
+                                        .w-20 #{topic.created_on}
+                                        .w-10
+                                            if topic.status === 'Open'
+                                                span.user-badge.success-badge #{topic.status}
+                                            else if topic.status === 'Closed'
+                                                span.user-badge.error-badge #{topic.status}
+                                            else if topic.status === 'Removed'
+                                                span.user-badge.critical-badge #{topic.status}
+                                        .w-5
+                                            .admin-menu-container
+                                                i.fas.fa-ellipsis-h.admin-menu-button
+                                                .admin-menu
+                                                    div(data-id=topic.id, data-status='Open', data-type=type) Open
+                                                    div(data-id=topic.id, data-status='Closed', data-type=type) Close
+                                                    div(data-id=topic.id, data-status='Removed', data-type=type) Remove
+                                                    div(data-id=topic.id, data-status='Delete', data-type=type) Delete

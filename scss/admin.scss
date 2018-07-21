@@ -52,11 +52,7 @@
     padding-left: 20px;
 }
 
-.user-details-profile-pic {
-    position: relative;
-}
-
-.delete-user-profile-pic-form {
+.delete-user-profile-pic {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -66,17 +62,16 @@
     display: none;
 }
 
-.category-title-container {
-    position: relative;
+.user-details {
+    margin-left: 30px;
+    border-left: 5px solid $secondary_color;
+    background: $light_border_color;
+    font-size: 0.8em;
 }
 
 .rename-category {
     position: absolute;
     top: 0;
-}
-
-.users-username {
-    cursor: pointer;
 }
 
 .admin-post-form {
@@ -118,10 +113,6 @@
     border: 1px solid $light_border_color;
 }
 
-.topics-header, .categories-header {
-    cursor: pointer;
-}
-
 .user-fields {
     width: 75%;
     display: flex;
@@ -145,45 +136,17 @@
     background: #F0F0F0;
 }
 
-.admin-post-row-title {
-    cursor: pointer;
-}
-
 .admin-post-row-title:hover {
     text-decoration: underline;
 }
 
-#change-category-status-form, .admin-menu-container {
+#change-category-status-form, .admin-menu-container, .category-title-container, .category-header, .user-details-profile-pic {
     position: relative;
 }
 
-.status-option, .status-option-button, .admin-menu-button, .admin-menu div {
+.admin-menu-button, .admin-menu div, .admin-user-username, .admin-post-row-title, .topics-header, .categories-header, .user-details-profile-pic {
     cursor: pointer;
 }
-
-.status-option-menu {
-    position: absolute;
-    display: none;
-    font-size: 0.8em;
-    z-index: 9999;
-    @include box-shadow;
-
-    .status-option {
-        text-align: center;
-        padding: 10px;
-        background: rgb(255, 255, 255);
-        border: 1px solid $light_border_color;
-
-        &:not(:first-child) {
-            border-top: 0;
-        }
-
-        &:hover {
-            background: $light_border_color;
-        }
-    }
-}
-
 
 .admin-menu-button {
     background: transparent;

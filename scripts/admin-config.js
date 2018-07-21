@@ -4,7 +4,7 @@ function changeConfig(config) {
         let status = $(this).attr('data-status'),
             configId = $(this).attr('data-config-id');
 
-        showLoading();
+        App.loading.show();
 
         $.post({
             url: '/change-config',
@@ -14,7 +14,7 @@ function changeConfig(config) {
             },
             success: function(resp) {
                 console.log(resp);
-                hideLoading();
+                App.loading.hide();
 
                 if (resp.status === 'success') {
                     if (resp.config === 'Site') {
@@ -47,8 +47,6 @@ $(document).ready(function() {
         $(this).submit();
     });
 
-    menuHandler('admin-menu-button', 'admin-menu');
-
     changeConfig('.site-config-option');
     changeConfig('.reg-config-option');
 
@@ -58,14 +56,14 @@ $(document).ready(function() {
         console.log($(this))
 
         if ($(this).children('select').val() !== '') {
-            showLoading();
+            App.loading.show();
 
             $.post({
                 url: '/change-config',
                 data: $(form).serialize(),
                 success: function(resp) {
                     console.log(resp);
-                    hideLoading();
+                    App.loading.hide();
 
                     if (resp.status === 'success') {
                         if (resp.config === 'Site') {

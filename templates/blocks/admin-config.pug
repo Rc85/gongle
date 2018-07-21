@@ -1,6 +1,6 @@
-extends ../layout
+extends ../admin-layout
 
-block header
+block admin-header
     script(src='/scripts/admin-config.js')
     link(rel='stylesheet', href='/css/admin.css')
 
@@ -9,6 +9,9 @@ block content
         .d-flex
             include ../inc/admin-sidebar
             section.admin-main
+                h2
+                    i.fas.fa-cogs.mr-5
+                    | Site Configurations
                 section.section-container
                     .col
                         div

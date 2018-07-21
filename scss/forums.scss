@@ -69,20 +69,16 @@
         border-top-right-radius: 3px;
         padding: 10px;
         margin-right: 5px;
+        color: $secondary_color;
         cursor: pointer;
         
         h4 {
             margin: 0;
         }
-    }
 
-    a {
-        color: $secondary_color;
-    }
-
-    a:hover {
-        color: $primary_color;
-        text-decoration: underline;
+        &:hover {
+            background: $light_border_color;
+        }
     }
 }
 
