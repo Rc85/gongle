@@ -488,13 +488,21 @@ app.get('/forums/posts/post-details', function(req, resp) {
         results['replies'] = {};
 
         if (reply_id) { // if the reply_id query string is provided, get that reply only
-            let reply = await client.query("SELECT * FROM posts LEFT JOIN users ON posts.post_user = users.username WHERE post_id = $1 AND post_status != 'Removed'", [reply_id, show_posts])
+            let reply = await client.query(`SELECT orig.*, p2.post_id AS p2_post_id, p2.post_user AS p2_post_user, p2.post_created AS p2_post_created, p2.post_body AS p2_post_body, p2.reply_to_post_id AS p2_reply_to_post_id, users.user_status, users.user_id, users.last_login
+            FROM posts orig
+            LEFT JOIN users ON orig.post_user = users.username
+            LEFT JOIN posts p2 ON orig.reply_to_post_id = p2.post_id
+            WHERE orig.post_id = $1
+            AND orig.post_status != 'Removed'`, [reply_id])
             .then((result) => {
                 done();
                 if (result !== undefined && result.rows.length === 1) {
                     result.rows[0].post_created = moment(result.rows[0].post_created).fromNow();
                     result.rows[0].post_modified = moment(result.rows[0].post_modified).fromNow();
                     result.rows[0].last_login = moment(result.rows[0].last_login).fromNow();
+                    result.rows[0].p2_post_created = moment(result.rows[0].p2_post_created).fromNow();
+
+                    console.log(result.rows[0]);
 
                     return result.rows[0];
                 }

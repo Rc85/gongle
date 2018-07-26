@@ -42,5 +42,13 @@ $(document).ready(function() {
         });
     });
 
-    toggleContent('.quote-header', '.quote-body');
+    $('.quote-header').on('click', function() {
+        $(this).siblings('.quote-body').slideToggle();
+    });
+
+    $('.quote-header button').on('click', function(e) {
+        e.stopPropagation();
+    });
+
+    //toggleContent('.quote-header', '.quote-body');
 });

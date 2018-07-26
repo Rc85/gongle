@@ -1,5 +1,7 @@
 $(document).ready(function() {
-    toggleContent('.category-bar', '.category-list-parent')
+    $('.category-bar').on('click', function() {
+        $(this).siblings('.category-list-parent').slideToggle();
+    });
 
     $('.category-title').on('click', function(e) {
         e.stopPropagation();

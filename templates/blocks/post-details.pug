@@ -71,24 +71,25 @@ block content
                         .w-10
                             +vote(post)
                     section
-                        section.quote
-                            header.col.quote-header
-                                h4 Original post by 
-                                    if post.p2_post_user === posts.post.post_user
-                                        mark
+                        if post.p2_post_id !== null
+                            section.quote
+                                header.col.quote-header
+                                    h4 Original post by 
+                                        if post.p2_post_user === posts.post.post_user
+                                            mark
+                                                a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
+                                        else
                                             a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
-                                    else
-                                        a(href='/profile?u=' + post.p2_post_user) #{post.p2_post_user}
-                                    |  #{post.p2_post_created} 
-                                    button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&rid=' + post.p2_post_id + '"')
-                                        i.fa.fa-angle-double-right
-                                i.fas.fa-lg.fa-angle-down
-                            section.quote-body
-                                .text-left
-                                    i.fas.fa-quote-left
-                                .mx-auto.w-90 #{post.p2_post_body}
-                                .text-right
-                                    i.fas.fa-quote-right.ml-auto
+                                        |  #{post.p2_post_created} 
+                                        button(type='button', onClick='javascript:location.href="/forums/posts/post-details?pid=' + posts.post.post_id + '&rid=' + post.p2_post_id + '"')
+                                            i.fa.fa-angle-double-right
+                                    i.fas.fa-lg.fa-angle-down
+                                section.quote-body
+                                    .text-left
+                                        i.fas.fa-quote-left
+                                    .mx-auto.w-90 #{post.p2_post_body}
+                                    .text-right
+                                        i.fas.fa-quote-right.ml-auto
                         section.post-body.ql-editor.mb-15 !{post.post_body}
                     footer
                         +postAction(posts.post, post)
