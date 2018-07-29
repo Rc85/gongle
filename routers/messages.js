@@ -33,7 +33,7 @@ app.post('/send-message', function(req, resp) {
     }
 });
 
-app.post('/star-message', function(req, resp) {
+app.post('/save-message', function(req, resp) {
     if (req.session.user) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }

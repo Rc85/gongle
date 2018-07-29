@@ -13,18 +13,26 @@ $(document).ready(function() {
     });
 
     $('.delete-user-profile-pic').on('click', function() {
-        let button = $(this),
-            user = {
-                id: $(button).attr('data-id'),
-                username: $(button).attr('data-username')
-            };
+        let button = $(this);
+        let user = {
+            id: $(button).attr('data-id'),
+            username: $(button).attr('data-username')
+        };
+        
+        alertify
+        .defaultValue('Your profile picture violates the terms of service.')
+        .prompt('Another reason for deleting this user\'s profile picture?', function(val, e) {
+            e.preventDefault();
 
-        Admin.users.delete.profilePic(user, function(resp) {
-            App.handle.response(resp.status, function() {
-                alertify.success('User profile picture deleted');
-
-                $(button).siblings().children('.profile-pic').attr('src', '/images/profile_default.png');
+            Admin.users.delete.profilePic(user, val, function(resp) {
+                App.handle.response(resp, function() {
+                    alertify.success('User profile picture deleted');
+                    $(button).siblings().children('.profile-pic').attr('src', '/images/profile_default.png');
+                });
             });
+        },
+        function() {
+            App.loading.hide();
         });
     });
 
@@ -34,7 +42,10 @@ $(document).ready(function() {
             privilege = $(option).attr('data-privilege');
 
         Admin.users.privilege.change(userId, privilege, (resp) => {
-            App.handle.response(resp.status, () => {
+            App.handle.response(resp, () => {
+                $('.admin-menu').hide();
+
+                alertify.success('User privilege changed');
                 $(option).parents().siblings('.admin-user-privilege').text(privilege);
             });
         });
@@ -47,19 +58,33 @@ $(document).ready(function() {
 
         if (status !== 'Delete') {
             Admin.status.change(option, 'users', (resp) => {
-                App.handle.response(resp.status, () => {
+                $('.admin-menu').hide();
+                
+                App.handle.response(resp, () => {
+                    alertify.success('User status changed');
                     Toggle.badge(option, '.admin-user-row', '.admin-user-status');
                 });
             });
         } else {
-            Admin.users.delete.account(userId, (resp) => {
-                if (resp.status === 'success') {
-                    $(option).parents('.admin-user-row').remove();
-                    alertify.success('Deleted');
-                } else if (resp.status === 'error') {
-                    alertify.error('An error occurred');
-                }
+            alertify
+            .okBtn('Yes')
+            .cancelBtn('No')
+            .confirm('Are you sure you want to delete this user? This cannot be reversed.', (e) => {
+                e.preventDefault();
+
+                Admin.users.delete.account(userId, (resp) => {
+                    App.handle.response(resp, () => {
+                        alertify.success('User deleted');
+                        $(option).parents('.admin-user-row').remove();
+                    });
+                });
+            },
+            function() {
+                App.loading.hide();
+                return false;
             });
         }
+
+        $('.admin-menu').hide();
     });
 });

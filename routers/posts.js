@@ -25,31 +25,76 @@ app.post('/post', function(req, resp) {
                     resp.send({status: 'error'});
                 });
 
-                if (userStatus[0].user_status === 'Suspended') {
+                let status = await client.query(`SELECT category_status, topic_status, subtopic_status, post_status
+                FROM posts
+                LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                LEFT JOIN categories ON topics.topic_category = categories.category_id
+                WHERE posts.post_id = $1`, [req.body.belongs_to_post_id])
+                .then((result) => {
+                    if (result !== undefined && result.rows.length === 1) {
+                        return result.rows[0];
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
                     done();
-                    resp.send({status: 'banned'});
-                } else if (userStatus[0].user_status === 'Banned') {
-                    done();
-                    resp.send({status: 'banned'});
-                } else if (userStatus.length === 0) {
-                    done();
-                    resp.send({status: 'user not found'});
-                } else {
-                    await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6, $7)', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id, req.body.tag])
-                    .then((result) => {
-                        done();
-                        if (result !== undefined && result.rowCount === 1) {
-                            resp.send({status: 'success'});
-                        } else {
-                            resp.send({status: 'failed'});
+                    resp.send({status: 'error'});
+                });
+
+                let allowPost;
+
+                if (status !== undefined) {
+                    if (status.category_status === 'Open') {
+                        allowPost = true;
+
+                        if (status.topic_status !== 'Open') {
+                            allowPost = false;
                         }
-                    })
-                    .catch((err) => {
-                        console.log(err);
+
+                        if (status.subtopic_status !== 'Open') {
+                            allowPost = false;
+                        }
+
+                        if (status.post_status !== 'Open') {
+                            allowPost = false;
+                        }
+                    } else {
+                        allowPost = false;
+                    }
+                } else {
+                    allowPost = false;
+                }
+
+                if (allowPost) {
+                    if (userStatus[0].user_status === 'Suspended') {
                         done();
-                        resp.send({status: 'error'});
-                    });
-                }      
+                        resp.send({status: 'banned'});
+                    } else if (userStatus[0].user_status === 'Banned') {
+                        done();
+                        resp.send({status: 'banned'});
+                    } else if (userStatus.length === 0) {
+                        done();
+                        resp.send({status: 'user not found'});
+                    } else {
+                        await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6, $7)', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id, req.body.tag])
+                        .then((result) => {
+                            done();
+                            if (result !== undefined && result.rowCount === 1) {
+                                resp.send({status: 'success'});
+                            } else {
+                                resp.send({status: 'failed'});
+                            }
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            done();
+                            resp.send({status: 'error'});
+                        });
+                    }
+                } else {
+                    fn.error(req, resp, 403);
+                }    
             });
         }
     } else {

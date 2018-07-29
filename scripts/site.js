@@ -130,7 +130,7 @@ $(document).ready(function() {
         App.loading.show();
 
         $.post({
-            url: '/change-post-status',
+            url: '/change-status',
             data: $(this).serialize(),
             success: function(resp) {
                 App.loading.hide();

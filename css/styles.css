@@ -117,7 +117,7 @@ label {
 }
 
 small {
-  font-size: 0.7em;
+  font-size: 0.8em;
 }
 
 .d-flex {
@@ -2511,6 +2511,10 @@ button[name=vote]:disabled {
   background: red;
 }
 
+.post-tag-badge {
+  background: #19c896;
+}
+
 .closed, .admin-login {
   height: 100vh;
   display: flex;
@@ -2572,7 +2576,7 @@ button[name=vote]:disabled {
   z-index: 10;
 }
 .post-type-button span {
-  border: 1px solid #007de1;
+  border: 1px solid #19c896;
   padding: 5px;
   border-radius: 3px;
 }
@@ -2581,7 +2585,7 @@ button[name=vote]:disabled {
 }
 
 .post-type-button.active span {
-  background: #007de1;
+  background: #19c896;
 }
 .post-type-button.active i {
   opacity: 1;
@@ -3047,4 +3051,4 @@ span.fa-stack {
   width: 100%;
 }
 
-/*# sourceMappingURL=css/styles.css.map */
+/*# sourceMappingURL=styles.css.map */

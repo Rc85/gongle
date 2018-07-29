@@ -53,57 +53,106 @@ const Admin = (() => {
                 }
             },
             delete: {
-                profilePic: (user, callback) => {
-                    alertify
-                    .defaultValue('Your profile picture violates the terms of service.')
-                    .prompt('Another reason for deleting this user\'s profile picture?', function(val, e) {
-                        e.preventDefault();
-                        App.loading.show();
+                profilePic: (user, reason, callback) => {
+                    App.loading.show();
 
-                        $.post({
-                            url: '/delete-user-profile-pic',
-                            data: {
-                                user_id: user.id,
-                                username: user.username,
-                                reason: val
-                            },
-                            success: function(resp) {
-                                App.loading.hide();
+                    $.post({
+                        url: '/delete-user-profile-pic',
+                        data: {
+                            user_id: user.id,
+                            username: user.username,
+                            reason: reason
+                        },
+                        success: function(resp) {
+                            App.loading.hide();
 
-                                callback(resp);
-                            }
-                        }) 
-                    }, function(e) {
-                        e.preventDefault();
-                        App.loading.hide();
+                            callback(resp);
+                        }
                     });
                 },
                 account: (userId, callback) => {
-                    alertify
-                    .okBtn('Yes')
-                    .cancelBtn('No')
-                    .confirm('Are you sure you want to delete this user? This cannot be reversed.', (e) => {
-                        e.preventDefault();
-                        App.loading.show();
+                    App.loading.show();
 
-                        $.post({
-                            url: '/delete-user',
-                            data: {
-                                user_id: userId
-                            },
-                            success: (resp) => {
-                                App.loading.hide();
+                    $.post({
+                        url: '/delete-user',
+                        data: {
+                            user_id: userId
+                        },
+                        success: (resp) => {
+                            App.loading.hide();
 
-                                callback(resp);
-                            }
-                        });
-                    },
-                    () => {
-                        App.loading.hide();
-                        return false;
+                            callback(resp);
+                        }
                     });
                 }
             }
-        }   
+        },
+        forum: {
+            move: (moveItem, moveTo, type, callback) => {
+                App.loading.show();
+
+                $.post({
+                    url: '/move-forum',
+                    data: {
+                        item: moveItem,
+                        to: moveTo,
+                        type: type
+                    },
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
+            },
+            /**
+             * @param {Number} id The id to be deleted
+             * @param {String} type A string indicate where to delete from (topic or subtopic)
+             */
+            delete: (id, type, callback) => {
+                App.loading.show();
+
+                $.post({
+                    url: '/delete-forum',
+                    data: {
+                        id: id,
+                        type: type
+                    },
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
+            },
+            create: (obj, callback) => {
+                App.loading.show();
+
+                console.log($(obj).serialize())
+
+                $.post({
+                    url: '/create-forum',
+                    data: $(obj).serialize(),
+                    success: (resp) => {
+                        App.loading.hide();
+                        
+                        callback(resp);
+                    }
+                });
+            },
+            rename: (obj, callback) => {
+                App.loading.show();
+
+                $.post({
+                    url: '/rename-topic',
+                    data: $(obj).serialize(),
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
+            }
+        }
     }
 })();

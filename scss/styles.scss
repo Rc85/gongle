@@ -219,6 +219,10 @@ button[name=vote]:disabled {
     background: rgb(255, 0, 0);
 }
 
+.post-tag-badge {
+    background: $primary_color;
+}
+
 .closed, .admin-login {
     height: 100vh;
     display: flex;
@@ -282,7 +286,7 @@ button[name=vote]:disabled {
     }
 
     span {
-        border: 1px solid rgb(0, 125, 225);
+        border: 1px solid $primary_color;
         padding: 5px;
         border-radius: 3px;
     }
@@ -294,7 +298,7 @@ button[name=vote]:disabled {
 
 .post-type-button.active {
     span {
-        background: rgb(0, 125, 225);
+        background: $primary_color;
     }
 
     i {

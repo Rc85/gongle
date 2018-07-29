@@ -1,11 +1,10 @@
 $(document).ready(function() {
     $('.category-title').on('click', function() {
         $(this).siblings('.rename-category').show();
-        $(this).siblings('.rename-category').find('input[name=category]').attr('autofocus', 'true');
+        $(this).siblings('.rename-category').find('input[name=category]').focus();
     });
 
     $('.cancel-rename-category').on('click', function() {
-        $(this).parents('.rename-category').attr('autofocus', 'false');
         $(this).parents('.rename-category').hide();
     });
 
@@ -48,58 +47,61 @@ $(document).ready(function() {
         }
     });
 
-    /* $('#change-category-status-form select').on('change', function(e) {
-        e.preventDefault();
-        let form = $(this).parent();
-
-        App.loading.show();
-
-        $.post({
-            url: '/change-category-status',
-            data: $(form).serialize(),
-            success: function(resp) {
-                App.loading.hide();
-
-                if (resp.status === 'success') {
-                    $(form).parent().siblings('.cat-status').empty();
-                    $(form).parent().siblings('.cat-status').append(
-                        resp.category_status === 'Open' ?
-                        $('<span>').addClass('user-badge success-badge').html(resp.category_status) :
-                        $('<span>').addClass('user-badge error-badge').html(resp.category_status)
-                    )
-                    alertify.success('Category ' + resp.category_status.toLowerCase());
-                } else if (resp.status === 'failed') {
-                    alertify.error('Failed to change status');
-                } else if (resp.status === 'error') {
-                    alertify.error('An error occurred');
-                }
-            }
-        });
-    }); */
-
-    $('.admin-menu div').on('click', function() {
+    $('.admin-menu div').on('click', function(e) {
         let option = $(this);
+        let id = $(option).attr('data-id');
+        let status = $(option).attr('data-status');
 
-        Admin.status.change(option, 'categories', (status) => {
-            $('.admin-menu').hide();
-
-            App.handle.response(status, () => {
-                Toggle.badge(option, '.category-row', '.cat-status');
-            });
-        });
-
-        /* if ($(this).attr('data-status') === 'Delete') {
-            alertify.confirm('Are you sure you want delete this category? This cannot be reversed.', function(e) {
+        if (status === 'Delete') {
+            alertify
+            .okBtn('Yes')
+            .cancelBtn('No')
+            .confirm('Are you sure you want to delete this category? This cannot be reversed.', (e) => {
                 e.preventDefault();
+            
+                Admin.forum.delete(id, 'categories', (resp) => {
+                    $('.admin-menu').hide();
 
-                changeCategoryStatus(option, '.category-row');
-            },
-            function(e) {
+                    App.handle.response(resp, () => {
+                        alertify.success('Category deleted');
+                        $(option).parents('.category-row').remove();
+                    });
+                });
+            }, () => {
                 App.loading.hide();
                 return false;
             });
         } else {
-            changeCategoryStatus(option, '.category-row');
+            Admin.status.change(option, 'categories', (resp) => {
+                $('.admin-menu').hide();
+
+                App.handle.response(resp, () => {
+                    alertify.success('Category status updated');
+                    Toggle.badge(option, '.category-row', '.cat-status');
+                });
+            });
+        }
+        
+        /* if (status !== 'Delete') {
+            console.log(status);
+            Admin.status.change(option, 'categories', (resp) => {
+                $('.admin-menu').hide();
+
+                App.handle.response(resp, () => {
+                    alertify.success('Category status updated');
+                    Toggle.badge(option, '.category-row', '.cat-status');
+                });
+            });
+        } else {
+            console.log(status);
+            Admin.forum.delete(option, 'categories', (resp) => {
+                $('.admin-menu').hide();
+
+                App.handle.response(resp, () => {
+                    alertify.success('Category deleted');
+                    $(option).parents('.category-row').remove();
+                });
+            });
         } */
     });
 
@@ -108,13 +110,14 @@ $(document).ready(function() {
     $('#select-all').on('click', function() {
         if ($(this).prop('checked')) {
             $('.select-item').prop('checked', true);
+            categories = [];
             $('.select-item').each(function(i) {
                 categories.push($(this).attr('data-id'));
             });
-
-            console.log(categories);
         } else {
             $('.select-item').prop('checked', false);
+
+            categories = [];
         }
     });
 
@@ -124,8 +127,6 @@ $(document).ready(function() {
         } else {
             categories.splice(categories.indexOf($(this).attr('data-id')), 1);
         }
-
-        console.log(categories);
     });
 
     $('.delete-button').on('click', function() {
@@ -134,24 +135,21 @@ $(document).ready(function() {
 
             App.loading.show();
 
-            $.post({
-                url: '/delete-all',
-                data: {
-                    type: 'categories',
-                    ids: categories
-                },
-                success: function(resp) {
-                    console.log(resp);
-                    App.loading.hide();
+            Admin.forum.delete(categories, 'categories', (resp) => {
+                App.handle.response(resp, () => {
+                    location.reload();
+                });
+            });
+        });
+    });
 
-                    if (resp.status === 'success') {
-                        location.reload();
-                    } else if (resp.status === 'error') {
-                        alertify.error('An error occurred');
-                    } else if (resp.status === 'failed') {
-                        alertify.error('Failed to delete');
-                    }
-                }
+    $('#create-category-form').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+
+        Admin.forum.create(form, (resp) => {
+            App.handle.response(resp, () => {
+                location.reload();
             });
         });
     });

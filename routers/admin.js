@@ -41,6 +41,41 @@ app.post('/change-user-privilege', function(req, resp) {
     }
 });
 
+app.post('/move-forum', (req, resp) => {
+    if (req.session.user && req.session.user.privilege > 1) {
+        db.connect(async function(err, client, done) {
+            if (err) { console.log(err); }
+
+            let queryString;
+
+            if (req.body.type === 'topic') {
+                queryString = `UPDATE topics
+                SET topic_category = $1
+                WHERE topic_id = $2`;
+            } else if (req.body.type === 'subtopic') {
+                queryString = `UPDATE subtopics
+                SET belongs_to_topic = $1
+                WHERE subtopic_id = $2`;
+            }
+
+            await client.query(queryString, [req.body.to, req.body.item])
+            .then((result) => {
+                done();
+                if (result !== undefined && result.rowCount === 1) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'fail'});
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+        });
+    }
+});
+
 app.post('/change-user-status', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 0) {
@@ -477,13 +512,13 @@ app.post('/create-category', function(req, resp) {
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
-                        resp.redirect(req.get('referer'));
+                        resp.send({status: 'success'});
                     }
                 })
                 .catch((err) => {
                     console.log(err);
                     done();
-                    fn.error(req, resp, 500);
+                    resp.send({status: 'error'});
                 });
             });
         } else {
@@ -494,37 +529,37 @@ app.post('/create-category', function(req, resp) {
     }
 });
 
-app.post('/create-topic', function(req, resp) {
+app.post('/create-forum', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 1) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
                 
-                let createTopic = await client.query('INSERT INTO topics (topic_title, topic_category, topic_created_by) VALUES ($1, $2, $3) RETURNING *', [req.body.title, req.body.parent, req.session.user.username])
+                let queryString,
+                    params;
+
+                if (req.body.type === 'topic') {
+                    queryString = `INSERT INTO topics (topic_title, topic_category, topic_created_by) VALUES ($1, $2, $3) RETURNING *`;
+                    params = [req.body.title, req.body.id, req.session.user.username];
+                } else if (req.body.type === 'subtopic') {
+                    queryString = `INSERT INTO subtopics (subtopic_title, belongs_to_topic, subtopic_created_by) VALUES ($1, $2, $3) RETURNING *`;
+                    params = [req.body.title, req.body.id, req.session.user.username];
+                } else if (req.body.type === 'category') {
+                    queryString = `INSERT INTO categories (category, cat_created_by) VALUES ($1, $2)`;
+                    params = [req.body.title, req.session.user.username];
+                }
+
+                await client.query(queryString, params)
                 .then((result) => {
+                    done();
                     if (result !== undefined && result.rowCount === 1) {
-                        return result.rows;
+                        resp.send({status: 'success', results: result.rows[0]});
                     }
                 })
                 .catch((err) => {
                     console.log(err);
                     done();
                     resp.send({status: 'error'});
-                });
-
-                await client.query('SELECT topic_id AS id, topic_title AS title, topic_category AS belongs_to, topic_created_on AS created_on, topic_created_by AS created_by, topic_status AS status FROM topics WHERE topic_id = $1', [createTopic[0].topic_id])
-                .then((result) => {
-                    done();
-                    if (result !== undefined && result.rows.length === 1) {
-                        result.rows[0].created_on = moment(result.rows[0].created_on).format('MM/DD/YYYY @ hh:mm:ss A');
-
-                        resp.send({status: 'success', result: result.rows[0]});
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    done();
-                    resp.send({status: 'fail'});
                 });
             });
         } else {
@@ -541,11 +576,24 @@ app.post('/rename-topic', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
                 
-                await client.query('UPDATE topics SET topic_title = $1 WHERE topic_id = $2 RETURNING topic_title', [req.body.new_title, req.body.id])
+                let queryString;
+
+                if (req.body.type === 'topic') {
+                    queryString = `UPDATE topics
+                    SET topic_title = $1
+                    WHERE topic_id = $2 RETURNING topic_title AS title`
+                } else {
+                    queryString = `UPDATE subtopics
+                    SET subtopic_title = $1
+                    WHERE subtopic_id = $2 RETURNING subtopic_title AS title`
+                }
+
+                await client.query(queryString, [req.body.title, req.body.id])
                 .then((result) => {
-                    done();
                     if (result !== undefined && result.rowCount === 1) {
-                        resp.send({status: 'success', new_title: result.rows[0].topic_title});
+                        resp.send({status: 'success', title: result.rows[0].title});
+                    } else {
+                        resp.send({status: 'fail'});
                     }
                 })
                 .catch((err) => {
@@ -631,8 +679,7 @@ app.post('/rename-category', function(req, resp) {
     }
 });
 
-app.post('/change-category-status', function(req, resp) {
-    console.log(req.body);
+/* app.post('/change-category-status', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 1) {
             db.connect(async function(err, client, done) {
@@ -673,6 +720,54 @@ app.post('/change-category-status', function(req, resp) {
                         resp.send({status: 'error'});
                     });
                 }
+            });
+        } else {
+            fn.error(req, resp, 401);
+        }
+    } else {
+        fn.error(req, resp, 403);
+    }
+}); */
+
+app.post('/delete-forum', (req, resp) => {
+    if (req.session.user) {
+        if (req.session.user.privilege > 1) {
+            db.connect(async function(err, client, done) {
+                if (err) { console.log(err); }
+
+                let queryString,
+                    id;
+
+                if (req.body.id instanceof Array) {
+                    id = req.body.id.map(function(i) {
+                        return parseInt(i);
+                    });
+                } else {
+                    id = [req.body.id];
+                }
+
+                if (req.body.type === 'topic') {
+                    queryString = `DELETE FROM topics WHERE topic_id = ANY($1)`;
+                } else if (req.body.type === 'subtopic') {
+                    queryString = `DELETE FROM subtopics WHERE subtopic_id = ANY($1)`;
+                } else if (req.body.type === 'categories') {
+                    queryString = `DELETE FROM categories WHERE category_id = ANY($1)`;
+                }
+
+                await client.query(queryString, [id])
+                .then((result) => {
+                    done();
+                    if (result !== undefined && result.rowCount > 0) {
+                        resp.send({status: 'success'});
+                    } else {
+                        resp.send({status: 'fail'});
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                });
             });
         } else {
             fn.error(req, resp, 401);

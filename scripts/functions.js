@@ -1,99 +1,3 @@
-/* function showLoading() {
-    $('body').css({'overflow-y': 'hidden'});
-
-    $('body').prepend(
-        $('<div>').addClass('loading-screen').css({'top': $(window).scrollTop()}).append(
-            $('<div>').addClass('loading-component').append(
-                $('<i>').addClass('fas fa-5x fa-spinner fa-spin'),
-                $('<span>').text('Please wait...')
-            )
-        )
-    )
-}
-
-function hideLoading() {
-    $('body').css({'overflow-y': ''});
-
-    $('.loading-screen').remove();
-} */
-
-/* function populateSelect(selector) {
-    $.get({
-        url: '/get-categories',
-        success: function(resp) {
-            if (resp.status === 'success') {
-                for (let i in resp.categories) {
-                    $(selector).append(
-                        $('<option>').attr('value', resp.categories[i].category_id).text(resp.categories[i].category)
-                    )
-                }
-            }
-        }
-    });
-
-    $('#select-category').on('change', function() {
-        $.post({
-            url: '/get-topics-by-category',
-            data: {
-                category: $(this).val()
-            },
-            success: function(resp) {
-                $('#select-topic').empty();
-                $('#select-topic').append($('<option>'));
-
-                if (resp.status === 'success') {
-                    for (let i in resp.topics) {
-                        $('#select-topic').append(
-                            $('<option>').attr('value', resp.topics[i].topic_id).text(resp.topics[i].topic_title)
-                        )
-                    }
-                }
-            }
-        });
-    });
-} */
-
-/* function getPostDetails(form, page, obj) {
-    if (form) {
-        var data = $(form).serialize() + '&page=' + page;
-    } else if (obj) {
-        var data = 'category=' + obj.category + '&topic=' + obj.topic + '&subtopic=' + obj.subtopic + '&page=' + page;
-    }
-
-    $.post({
-        url: '/get-post-details?' + data,
-        data: data,
-        success: function(resp) {
-            console.log(resp);
-            App.loading.hide();
-
-            $('#post-settings').empty();
-            $('.pagination-container').empty();
-
-            $('#post-settings').append(
-                $('<header>').addClass('header col').append(
-                    $('<div>').addClass('w-5').text('ID'),
-                    $('<div>').addClass('w-40').text('Post Title'),
-                    $('<div>').addClass('w-15').text('Posted By'),
-                    $('<div>').addClass('w-25').text('Posted On'),
-                    $('<div>').addClass('w-10 text-center').text('Status'),
-                    $('<div>').addClass('w-5')
-                )
-            );
-
-            for (let post in resp.posts) {
-                $('#post-settings').append(
-                    $('<div>').addClass('admin-post-container').append(
-                        adminPostRow(resp.posts[post], false)
-                    )
-                )
-            }
-
-            createPagination('.pagination-container', resp.posts[0].total_posts, 10, resp.obj, false, getPostDetails);
-        }
-    });
-} */
-
 /**
  * 
  * @param {Element} appendTo The element, usually a class name, to append the page numbers to.
@@ -343,7 +247,7 @@ function createPageNum(parent, total, obj, link, label, func) {
     }
 } */
 
-function adminPostRow(obj, isInDetails) {
+/* function adminPostRow(obj, isInDetails) {
     let content = '';
     
     if (isInDetails) {
@@ -385,9 +289,6 @@ function adminPostRow(obj, isInDetails) {
                         $('<i>').addClass('fas fa-lg fa-ellipsis-h')
                     ),
                     $('<div>').addClass('admin-menu text-left').append(
-                        /* $('<form>').addClass('open-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
-                            $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Open'}), */
                             $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Open'}).html('Open').on('click', function(e) {
                                 e.preventDefault();
                                 let form = $(this);
@@ -401,45 +302,33 @@ function adminPostRow(obj, isInDetails) {
                                 $(form).submit();
                                 $(form).off('submit');
                             }),
-                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Makes post visible and accessible')
-                        //),
                         obj.belongs_to_post_id === null ?
-                        /* $('<form>').addClass('close-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
-                            $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Closed'}), */
-                            $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Closed'}).html('Close').on('click', function(e) {
+                        $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Closed'}).html('Close').on('click', function(e) {
+                            e.preventDefault();
+                            let form = $(this);
+
+                            $(this).parent().on('submit', function(e) {
                                 e.preventDefault();
-                                let form = $(this);
-    
-                                $(this).parent().on('submit', function(e) {
-                                    e.preventDefault();
 
-                                    changePostStatus(form, '.admin-post-row');
-                                });
+                                changePostStatus(form, '.admin-post-row');
+                            });
 
-                                $(form).submit();
-                                $(form).off('submit');
-                            })
-                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Changes post to read-only')
-                        /* ) */ : '',
-                        /* $('<form>').addClass('remove-post').attr({'action': '/change-post-status', 'method': 'POST'}).append(
-                            $('<input>').attr({'type': 'hidden', 'name': 'post_id', 'value': obj.post_id}),
-                            $('<input>').attr({'type': 'hidden', 'name': 'status', 'value': 'Removed'}), */
-                            $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Removed'}).html('Remove').on('click', function(e) {
+                            $(form).submit();
+                            $(form).off('submit');
+                        }) : '',
+                        $('<div>').attr({'data-id': obj.post_id, 'data-status': 'Removed'}).html('Remove').on('click', function(e) {
+                            e.preventDefault();
+                            let form = $(this);
+
+                            $(this).parent().on('submit', function(e) {
                                 e.preventDefault();
-                                let form = $(this);
-    
-                                $(this).parent().on('submit', function(e) {
-                                    e.preventDefault();
 
-                                    changePostStatus(form, '.admin-post-row');
-                                });
+                                changePostStatus(form, '.admin-post-row');
+                            });
 
-                                $(form).submit();
-                                $(form).off('submit');
-                            }),
-                            //$('<i>').addClass('ml-5 far fa-question-circle').attr('title', 'Hides post and makes it inaccessible')
-                        //)
+                            $(form).submit();
+                            $(form).off('submit');
+                        }),
                     )
                 )
             )
@@ -448,7 +337,7 @@ function adminPostRow(obj, isInDetails) {
     )
 
     return row;
-}
+} */
 
 /* function urlParams(p) {
     let urlString = new URL(window.location.href),
@@ -881,11 +770,7 @@ function getSettings(id, form, cb) {
     });
 } */
 
-/**
- * 
- * @param {String} data String of URL parameters
- */
-function submitPost(data) {
+/* function submitPost(data) {
     $.post({
         url: '/post',
         data: data,
@@ -905,15 +790,9 @@ function submitPost(data) {
             }
         }
     });
-}
+} */
 
-/**
- * 
- * @param {String} where Subtopic name
- * @param {String|Number} page Page number use to calculate the offset for database query
- * @param {Function} callback 
- */
-function getNumberOfPosts(where, page, callback) {
+/* function getNumberOfPosts(where, page, callback) {
     $.post({
         url: '/get-num-of-posts',
         data: {
@@ -925,13 +804,6 @@ function getNumberOfPosts(where, page, callback) {
         }
     });
 }
-
-/**
- * 
- * @param {String|Number} postId The ID of the post being viewed
- * @param {String|Number} page Page number use to calculate the offset for database query
- * @param {Function} callback 
- */
 function getNumberOfReplies(postId, page, callback) {
     $.post({
         url: '/get-replies',
@@ -945,9 +817,9 @@ function getNumberOfReplies(postId, page, callback) {
             }
         }
     });
-}
+} */
 
-function toggleSidebar(toggler, bar, sidebarParent, parentWidth, sidebarWidth, callback) {
+/* function toggleSidebar(toggler, bar, sidebarParent, parentWidth, sidebarWidth, callback) {
     $(toggler).on('click', function() {
         let controlBar = $(bar);
         if (forumSidebar === 'shown') {
@@ -964,4 +836,4 @@ function toggleSidebar(toggler, bar, sidebarParent, parentWidth, sidebarWidth, c
             callback('shown');
         }
     });
-}
+} */

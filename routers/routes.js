@@ -41,12 +41,13 @@ app.get('/', function(req, resp) {
         if (err) { console.log(err); }
 
         let allTopics = await client.query(
-        `SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, cat_icon
+        `SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, category_status, cat_icon
         FROM categories
         LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id
         LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
         LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
-        GROUP BY belongs_to_topic, subtopic_title, topic_title, category, cat_icon
+        WHERE category_status != 'Closed'
+        GROUP BY belongs_to_topic, subtopic_title, topic_title, category, category_status, cat_icon
         ORDER BY category, topic_title
         LIKE '%General' DESC, topic_title, subtopic_title = 'Other' ASC, subtopic_title`
         )
@@ -61,15 +62,6 @@ app.get('/', function(req, resp) {
             done();
             fn.error(req, resp, 400)
         });
-
-        /* Create an object in the form of
-        {
-            category: {
-                topic: {
-                    subtopic: post_count
-                }
-            }
-        } */
 
         console.log(allTopics);
 
@@ -102,52 +94,17 @@ app.get('/', function(req, resp) {
             }
         }
 
-        console.log(category);
-
         resp.render('blocks/index', {user: req.session.user, categories: category, title: 'Main'});
     });
-    /* db.query("SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category FROM categories LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic GROUP BY belongs_to_topic, subtopic_title, topic_title, category ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title", function(err, result) {
-        if (err) {
-            console.log(err);
-            resp.send({status: 'error'});
-        }
-
-        if (result !== undefined) {
-            let category = {}
-            let last = '';
-
-            for (let item of result.rows) {
-                category[item.category] = {}
-            }
-
-            for (let item of result.rows) {
-                if (item.topic_title !== last) {
-                    if (item.category !== null && item.topic_title !== null) {
-                        category[item.category][item.topic_title] = {}
-                        if (item.subtopic_title !== null) {
-                            category[item.category][item.topic_title][item.subtopic_title] = {};
-                            category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
-                        }
-                    }
-
-                    last = item.topic_title
-                } else {
-                    if (item.category !== null && item.topic_title !== null && item.subtopic_title !== null) {
-                        category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
-                    }
-
-                    last = item.topic_title
-                }
-            }
-
-            resp.render('blocks/index', {user: req.session.user, categories: category, title: 'Main'});
-        }
-    }); */
 });
 
 app.get('/forums', function(req, resp) {
-    fn.newActivePopular('', 10, function(results) {
-        resp.render('forums/forums', {user: req.session.user, popular: results.popular, new_posts: results.new_posts, active: results.active, title: 'Forums'});
+    db.connect(async (err, client, done) => {
+        if (err) { console.log(err); }
+        
+        fn.newActivePopular(client, done, '', 10, function(results) {
+            resp.render('forums/forums', {user: req.session.user, popular: results.popular, new_posts: results.new_posts, active: results.active, title: 'Forums'});
+        });
     });
 });
 
@@ -156,16 +113,12 @@ app.get('/forums/:category', function(req, resp) {
         if (err) { console.log(err); }
         
         let title = fn.capitalize(req.params.category.replace('_', ' ')),
-            moreQuery = " AND categories.category = '" + title + "'";
+            moreQuery = `AND categories.category = '${title}'`;
 
-        let categories = await client.query("SELECT topic_title, pt.last_posted, pt.post_user FROM topics LEFT JOIN categories ON categories.category_id = topics.topic_category LEFT JOIN (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic) st ON topics.topic_id = st.belongs_to_topic LEFT JOIN (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id WHERE category = $1 ORDER BY topic_title LIKE '%General' DESC, subtopic_title", [title])
+        let status = await client.query(`SELECT category_status FROM categories WHERE category = $1`, [title])
         .then((result) => {
-            if (result !== undefined) {
-                for (let i in result.rows) {
-                    result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
-                }
-
-                return result.rows;
+            if (result !== undefined && result.rows.length === 1) {
+                return result.rows[0].category_status;
             }
         })
         .catch((err) => {
@@ -173,26 +126,50 @@ app.get('/forums/:category', function(req, resp) {
             done();
         });
 
-        fn.newActivePopular(moreQuery, 10, function(results) {
-            resp.render('forums/subforums', {user: req.session.user, subtopics: categories, popular: results.popular, new_posts: results.new_posts, active: results.active, title: title});
-        });
-    });
+        console.log(status);
 
-    /* db.query("SELECT topic_title, pt.last_posted, pt.post_user FROM topics LEFT JOIN categories ON categories.category_id = topics.topic_category LEFT JOIN (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic) st ON topics.topic_id = st.belongs_to_topic LEFT JOIN (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id WHERE category = $1 ORDER BY subtopic_title LIKE '%General' DESC, subtopic_title", [title], function(err, result) {
-        if (err) {
-            console.log(err);
-            fn.error(req, resp, 500);
-        } else if (result !== undefined) {
-            for (let i in result.rows) {
-                result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
-            }
+        if (status !== 'Closed' && status !== undefined) {
+            let categories = await client.query(`SELECT topic_title, topic_status, pt.last_posted, pt.post_user
+            FROM topics
+            LEFT JOIN categories ON categories.category_id = topics.topic_category
+            LEFT JOIN
+                (SELECT DISTINCT ON (belongs_to_topic) belongs_to_topic, subtopic_id, subtopic_title 
+                FROM subtopics
+                LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic
+                WHERE subtopic_status != 'Removed') st ON topics.topic_id = st.belongs_to_topic
+            LEFT JOIN
+                (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id
+                FROM posts
+                LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                WHERE post_status != 'Removed'
+                GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id
+            WHERE category = $1
+            AND topic_status != 'Removed'
+            AND topic_status != 'Closed'
+            ORDER BY topic_title LIKE '%General' DESC, topic_title ASC`, [title])
+            .then((result) => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
+                    }
 
-            fn.newActivePopular(moreQuery, 10, function(results) {
-                console.log(result.rows);
-                resp.render('forums/subforums', {user: req.session.user, subtopics: result.rows, popular: results.popular, new_posts: results.new_posts, active: results.active, title: title});
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
             });
+
+            fn.newActivePopular(client, done, moreQuery, 10, function(results) {
+                resp.render('forums/subforums', {user: req.session.user, subtopics: categories, popular: results.popular, new_posts: results.new_posts, active: results.active, title: title});
+            });
+        } else {
+            done();
+            fn.error(req, resp, 403, `The forum you're trying to access is closed.`);
         }
-    }); */
+    });
 });
 
 app.get('/register', function(req, resp) {
@@ -260,189 +237,249 @@ app.get('/profile', function(req, resp) {
             });
         }
 
-        resp.render('blocks/profile', {user: req.session.user, viewing: userProfile, violations: violations, title: 'Profile'});
+        resp.render('blocks/profile-stats', {user: req.session.user, viewing: userProfile, violations: violations, title: 'Profile'});
     });
-
-    /* db.query("SELECT COUNT(posts.*) AS posts_count, SUM(posts.post_downvote) AS downvotes, SUM(posts.post_upvote) AS upvotes, avatar_url, user_id, username, email, last_login, user_status, user_level FROM users LEFT OUTER JOIN posts ON users.username = posts.post_user WHERE users.username = $1 AND users.user_id > 3 GROUP BY users.user_id", [username], function(err, result) {
-        if (err) {
-            console.log(err);
-            fn.error(req, resp, 500);
-        } else if (result !== undefined) {
-            if (result.rows.length === 1) {
-                result.rows[0].last_login = moment.tz(result.rows[0].last_login, 'America/Vancouver').format('MM/DD/YY @ hh:mm:ss A z');
-                let viewing = result.rows[0];
-
-                if (req.session.user) {
-                    db.query('SELECT violations.*, users.username FROM violations LEFT JOIN users ON violations.v_issued_by = users.user_id WHERE v_user_id = $1 ORDER BY v_date DESC', [req.session.user.user_id], function(err, result) {
-                        if (err) {
-                            console.log(err);
-                            fn.error(req, resp, 500);
-                        } else if (result !== undefined) {
-                            for (let i in result.rows) {
-                                result.rows[i].v_date = moment(result.rows[i].v_date).format('MM/DD/YYYY @ hh:mm:ss A');
-                            }
-    
-                            resp.render('blocks/profile', {user: req.session.user, viewing: viewing, violations: result.rows, title: 'Profile'});
-                        }
-                    });
-                } else {
-                    resp.render('blocks/profile', {user: req.session.user, viewing: viewing, violations: [], title: 'Profile'});
-                }
-            } else {
-                fn.error(req, resp, 401);
-            }
-        }
-    }); */
 });
+
+app.get('/profile/posts', (req, resp) => {
+    if (req.session.user) {
+        let username = req.query.u;
+        let page = req.query.page ? parseInt(req.query.page) : 1;
+        let offset;
+
+        if (page > 1) {
+            offset = (page - 1) * 20;
+        } else {
+            offset = 0;
+        }
+
+        let posts = await client.query(`SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title
+        FROM posts
+        JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+        WHERE post_user = $1
+        AND reply_to_post_id IS NULL
+        AND posts.post_status != 'Removed'
+        GROUP BY posts.post_id, subtopics.subtopic_title
+        ORDER BY post_created DESC
+        LIMIT 20
+        OFFSET $2`, [req.session.user.username, offset])
+        .then((result) => {
+            done();
+            if (result !== undefined) {
+                return result.rows;
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            fn.error(req, resp, 500);
+        });
+
+        resp.render('blocks/profile-posts')
+    }
+})
 
 app.get('/subforums/:topic', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
         let topic = fn.capitalize(req.params.topic.replace('_', ' ')),
-            moreQuery = " AND topic_title = '" + topic + "'";
-
-        let topics = await client.query("SELECT subtopics.subtopic_title, topics.topic_title, p2.last_posted, p2.post_user FROM subtopics LEFT JOIN topics ON belongs_to_topic = topic_id LEFT OUTER JOIN (SELECT DISTINCT ON (subtopic_id) MAX(post_created) AS last_posted, post_user, subtopic_id FROM posts LEFT OUTER JOIN subtopics ON subtopics.subtopic_id = posts.post_topic GROUP BY post_user, subtopic_id ORDER BY subtopic_id) p2 ON subtopics.subtopic_id = p2.subtopic_id WHERE topic_title = $1 GROUP BY subtopics.subtopic_id, topics.topic_title, p2.last_posted, post_user ORDER BY subtopic_title = 'Other' ASC, subtopic_title", [topic])
+            moreQuery = `AND topic_title = '${topic}'`;
+        
+        let status = await client.query(`SELECT topic_status, category_status FROM topics LEFT JOIN categories ON topics.topic_category = categories.category_id WHERE topic_title = $1`, [topic])
         .then((result) => {
-            done();
-            if (result !== undefined) {
-                for (let i in result.rows) {
-                    result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
-                }
-    
-                return result.rows;
+            if (result !== undefined && result.rows.length === 1) {
+                return result.rows[0];
             }
         })
         .catch((err) => {
             console.log(err);
             done();
-            fn.error(req, resp, 500);
+            resp.send({status: 'error'});
         });
 
-        fn.newActivePopular(moreQuery, 3, function(results) {
-            resp.render('forums/subforums', {user: req.session.user, subtopics: topics, title: topic.replace('_', ' '), new_posts: results.new_posts, active: results.active, popular: results.popular});
-        });
+        let access;
 
-    })
-    /* let topic = fn.capitalize(req.params.topic.replace('_', ' '));
-    let moreQuery = " AND topic_title = '" + topic + "'";
+        if (status !== undefined) { // Topic does not exist
+            if (status.category_status === 'Open') {
+                access = true;
 
-    db.query("SELECT CASE WHEN subtopics.subtopic_title LIKE '%Others' THEN 'Others' ELSE subtopics.subtopic_title END, topics.topic_title, p2.last_posted, p2.post_user FROM subtopics LEFT JOIN topics ON belongs_to_topic = topic_id LEFT OUTER JOIN (SELECT DISTINCT ON (subtopic_id) MAX(post_created) AS last_posted, post_user, subtopic_id FROM posts LEFT OUTER JOIN subtopics ON subtopics.subtopic_id = posts.post_topic GROUP BY post_user, subtopic_id ORDER BY subtopic_id) p2 ON subtopics.subtopic_id = p2.subtopic_id WHERE topic_title = $1 GROUP BY subtopics.subtopic_id, topics.topic_title, p2.last_posted, post_user ORDER BY subtopic_title, subtopic_title LIKE '%Others' ASC", [topic], function(err, result) {
-        if (err) {
-            console.log(err);
-            fn.error(req, resp, 500);
-        } else if (result !== undefined) {
-            console.log(result.rows);
-            for (let i in result.rows) {
-                result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
+                if (status.topic_status !== 'Open') {
+                    access = false;
+                }
+            } else {
+                access = false;
             }
-
-            fn.newActivePopular(moreQuery, 3, function(results) {
-                resp.render('forums/subforums', {user: req.session.user, subtopics: result.rows, title: topic.replace('_', ' '), new_posts: results.new_posts, active: results.active, popular: results.popular});
-            });
+        } else {
+            access = false;
         }
-    }); */
+
+        if (access) {
+            let topics = await client.query(`SELECT subtopics.subtopic_title, topics.topic_title, p2.last_posted, p2.post_user, subtopic_status
+            FROM subtopics
+            LEFT JOIN topics ON belongs_to_topic = topic_id
+            LEFT OUTER JOIN
+                (SELECT DISTINCT ON (subtopic_id) MAX(post_created) AS last_posted, post_user, subtopic_id
+                FROM posts
+                LEFT OUTER JOIN subtopics ON subtopics.subtopic_id = posts.post_topic
+                GROUP BY post_user, subtopic_id
+                ORDER BY subtopic_id) p2 ON subtopics.subtopic_id = p2.subtopic_id
+            WHERE topic_title = $1
+            AND subtopic_status != 'Removed'
+            GROUP BY subtopics.subtopic_id, topics.topic_title, p2.last_posted, post_user, subtopic_status
+            ORDER BY subtopic_title = 'Other' ASC, subtopic_title`, [topic])
+            .then((result) => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].last_posted = moment(result.rows[i].last_posted).fromNow();
+                    }
+        
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            fn.newActivePopular(client, done, moreQuery, 3, function(results) {
+                resp.render('forums/subforums', {user: req.session.user, subtopics: topics, title: topic.replace('_', ' '), new_posts: results.new_posts, active: results.active, popular: results.popular});
+            });
+        } else {
+            fn.error(req, resp, 404);
+        }
+    });
 });
 
 app.get('/subforums/:topic/:subtopic', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
-        let topic = fn.capitalize(req.params.topic.replace('_', ' ')),
-            subtopic;
+        let topic = fn.capitalize(req.params.topic.replace('_', ' '));
+        let subtopic;
 
-        let allCapSubtopic = ['cpu', 'kia', 'lg', 'dslr', 'asus', 'htc', 'rca', 'bmw', 'gmc', 'fps', 'mmo', 'moba', 'rpg', 'rts', 'ufc']
+        let needsToBeCapitalized = ['cpu', 'kia', 'lg', 'dslr', 'asus', 'htc', 'rca', 'bmw', 'gmc', 'fps', 'mmo', 'moba', 'rpg', 'rts', 'ufc', 'mlb', 'nba', 'nhl', 'nfl']
 
-        if (allCapSubtopic.indexOf(req.params.subtopic) > 0) {
+        if (needsToBeCapitalized.indexOf(req.params.subtopic) > 0) {
             subtopic = req.params.subtopic.replace('_', ' ').toUpperCase().replace('/', '');
         } else {
             subtopic = fn.capitalize(req.params.subtopic.replace('_', ' ').replace('/', ''))
         }
-        
-        console.log(topic, subtopic);
 
-        let getTopics = await client.query('SELECT subtopic_status, subtopic_id, topic_title, category, category_status FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN categories ON categories.category_id = topics.topic_category WHERE subtopic_title = $1 AND topic_title = $2', [subtopic, topic])
+        let status = await client.query(`SELECT category_status, topic_status, subtopic_status
+        FROM subtopics
+        LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+        LEFT JOIN categories ON topics.topic_category = categories.category_id
+        WHERE subtopic_title = $1
+        AND topic_title = $2`, [subtopic, topic])
         .then((result) => {
             if (result !== undefined && result.rows.length === 1) {
-                return result.rows;
+                return result.rows[0];
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'error'});
+        });
+
+        console.log(status);
+        let access;
+
+        if (status !== undefined) {
+            if (status.category_status === 'Open') {
+                access = true;
+
+                if (status.topic_status !== 'Open') {
+                    access = false
+                }
+            } else {
+                access = false;
+            }
+        } else {
+            access = false;
+        }
+
+        console.log(access);
+
+        if (access) {
+            let getTopics = await client.query(`SELECT subtopic_status, subtopic_id, topic_title, category, category_status
+            FROM subtopics
+            LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic
+            LEFT JOIN categories ON categories.category_id = topics.topic_category
+            WHERE subtopic_title = $1
+            AND topic_title = $2`, [subtopic, topic])
+            .then((result) => {
+                if (result !== undefined && result.rows.length === 1) {
+                    return result.rows;
+                } else {
+                    fn.error(req, resp, 404);
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            if (getTopics[0].subtopic_status !== 'Removed') {
+                let page = req.query.page ? parseInt(req.query.page) : 1,
+                    subtopicStatus = getTopics[0].subtopic_status,
+                    subtopic_id = getTopics[0].subtopic_id,
+                    topicTitle = getTopics[0].topic_title,
+                    category = getTopics[0].category,
+                    categoryStatus = getTopics[0].category_status;
+
+                if (page > 1) {
+                    var limit = (page - 1) * 25;
+                    var offset = limit;
+                } else {
+                    var limit = 25;
+                    var offset = 0;
+                }
+
+                let posts = await client.query(`SELECT
+                    (SELECT COUNT(post_id)
+                    FROM posts
+                    LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic
+                    WHERE subtopic_title = $1
+                    AND reply_to_post_id IS NULL
+                    AND post_status != 'Removed') AS count,
+                posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login, subtopics.subtopic_id
+                FROM posts
+                LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                LEFT JOIN users ON users.username = posts.post_user
+                WHERE subtopics.subtopic_title = $1
+                AND reply_to_post_id IS NULL
+                GROUP BY posts.post_id, subtopics.subtopic_title, subtopics.subtopic_id, users.user_id
+                ORDER BY post_created DESC
+                LIMIT $2
+                OFFSET $3`, [subtopic, limit, offset])
+                .then((result) => {
+                    done();
+                    if (result !== undefined) {
+                        for (let i in result.rows) {
+                            result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
+                            result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
+                        }
+
+                        return result.rows;
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    done();
+                    fn.error(req, resp, 500);
+                });
+                
+                resp.render('forums/posts', {user: req.session.user, posts: posts, category_status: categoryStatus, subtopic_status: subtopicStatus, title: subtopic, topic_title: topicTitle, subtopic_id: subtopic_id, category: category, page: page});
             } else {
                 fn.error(req, resp, 404);
             }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            fn.error(req, resp, 500);
-        });
-
-        let page = parseInt(req.query.page),
-            subtopicStatus = getTopics[0].subtopic_status,
-            subtopic_id = getTopics[0].subtopic_id,
-            topicTitle = getTopics[0].topic_title,
-            category = getTopics[0].category,
-            categoryStatus = getTopics[0].category_status;
-
-        if (page > 1) {
-            var limit = (page - 1) * 25;
-            var offset = limit;
         } else {
-            var limit = 25;
-            var offset = 0;
+            fn.error(req, resp, 404);
         }
-
-        let posts = await client.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login, subtopics.subtopic_id FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, subtopics.subtopic_id, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset])
-        .then((result) => {
-            done();
-            if (result !== undefined) {
-                for (let i in result.rows) {
-                    result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                    result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
-                }
-
-                return result.rows;
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            fn.error(req, resp, 500);
-        });
-        
-        resp.render('forums/posts', {user: req.session.user, posts: posts, category_status: categoryStatus, subtopic_status: subtopicStatus, title: subtopic, topic_title: topicTitle, subtopic_id: subtopic_id, category: category});
     });
-
-    /* db.query('SELECT subtopic_status, subtopic_id, topic_title, category FROM subtopics LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic LEFT JOIN categories ON categories.category_id = topics.topic_category WHERE subtopic_title = $1', [subtopic], function(err, result) {
-        if (err) {
-            console.log(err);
-            fn.error(req, resp, 500);
-        } else if (result !== undefined && result.rows.length === 1) {
-            let status = result.rows[0].subtopic_status;
-            let subtopic_id = result.rows[0].subtopic_id;
-            let topic_title = result.rows[0].topic_title;
-            let category = result.rows[0].category;
-
-            if (page > 1) {
-                var limit = (page - 1) * 25;
-                var offset = limit;
-            } else {
-                var limit = 25;
-                var offset = 0;
-            }
-
-            db.query('SELECT posts.*, SUM(posts.replies) AS total_replies, subtopics.subtopic_title, users.username, users.user_id, users.last_login FROM posts LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id LEFT JOIN users ON users.username = posts.post_user WHERE subtopics.subtopic_title = $1 AND reply_to_post_id IS NULL GROUP BY posts.post_id, subtopics.subtopic_title, users.user_id ORDER BY post_created DESC LIMIT $2 OFFSET $3', [subtopic, limit, offset], function(err, result) {
-                if (err) {
-                    console.log(err);
-                    fn.error(req, resp, 500);
-                } else if (result !== undefined) {
-                    for (let i in result.rows) {
-                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
-                        result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
-                    }
-
-                    resp.render('forums/posts', {user: req.session.user, posts: result.rows, status: status, title: subtopic, topic_title: topic_title, subtopic_id: subtopic_id, category: category});
-                }
-            });
-        }
-    }); */
 });
 
 app.get('/forums/posts/post-details', function(req, resp) {
@@ -451,7 +488,7 @@ app.get('/forums/posts/post-details', function(req, resp) {
 
         let post_id = req.query.pid,
             reply_id = req.query.rid,
-            page = parseInt(req.query.page),
+            page = req.query.page ? parseInt(req.query.page) : 1,
             results = {};
 
         let originalPost = await client.query(
@@ -523,9 +560,24 @@ app.get('/forums/posts/post-details', function(req, resp) {
                 var offset = 0;
             }
 
-            let repliesWithQuotes = await client.query("SELECT orig.*, p2.post_id AS p2_post_id, p2.post_user AS p2_post_user, p2.post_created AS p2_post_created, p2.post_body AS p2_post_body, p2.reply_to_post_id AS p2_reply_to_post_id, users.user_status, users.user_id, users.last_login FROM posts orig LEFT JOIN posts p2 ON orig.reply_to_post_id = p2.post_id LEFT JOIN users ON orig.post_user = users.username WHERE orig.belongs_to_post_id = $1 AND  orig.post_status != 'Removed' ORDER BY orig.post_created, p2.post_created DESC OFFSET $2 LIMIT 10", [post_id, offset])
+            let repliesWithQuotes = await client.query(`SELECT
+                (SELECT COUNT(post_id) AS count
+                FROM posts
+                WHERE belongs_to_post_id = $1
+                AND post_status != 'Removed') AS count,
+            orig.*, p2.post_id AS p2_post_id, p2.post_user AS p2_post_user, p2.post_created AS p2_post_created, p2.post_body AS p2_post_body, p2.reply_to_post_id AS p2_reply_to_post_id, users.user_status, users.user_id, users.last_login
+            FROM posts orig
+            LEFT JOIN posts p2 ON orig.reply_to_post_id = p2.post_id
+            LEFT JOIN users ON orig.post_user = users.username
+            WHERE orig.belongs_to_post_id = $1
+            AND orig.post_status != 'Removed'
+            ORDER BY orig.post_created, p2.post_created DESC
+            OFFSET $2
+            LIMIT 10`, [post_id, offset])
             .then((result) => {
                 done();
+
+                console.log(result.rows);
                 if (result !== undefined) {
                     for (let i in result.rows) {
                         result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
@@ -545,7 +597,7 @@ app.get('/forums/posts/post-details', function(req, resp) {
 
             results['replies'] = repliesWithQuotes;
 
-            resp.render('blocks/post-details', {user: req.session.user, posts: results, title: results.post.post_title});
+            resp.render('blocks/post-details', {user: req.session.user, posts: results, title: results.post.post_title, page: page});
         }
     });
 
@@ -786,15 +838,9 @@ app.get('/admin-page/users', function(req, resp) {
 
                 let paramString = '',
                     offset,
-                    page,
+                    page = req.query.page ? parseInt(req.query.page) : 1,
                     params = [],
                     username = req.query.username;
-
-                if (req.query.page) {
-                    page = parseInt(req.query.page);
-                } else {
-                    page = 1;
-                }
 
                 if (page > 1) {
                     offset = (page - 1) * 20;
@@ -910,42 +956,42 @@ app.get('/admin-page/posts', function(req, resp) {
 
                 if (category !== '' && category !== undefined) {
                     params.push(category);
-                    let index = params.indexOf(category) + 1;
+                    let index = params.length;
                     whereConditions.push(`categories.category_id = $${index}`);
 
                     if (topic !== '' && topic !== undefined) {
                         params.push(topic);
-                        let index = params.indexOf(topic) + 1;
+                        let index = params.length;
                         whereConditions.push(`topics.topic_id = $${index}`);
                     }
 
                     if (subtopic !== '' && subtopic !== undefined) {
                         params.push(subtopic);
-                        let index = params.indexOf(subtopic) + 1;
+                        let index = params.length;
                         whereConditions.push(`subtopics.subtopic_id = $${index}`);
                     }
 
                     if (postId !== '' && postId !== undefined) {
                         params.push(postId);
-                        let index = params.indexOf(postId) + 1;
+                        let index = params.length;
                         whereConditions.push(`posts.post_id = $${index}`);
                     }
 
                     if (username !== '' && username !== undefined) {
                         params.push(username);
-                        let index = params.indexOf(username) + 1;
+                        let index = params.length;
                         whereConditions.push(`posts.post_user = $${index}`);
                     }
 
                     if (status !== '' && status !== undefined) {
                         params.push(status);
-                        let index = params.indexOf(status) + 1;
+                        let index = params.length;
                         whereConditions.push(`posts.post_status = $${index}`);
                     }
 
                     if (title !== '' && title !== undefined) {
                         params.push(title);
-                        let index = params.indexOf(title) + 1;
+                        let index = params.length;
                         whereConditions.push(`posts.post_title LIKE % || $${index} || %`);
                     }
                 }
@@ -968,6 +1014,9 @@ app.get('/admin-page/posts', function(req, resp) {
                 LIMIT 10
                 OFFSET $1`;
 
+                console.log(queryString)
+                console.log(params);
+
                 let posts;
                 
                 if (whereConditions.length > 1) {
@@ -989,8 +1038,6 @@ app.get('/admin-page/posts', function(req, resp) {
                 } else {
                     posts = [];
                 }
-
-                console.log(posts);
 
                 let url = `/admin-page/posts?category=${category}&topic=${topic}&subtopic=${subtopic}&post_id=${postId}&username=${username}&status=${status}&title=${title}`
 
@@ -1077,16 +1124,32 @@ app.get('/admin-page/topics', function(req, resp) {
                     topic = req.query.topic,
                     params,
                     type,
-                    queryString;
+                    queryString,
+                    parents,
+                    results = [],
+                    create = [];
 
                 if (category !== '' && category !== undefined) {
                     queryString = `SELECT topic_id AS id, topic_title AS title, topic_category AS belongs_to_id, topic_created_on AS created_on, topic_created_by AS created_by, topic_status AS status, categories.category AS belongs_to
                     FROM topics
                     LEFT JOIN categories ON topics.topic_category = categories.category_id
                     WHERE topic_category = $1
-                    ORDER BY topic_id`;
+                    ORDER BY topic_title`;
                     params = [category];
                     type = 'topic';
+
+                    parents = await client.query(`SELECT category_id AS id, category AS name
+                    FROM categories
+                    ORDER BY category`)
+                    .then((result) => {
+                        if (result !== undefined) {
+                            return result.rows;
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                    });
 
                     if (topic !== '' && topic !== undefined) {
                         queryString = `SELECT subtopic_id AS id, subtopic_title AS title, belongs_to_topic AS belongs_to_id, subtopic_created_on AS created_on, subtopic_created_by AS created_by, subtopic_status AS status, topics.topic_title AS belongs_to, categories.category AS category
@@ -1094,18 +1157,30 @@ app.get('/admin-page/topics', function(req, resp) {
                         LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
                         LEFT JOIN categories ON topics.topic_category = categories.category_id
                         WHERE belongs_to_topic = $1
-                        ORDER BY subtopic_id`;
+                        ORDER BY subtopic_title`;
                         params = [topic];
                         type = 'subtopic';
+
+                        parents = await client.query(`SELECT topic_id AS id, topic_title AS name
+                        FROM topics
+                        WHERE topic_category = $1
+                        AND topic_title NOT LIKE '%General'
+                        ORDER BY topic_title`, [category])
+                        .then((result) => {
+                            if (result !== undefined) {
+                                return result.rows;
+                            }
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            done();
+                        });
                     }
                 }
 
-                let results
-                
                 if (category !== '' && category !== undefined) {
                     results = await client.query(queryString, params)
                     .then((result) => {
-                        done();
                         if (result !== undefined) {
                             for (let i in result.rows) {
                                 result.rows[i].created_on = moment(result.rows[i].created_on).format('MM/DD/YYYY @ hh:mm:ss A');
@@ -1119,11 +1194,52 @@ app.get('/admin-page/topics', function(req, resp) {
                         done();
                         fn.error(req, resp, 500);
                     });
-                } else {
-                    results = [];
                 }
 
-                resp.render('blocks/admin-topics', {user: req.session.user, results: results, type: type, page: 'topics', title: 'Admin Topics'});
+                if (category !== '' && category !== undefined) {
+                    create = await client.query(`SELECT category_id AS id, category AS title
+                    FROM categories
+                    WHERE category_id = $1`, [category])
+                    .then((result) => {
+                        if (result !== undefined) {
+                            return result.rows;
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        done();
+                        resp.send({status: 'error'});
+                    });
+
+                    if (topic !== '' && topic !== undefined) {
+                        create = await client.query(`SELECT topic_id AS id, topic_title AS title, category AS parent
+                        FROM topics
+                        LEFT JOIN categories ON topics.topic_category = categories.category_id
+                        WHERE topic_id = $1`, [topic])
+                        .then((result) => {
+                            if (result !== undefined) {
+                                return result.rows;
+                            }
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            done();
+                            resp.send({status: 'error'});
+                        });
+                    }
+                }
+
+                done();
+
+                resp.render('blocks/admin-topics', {
+                    user: req.session.user,
+                    results: results,
+                    type: type,
+                    create: create,
+                    page: 'topics',
+                    title: 'Admin Topics',
+                    parents: parents,
+                });
             });
         } else {
             fn.error(req, resp, 401);
@@ -1562,6 +1678,26 @@ app.get('/message/compose', function(req, resp) {
     } else {
         fn.error(req, resp, 403);
     }
+});
+
+app.get('/about', (req, resp) => {
+    resp.render('blocks/about');
+});
+
+app.get('/tos', (req, resp) => {
+    resp.render('blocks/tos');
+});
+
+app.get('/privacy', (req, resp) => {
+    resp.render('blocks/privacy');
+});
+
+app.get('/search', (req, resp) => {
+    resp.render('blocks/search');
+});
+
+app.get('/contact', (req, resp) => {
+    resp.render('blocks/contact');
 });
 
 app.get('/logout', function(req, resp) {

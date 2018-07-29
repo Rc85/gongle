@@ -55,7 +55,7 @@ block content
                                     span #{message.message_date}
                             .w-10.d-flex.justify-content-end.align-items-center
                                 +deleteMessage(message, 'message')
-                                include ../inc/star-message
+                                include ../inc/save-message
                         .mb-15 !{message.message}
                         if location !== 'outbox'
                             .mb-15.text-right

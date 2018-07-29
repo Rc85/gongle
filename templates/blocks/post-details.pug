@@ -1,6 +1,10 @@
 extends ../forum-layout
 
 block subforum-header
+    link(rel='stylesheet', href='/css/vendor/quill.core.css')
+    link(rel='stylesheet', href='/css/vendor/quill.snow.css')
+    script(src='/scripts/vendor/quill.js')
+    script(src='/scripts/editor.js')
     script(src='/scripts/post-details.js')
     link(rel='stylesheet', href='/css/post-details.css')
 
@@ -12,17 +16,28 @@ block content
                 .w-10
                     +vote(post)
                 .w-80
-                    h2 #{posts.post.post_title}
+                    h2
                         if posts.post.post_status === 'Closed'
-                            span.user-badge.error-badge.ml-5
+                            span.user-badge.error-badge.mr-5
                                 i.fas.fa-comment-slash.mr-5
                                 | #{posts.post.post_status}
+                        | #{posts.post.post_title}
                     small Posted by 
                         +mod-user(posts.post.post_user, posts.post.user_id, posts.post.last_login, posts.post.user_level)
-                        | #{posts.post.post_created} in 
+                        |  #{posts.post.post_created} in 
                         a(href='/forums/' + posts.post.topic_title.toLowerCase().replace(' ', '_')) #{posts.post.topic_title}
                         i.fas.fa-angle-right.ml-5.mr-5
                         a(href='/subforums/' + posts.post.topic_title.toLowerCase().replace(' ', '_') + '/' + posts.post.subtopic_title.toLowerCase().replace(' ', '_')) #{posts.post.subtopic_title}
+                        |  as 
+                        if post.post_type === 'Discussion'
+                            - var postIcon = 'far fa-comments mr-5'
+                        else if post.post_type === 'Question'
+                            - var postIcon = 'far fa-question-circle mr-5'
+                        else if post.post_type === 'Rant'
+                            - var postIcon = 'fas fa-exclamation mr-5'
+                        span.user-badge.post-tag-badge.mr-5 
+                            i(class=postIcon)
+                            | #{post.post_type}
                         if posts.post.post_modified !== 'Invalid date'
                             |  | 
                             i.post-edited Edited #{posts.post.post_modified}
@@ -49,7 +64,9 @@ block content
                 +postAction(posts.post, posts.post)
         section.replies
             if posts.replies.length > 0
-                .post-details-pagination.mb-15
+                .pagination-container.mb-15
+                    .pagination
+                        +createPagination(posts.replies[0].count, 10, page, '/posts-detail?pid=' + posts.post.post_id)
             each post, i in posts.replies
                 section.reply(id='reply-' + post.post_id)
                     header.col
@@ -94,4 +111,7 @@ block content
                     footer
                         +postAction(posts.post, post)
             if posts.replies.length > 0
-                .post-details-pagination.mb-15
+                .pagination-container.mb-15
+                    .pagination
+                        +createPagination(posts.replies[0].count, 10, page, '/posts-detail?pid=' + posts.post.post_id)
+                    

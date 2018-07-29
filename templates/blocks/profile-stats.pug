@@ -1,0 +1,47 @@
+extends ../profile-layout
+
+block user-content
+    #user-stats.tab-content
+        section.col.mb-15
+            .section-container.w-25.mr-5.text-center
+                h3
+                    i.fas.fa-trophy.mr-5
+                    | Total Honors
+                span.user-stats 0
+            .section-container.w-25.mr-5.text-center
+                h3
+                    i.far.fa-file-alt.mr-5
+                    | Total Posts
+                span.user-stats #{viewing.posts_count}
+            .section-container.w-25.mr-5.text-center
+                h3
+                    i.far.fa-thumbs-up.mr-5
+                    | Total Upvotes
+                span.user-stats #{Math.abs(viewing.upvotes)}
+            .section-container.w-25.text-center
+                h3
+                    i.far.fa-thumbs-down.mr-5
+                    | Total Downvotes
+                span.user-stats #{Math.abs(viewing.downvotes)}
+        section#post-frequency.section-container
+            h3
+                i.fas.fa-chart-line.mr-5
+                | Post Frequency
+            canvas#post-frequency-chart.w-100(height='300')
+        if user
+            if user.user_id === viewing.user_id
+                section#violations.section-container
+                    h3
+                        i.fas.fa-exclamation-triangle.mr-5
+                        | VIOLATION HISTORY
+                    header.header.col
+                        .w-10 ID
+                        .w-50 Reason
+                        .w-25 Date
+                        .w-15 Issued By
+                    each violation, i in violations
+                        .col
+                            .w-10 #{violation.v_id}
+                            .w-50 #{violation.violation}
+                            .w-25 #{violation.v_date}
+                            .w-15 #{violation.username}

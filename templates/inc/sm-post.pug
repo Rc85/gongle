@@ -8,8 +8,8 @@
             else if post.post_type === 'Question'
                 - var postIcon = 'far fa-question-circle mr-5'
             else if post.post_type === 'Rant'
-                - var postIcon = 'fas fa-exclamation-circle mr-5'
-            span.user-badge.pending-badge.mr-5
+                - var postIcon = 'fas fa-exclamation mr-5'
+            span.user-badge.post-tag-badge.mr-5
                 i(class=postIcon)
                 | #{post.post_type}
             a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}

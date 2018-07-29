@@ -61,9 +61,12 @@ app.post('/get-topics', function(req, resp) {
         if (req.body.category === undefined) {
             queryString = `SELECT *
             FROM topics
-            ORDER BY topic_title ASC`;
+            ORDER BY topic_title`;
         } else {
-            queryString = `SELECT * FROM topics WHERE topic_category = ${req.body.category} ORDER BY topic_title ASC`;
+            queryString = `SELECT *
+            FROM topics
+            WHERE topic_category = '${req.body.category}'
+            ORDER BY topic_title`;
         }
 
         await client.query(queryString)
@@ -276,7 +279,7 @@ app.post('/get-subtopics', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        await client.query('SELECT * FROM subtopics WHERE belongs_to_topic = $1', [req.body.topic_id])
+        await client.query('SELECT * FROM subtopics WHERE belongs_to_topic = $1 ORDER BY subtopic_title', [req.body.topic_id])
         .then((result) => {
             done();
             if (result !== undefined) {
@@ -430,17 +433,104 @@ app.post('/get-user-posts', function(req, resp) {
     }
 });
 
+app.get('/get-forum-sidebar', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+
+        let forumSidebar = await client.query(`SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, category_status, topic_status, subtopic_status
+        FROM categories
+        LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id
+        LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
+        LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
+        WHERE category_status != 'Closed'
+        AND topic_status != 'Removed'
+        AND topic_status != 'Closed'
+        AND subtopic_status != 'Removed'
+        GROUP BY belongs_to_topic, subtopic_title, topic_title, category, category_status, topic_status, subtopic_status
+        ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title`)
+        .then((result) => {
+            done();
+            if (result !== undefined) {
+                return result.rows;
+            } else {
+                resp.send({status: 'error'});
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'error'});
+        });
+
+        let category = {}
+        let last = '';
+
+        for (let item of forumSidebar) {
+            category[item.category] = {}
+        }
+
+        for (let item of forumSidebar) {
+            if (item.topic_title !== last) {
+                if (item.category !== null && item.topic_title !== null) {
+                    category[item.category][item.topic_title] = {}
+                    if (item.subtopic_title !== null) {
+                        category[item.category][item.topic_title][item.subtopic_title] = {};
+                        category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
+                    }
+                }
+
+                last = item.topic_title
+            } else {
+                if (item.category !== null && item.topic_title !== null && item.subtopic_title !== null) {
+                    category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
+                }
+
+                last = item.topic_title
+            }
+        }
+
+        resp.send({status: 'success', menu: category});
+    });
+});
+
 app.post('/get-post-count', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
 
-        let subtopic = req.body.from;
-        let page = req.body.page;
+        let from = req.body.from,
+            page = req.body.page,
+            queryString,
+            params;
 
-        client.query('SELECT COUNT(post_id) AS total_posts FROM posts LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic WHERE subtopics.subtopic_title = $1 AND posts.belongs_to_post_id IS NULL', [fn.capitalize(subtopic).replace('_', ' ')])
+        console.log(typeof req.body.replies)
+
+        if (req.body.replies === 'true') {
+            queryString = `SELECT SUM(count_replies) AS total_posts FROM
+                (SELECT COUNT(reply_to_post_id) AS count_replies
+                FROM posts
+                WHERE belongs_to_post_id = $1
+                AND reply_to_post_id IS NOT NULL
+                AND post_status != 'Removed'
+                GROUP BY reply_to_post_id)
+            AS p2`;
+            params = [from];
+        } else {
+            queryString = `SELECT COUNT(post_id) AS total_posts 
+            FROM posts
+            LEFT JOIN subtopics ON subtopics.subtopic_id = posts.post_topic
+            WHERE subtopics.subtopic_title = $1
+            AND posts.belongs_to_post_id IS NULL
+            AND posts.post_status != 'Removed'`;
+            params = [fn.capitalize(from).replace('_', ' ')];
+        }
+
+        console.log(queryString);
+
+        client.query(queryString, params)
         .then((result) => {
             done();
             if (result !== undefined && result.rows.length === 1) {
+                console.log(result.rows)
                 let obj = {
                     page: page
                 }

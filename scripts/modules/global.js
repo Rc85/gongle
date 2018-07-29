@@ -21,21 +21,23 @@ const App = (() => {
         },
         handle: {
             /**
-             * @param {String} status The response from server
+             * @param {Object} resp The response object from server
              */
-            response: (status, callback) => {
-                if (status === 'success') {
-                    alertify.success('Updated');
-                    callback();
-                } else if (status === 'not found') {
+            response: (resp, callback) => {
+                console.log(resp);
+                if (resp.status === 'success') {
+                    if (callback) {
+                        callback(resp);
+                    }
+                } else if (resp.status === 'not found') {
                     alertify.error('Not found');
-                } else if (status === 'unauthorized') {
+                } else if (resp.status === 'unauthorized') {
                     alertify.error('You\'re not authorized');
-                } else if (status === 'error') {
+                } else if (resp.status === 'error') {
                     alertify.error('An error occurred');
-                } else if (status === 'fail') {
-                    alertify.error === 'Failed to execute that action';
-                } else if (status === 'deleted') {
+                } else if (resp.status === 'fail') {
+                    alertify.error('Failed to execute that action');
+                } else if (resp.status === 'deleted') {
                     alertify.success('Deleted');
                 }
             }
@@ -196,20 +198,14 @@ const Fetch = (() => {
             $.get({
                 url: '/get-categories',
                 success: (resp) => {
-                    if (resp.status === 'success') {
-                        callback(resp.categories);
-                    } else if (resp.status === 'error') {
-                        alertify.alert('An error occurred')
-                    } else if (resp.status === 'failed') {
-                        alertify.alert('Failed to fetch categories');
-                    }
+                    callback(resp);
                 }
             });
         },
         /**
          * @param {String} c Get topics in this category
          */
-        topics: (c, cb) => {
+        topics: function(c, cb) {
             let inputs = Array.from(arguments);
             let category = inputs.find((c) => { return typeof c === 'string'});
             let callback = inputs.find((cb) => { return typeof cb === 'function'});
@@ -220,13 +216,22 @@ const Fetch = (() => {
                     category: category
                 },
                 success: (resp) => {
-                    if (resp.status === 'success') {
-                        callback(resp.topics)
-                    } else if (resp.status === 'fail') {
-                        alertify.error('Failed to fetch topics');
-                    } else if (resp.status === 'error') {
-                        alertify.error('An error occurred');
-                    }
+                    callback(resp);
+                }
+            });
+        },
+        subtopics: function(t, cb) {
+            let inputs = Array.from(arguments);
+            let topic = inputs.find((t) => { return typeof t === 'string'});
+            let callback = inputs.find((cb) => { return typeof cb === 'function'});
+
+            $.post({
+                url: '/get-subtopics',
+                data: {
+                    topic_id: topic
+                },
+                success: (resp) => {
+                    callback(resp);
                 }
             });
         },
@@ -234,25 +239,40 @@ const Fetch = (() => {
             /**
             * @param {String} where Subtopic name
             * @param {String|Number} page Page number use to calculate the offset for database query
-            * @param {Function} callback 
+            * @param {Boolean} replies If true, fetch for replies only
+            * @param {Function} callback Callback with the resp object to create paginations
             */
-            count: (where, page, callback) => {
-               $.post({
-                   url: '/get-post-count',
-                   data: {
-                       from: where,
-                       page: page
-                   },
-                   success: (resp) => {
-                       callback(resp);
-                   }
-               });
-           }
+            count: function(where, page, replies, callback) {
+                let args = Array.from(arguments),
+                    getReplies = args.find((r) => { return typeof r === 'boolean'});
+
+                $.post({
+                    url: '/get-post-count',
+                    data: {
+                        from: where,
+                        page: page,
+                        replies: getReplies
+                    },
+                    success: (resp) => {
+                        callback(resp);
+                    }
+                });
+            }
+        },
+        forums: (callback) => {
+            $.get({
+                url: '/get-forum-sidebar',
+                success: function(resp) {
+                    callback(resp);
+                }
+            });
         }
     }
 })();
 
 const Toggle = (() => {
+    let _forumSidebar = 'shown';
+
     return {
         /**
          * @param {String} tabName Name of the tab (eg. this-tab = 'this')
@@ -356,6 +376,24 @@ const Toggle = (() => {
                 } else if ($(menu).css('display') === 'none') {
                     $('.' + menuClass).hide();
                     $(menu).show();
+                }
+            });
+        },
+        sidebar: (toggler, bar, parent, parentWidth, sidebarWidth) => {
+            $(toggler).on('click', () => {
+                let controlBar = $(bar);
+                if (_forumSidebar === 'shown') {
+                    $(parent).animate({'left': '-' + sidebarWidth + 'px'}, function() {
+                        $(controlBar).children('i').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+                    });                                
+                    $('main').animate({'padding-left': parentWidth - sidebarWidth + 30});
+                    _forumSidebar = 'hidden';
+                } else {
+                    $(parent).animate({'left': '0'}, () => {
+                        $(controlBar).children('i').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
+                    });
+                    $('main').animate({'padding-left': parentWidth + 30});
+                    _forumSidebar = 'shown';
                 }
             });
         }

@@ -5,7 +5,7 @@ $(document).ready(function() {
         followedPostsLoaded = false,
         friendsListLoaded = false;
 
-    $('.tab-link-button').on('click', function(e) {
+/*     $('.tab-link-button').on('click', function(e) {
         let clicked = $(this).attr('data-id');
         $('.tab-link-button').removeClass('active');
         $(this).addClass('active');
@@ -14,7 +14,7 @@ $(document).ready(function() {
 
         $('.tab-content').hide();
         $('#' + clicked).show();
-    });
+    }); */
 
     function populatePosts(parent, obj, show_body, is_reply) {
         //if (is_reply) {

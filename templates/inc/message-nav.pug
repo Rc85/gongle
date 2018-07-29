@@ -1,13 +1,13 @@
 - var inboxActive = ''
 - var outboxActive = ''
-- var starredActive = ''
+- var savedActive = ''
 - var composeActive = ''
 if location === 'inbox'
     - inboxActive = 'active'
 else if location === 'outbox'
     - outboxActive = 'active'
-else if location === 'starred'
-    - starredActive = 'active'
+else if location === 'saved'
+    - savedActive = 'active'
 else if location === 'compose'
     - composeActive = 'active'
 .message-nav
@@ -20,6 +20,6 @@ else if location === 'compose'
     a(href='/messages/outbox?key=' + user.session_key, class=outboxActive)
         i.fas.fa-envelope-open.mr-5
         | Outbox
-    a(href='/messages/starred?key=' + user.session_key, class=starredActive)
+    a(href='/messages/saved?key=' + user.session_key, class=savedActive)
         i.fas.fa-star.mr-5
-        | Starred
+        | Saved

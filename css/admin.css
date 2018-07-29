@@ -131,7 +131,7 @@
   text-decoration: underline;
 }
 
-#change-category-status-form, .admin-menu-container, .category-title-container, .category-header, .user-details-profile-pic {
+#change-category-status-form, .admin-menu-container, .category-title-container, .category-header, .user-details-profile-pic, .admin-topic-title, .topic-header {
   position: relative;
 }
 
@@ -164,4 +164,15 @@
   background: #c8c8c8;
 }
 
-/*# sourceMappingURL=css/admin.css.map */
+.admin-rename-topic-form {
+  display: none;
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+
+.admin-rename-topic-submit {
+  display: none;
+}
+
+/*# sourceMappingURL=admin.css.map */

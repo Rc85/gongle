@@ -1,5 +1,5 @@
-if (starred_messages.indexOf(message.message_id) < 0)
-    form.star-message(action='/star-message', method='post')
+if (saved_messages.indexOf(message.message_id) < 0)
+    form.save-message(action='/save-message', method='post')
         input(type='hidden', name='message_id', value=message.message_id)
         button(type='submit')
             i.far.fa-lg.fa-star

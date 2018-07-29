@@ -1,7 +1,6 @@
 extends ../forum-layout
 
 block subforum-header
-    script(src='/scripts/functions/posts.js')
     link(rel='stylesheet', href='/css/vendor/quill.core.css')
     link(rel='stylesheet', href='/css/vendor/quill.snow.css')
     script(src='/scripts/vendor/quill.js')
@@ -18,10 +17,10 @@ block content
                 a(href='/subforums/' + topic_title.toLowerCase().replace(' ', '_')) #{topic_title}
                 i.fas.fa-lg.fa-angle-right.mr-10.ml-10
             | #{title}
-        if user
-            if subtopic_status === 'Closed' || category_status === 'Closed'
-                .error.mb-15 This category/subtopic is currently closed and is read only. Please check back later.
-            else
+        if subtopic_status === 'Closed' || category_status === 'Closed'
+            .error.mb-15 This forum is currently closed. Please check back later.
+        else
+            if user
                 .post-control
                     button#new-post-button.mb-15(type='button') NEW POST
                 form#post-form(action='/post', method='POST')
@@ -52,9 +51,11 @@ block content
         if posts.length > 0
             section
                 .pagination-container.mb-15
+                    .pagination
+                        +createPagination(posts[0].count, 25, page, '/subforums/' + topic_title.toLowerCase().replace(' ', '_') + '/' + title.toLowerCase().replace(' ', '_') + '?')
                 each post, i in posts
                     .col.forum-post-row
-                        .w-10
+                        div
                             +vote(post)
                         .w-80
                             .show-posts
@@ -63,8 +64,8 @@ block content
                                 else if post.post_type === 'Question'
                                     - var postIcon = 'far fa-question-circle mr-5'
                                 else if post.post_type === 'Rant'
-                                    - var postIcon = 'fas fa-exclamation-circle mr-5'
-                                span.user-badge.pending-badge.mr-5 
+                                    - var postIcon = 'fas fa-exclamation mr-5'
+                                span.user-badge.post-tag-badge.mr-5 
                                     i(class=postIcon)
                                     | #{post.post_type}
                                 a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
@@ -81,4 +82,6 @@ block content
                         //-.w-15.d-flex.align-items-start
                             +mod-user(post.post_user, post.user_id, post.last_login)
                         //-.w-15.text-right #{post.post_created}
-                .pagination-container.mt-15
+                .pagination-container.mb-15
+                    .pagination
+                        +createPagination(posts[0].count, 25, page, '/subforums/' + topic_title.toLowerCase().replace(' ', '_') + '/' + title.toLowerCase().replace(' ', '_') + '?')

@@ -6,11 +6,14 @@ $(document).ready(function() {
     });
 
     $('.admin-menu div').on('click', function(e) {
-        let ele = $(this);
+        let option = $(this);
 
-        Admin.status.change(ele, 'posts', function(status) {
-            App.handle.response(status, function() {
-                Toggle.badge(ele, '.admin-post-row', '.post-status');
+        Admin.status.change(option, 'posts', function(resp) {
+            $('.admin-menu').hide();
+            
+            App.handle.response(resp, function() {
+                alertify.success('Post status updated');
+                Toggle.badge(option, '.admin-post-row', '.post-status');
             });
         });
     });
