@@ -12,11 +12,17 @@ block content
         section#forum-list
             each category, cat in categories
                 section.category
+                    if cat === 'Automotives'
+                        - var catClass = ''
+                        - var arrowClass = 'fa-angle-up'
+                    else
+                        - var catClass = 'category-list-parent'
+                        - var arrowClass = 'fa-angle-down'
                     .category-bar
                         a(href='/forums/' + cat.toLowerCase().replace(' ', '_').replace('/', ''))
                             h3.category-title !{category.icon} #{cat}
-                        i.fa.fa-lg.fa-angle-up
-                    section.category-list-parent
+                        i.fa.fa-lg(class=arrowClass)
+                    section(class=catClass)
                         section.category-list
                             each topic, key in category.topics
                                 section.topic-list
