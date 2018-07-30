@@ -14,7 +14,7 @@ block content
             header.col.mb-10
                 - let post = posts.post
                 .w-10
-                    +vote(post)
+                    +vote(post, true)(post)
                 .w-80
                     h2
                         if posts.post.post_status === 'Closed'
@@ -86,7 +86,7 @@ block content
                                     |  | 
                                     i.post-edited Edited #{post.post_modified}
                         .w-10
-                            +vote(post)
+                            +vote(post, true)(post)
                     section
                         if post.p2_post_id !== null
                             section.quote

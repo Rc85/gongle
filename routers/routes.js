@@ -237,45 +237,135 @@ app.get('/profile', function(req, resp) {
             });
         }
 
-        resp.render('blocks/profile-stats', {user: req.session.user, viewing: userProfile, violations: violations, title: 'Profile'});
+        resp.render('blocks/profile-stats', {user: req.session.user, viewing: userProfile, violations: violations, title: 'User - Profile'});
     });
 });
 
 app.get('/profile/posts', (req, resp) => {
     if (req.session.user) {
-        let username = req.query.u;
-        let page = req.query.page ? parseInt(req.query.page) : 1;
-        let offset;
+        db.connect(async (err, client, done) => {
+            if (err) { console.log(err); }
 
-        if (page > 1) {
-            offset = (page - 1) * 20;
-        } else {
-            offset = 0;
-        }
+            let page = req.query.page ? parseInt(req.query.page) : 1;
+            let offset;
 
-        let posts = await client.query(`SELECT COUNT(post_id) AS total_posts, posts.*, subtopics.subtopic_title
-        FROM posts
-        JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
-        WHERE post_user = $1
-        AND reply_to_post_id IS NULL
-        AND posts.post_status != 'Removed'
-        GROUP BY posts.post_id, subtopics.subtopic_title
-        ORDER BY post_created DESC
-        LIMIT 20
-        OFFSET $2`, [req.session.user.username, offset])
-        .then((result) => {
-            done();
-            if (result !== undefined) {
-                return result.rows;
+            if (page > 1) {
+                offset = (page - 1) * 20;
+            } else {
+                offset = 0;
             }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            fn.error(req, resp, 500);
-        });
 
-        resp.render('blocks/profile-posts')
+            let posts = await client.query(`SELECT posts.*,
+                (SELECT COUNT(post_id) AS count FROM posts
+                WHERE belongs_to_post_id IS NULL
+                AND post_user = $1
+                AND post_status != 'Removed') AS count FROM posts
+            WHERE belongs_to_post_id IS NULL
+            AND post_user = $1
+            AND post_status != 'Removed'
+            OFFSET $2
+            LIMIT 20`, [req.session.user.username, offset])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
+                        result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
+                    }
+
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            resp.render('blocks/profile-posts', {user: req.session.user, viewing: req.session.user, posts: posts, title: 'User - Posts', page: page});
+        });
+    }
+});
+
+app.get('/profile/replies', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async (err, client, done) => {
+            if (err) { console.log(err); }
+
+            let page = req.query.page ? parseInt(req.query.page) : 1;
+            let offset;
+
+            if (page > 1) {
+                offset = (page - 1) * 20;
+            } else {
+                offset = 0;
+            }
+
+            let replies = await client.query(`SELECT posts.*,
+                (SELECT COUNT(post_id) AS count FROM posts
+                WHERE belongs_to_post_id IS NOT NULL
+                AND post_user = $1
+                AND post_status != 'Removed') AS count FROM posts
+            WHERE belongs_to_post_id IS NOT NULL
+            AND post_user = $1
+            AND post_status != 'Removed'
+            OFFSET $2
+            LIMIT 20`, [req.session.user.username, offset])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
+                        result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
+                    }
+
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            resp.render('blocks/profile-replies', {user: req.session.user, viewing: req.session.user, replies: replies, title: 'User - Replies', page: page});
+        });
+    }
+});
+
+app.get('/profile/followed', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async (err, client, done) => {
+            if (err) { console.log(err); }
+
+            let page = req.query.page ? parseInt(req.query.page) : 1;
+            let offset;
+            
+            if (page > 1) {
+                offset = (page - 1) * 20;
+            } else {
+                offset = 0;
+            }
+
+            let posts = await client.query(`SELECT *,
+                (SELECT COUNT(followed_id) AS count FROM followed_posts
+                WHERE user_following = $1) AS count FROM followed_posts
+            LEFT OUTER JOIN posts ON followed_posts.followed_post = posts.post_id
+            LEFT OUTER JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+            WHERE user_following = $1
+            GROUP BY posts.post_id, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id
+            ORDER BY followed_on DESC
+            LIMIT 20
+            OFFSET $2`, [req.session.user.username, offset])
+            .then((result) => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
+                        result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
+                    }
+                }
+            })
+        })
     }
 })
 

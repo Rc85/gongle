@@ -1,6 +1,6 @@
-mixin vote(post)
+mixin vote(post, votable)
     - let postVotes = parseInt(post.post_upvote) + parseInt(post.post_downvote)
-    if user
+    if user && votable
         .voting(class=`vote-${post.post_id}`)
             if user.votes
                 - let upvoteClass = 'far'

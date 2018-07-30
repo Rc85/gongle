@@ -29,7 +29,9 @@ block content
                     | USERNAME:                        
                 .profile-field #{viewing.username}
                 if viewing.hide_email
-                    h4 EMAIL:
+                    h4
+                        i.fas.fa-envelope.mr-5
+                        | EMAIL:
                     .profile-field #{viewing.email}
                 h4
                     i.fas.fa-plug.mr-5
@@ -49,25 +51,40 @@ block content
                 .profile-field #{viewing.last_login}
             section.tab-container
                 nav.tab-bar
-                    a.tab-link-button.active(href='#', data-id='user-stats')
+                    - var statsClass = ''
+                    - var postsClass = ''
+                    - var repliesClass = ''
+                    - var followedClass = ''
+                    - var friendsClass = ''
+                    if title === 'User - Profile'
+                        - statsClass = 'active'
+                    else if title === 'User - Posts'
+                        - postsClass = 'active'
+                    else if title === 'User - Replies'
+                        - repliesClass = 'active'
+                    else if title === 'User - Followed Posts'
+                        - followedClass = 'active'
+                    else if title === 'User - Friends'
+                        - friendsClass = 'active'
+                    a.tab-link-button(href='/profile?u=' + viewing.username, data-id='user-stats', class=statsClass)
                         h4
                             i.fas.fa-chart-bar.mr-5
                             | STATS
                     if user
                         if user.user_id === viewing.user_id
-                            a#user-posts-button.tab-link-button(href='/profile/posts')
+                            a#user-posts-button.tab-link-button(href='/profile/posts', class=postsClass)
                                 h4
                                     i.far.fa-file-alt.mr-5
                                     | POSTS
-                            a#user-replies-button.tab-link-button(href='/profile/replies')
+                            a#user-replies-button.tab-link-button(href='/profile/replies', class=repliesClass)
                                 h4
                                     i.far.fa-comment-alt.mr-5
                                     | REPLIES
-                            a#user-followed-posts-button.tab-link-button(href='/profile/followed')
+                            a#user-followed-posts-button.tab-link-button(href='/profile/followed', class=followedClass)
                                 h4 
                                     i.far.fa-star.mr-5
                                     | FOLLOWED POSTS
-                            a#user-friends-button.tab-link-button(href='/profile/friends')
+                            a#user-friends-button.tab-link-button(href='/profile/friends', class=friendsClass)
                                 h4
                                     i.fas.fa-user-friends.mr-5
                                     | FRIENDS

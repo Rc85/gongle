@@ -70,10 +70,6 @@
     border-bottom-right-radius: 5px;
 }
 
-#user-replies, #user-posts, #user-followed-posts, #user-friends {
-    display: none;
-}
-
 .user-stats {
     color: $notice_color;
     font-size: 1.4em;
@@ -93,7 +89,11 @@
     }
 }
 
-#upload-profile-pic-input {
+.expand-post-body {
+    cursor: pointer;
+}
+
+#upload-profile-pic-input, .user-post-body {
     display: none;
 }
 

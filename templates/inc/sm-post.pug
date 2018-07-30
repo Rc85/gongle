@@ -1,6 +1,6 @@
 .d-flex.mb-5
     .mr-10
-        +vote(post)
+        +vote(post, true)(post)
     .w-85
         .show-posts
             if post.post_type === 'Discussion'

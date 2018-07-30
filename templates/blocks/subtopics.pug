@@ -27,7 +27,7 @@ block content
         each post, i in posts.post
             .col.mb-10(id='post-' + post.post_id)
                 .w-10
-                    +vote(post)
+                    +vote(post, true)(post)
                 .w-50
                     a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
                 .w-10

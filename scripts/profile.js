@@ -1,9 +1,5 @@
 $(document).ready(function() {
-    let username = App.url.param('u'),
-        postsLoaded = false,
-        repliesLoaded = false,
-        followedPostsLoaded = false,
-        friendsListLoaded = false;
+    let username = App.url.param('u');
 
 /*     $('.tab-link-button').on('click', function(e) {
         let clicked = $(this).attr('data-id');
@@ -16,7 +12,7 @@ $(document).ready(function() {
         $('#' + clicked).show();
     }); */
 
-    function populatePosts(parent, obj, show_body, is_reply) {
+    /* function populatePosts(parent, obj, show_body, is_reply) {
         //if (is_reply) {
             let url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&page=1';
         //} else {
@@ -51,9 +47,9 @@ $(document).ready(function() {
                 (show_body ? $('<div>').addClass('show-posts border-top-light mt-10').html(obj.post_body) : null)
             )
         )
-    }
+    } */
 
-    function getUserPosts(page, type, appendDiv) {
+    /* function getUserPosts(page, type, appendDiv) {
         App.loading.show();
 
         $.post({
@@ -95,7 +91,7 @@ $(document).ready(function() {
                 }
             }
         });
-    }
+    } */
 
     function getFriendsList(page) {
         App.loading.show();
@@ -182,7 +178,7 @@ $(document).ready(function() {
         });
     }
 
-    $('#user-posts-button').on('click', function(e) {
+    /* $('#user-posts-button').on('click', function(e) {
         if (!postsLoaded) {
             getUserPosts(1, 'posts', '#user-posts-content');
         }
@@ -204,7 +200,7 @@ $(document).ready(function() {
         if (!friendsListLoaded) {
             getFriendsList();
         }
-    });
+    }); */
 
     function randomColor() {
         let char = '0123456789ABCDEF';
@@ -331,4 +327,14 @@ $(document).ready(function() {
     $('#upload-profile-pic-input').on('change', function() {
         $('#upload-profile-pic-form').submit();
     });
+
+    $('.expand-post-body').on('click', function() {
+        $(this).siblings('.user-post-body').slideToggle();
+
+        if ($(this).children().hasClass('fa-angle-down')) {
+            $(this).children().removeClass('fa-angle-down').addClass('fa-angle-up');
+        } else {
+            $(this).children().removeClass('fa-angle-up').addClass('fa-angle-down');
+        }
+    })
 });

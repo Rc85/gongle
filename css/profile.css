@@ -61,10 +61,6 @@
   border-bottom-right-radius: 5px;
 }
 
-#user-replies, #user-posts, #user-followed-posts, #user-friends {
-  display: none;
-}
-
 .user-stats {
   color: #ff7d00;
   font-size: 1.4em;
@@ -83,7 +79,11 @@
   font-size: 0.5em;
 }
 
-#upload-profile-pic-input {
+.expand-post-body {
+  cursor: pointer;
+}
+
+#upload-profile-pic-input, .user-post-body {
   display: none;
 }
 

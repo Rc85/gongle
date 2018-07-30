@@ -1,6 +1,6 @@
 .col
     .w-10
-        +vote(post)
+        +vote(post, true)(post)
     .w-80
         .show-posts
             if post.post_type === 'Discussion'

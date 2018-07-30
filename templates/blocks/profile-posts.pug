@@ -1,0 +1,26 @@
+extends ../profile-layout
+
+block user-content
+    section#user-posts.tab-content
+        .pagination-container.mb-15
+            .pagination
+                +createPagination(posts[0].count, 20, page, '/profile/posts?')
+        each post, i in posts
+            .section-container.mb-15
+                .d-flex
+                    .mr-15
+                        +vote(post, false)
+                    .w-100
+                        .d-flex
+                            h4.mb-0
+                                a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
+                                if post.post_status === 'Closed'
+                                    span.ml-15.user-badge.error-badge #{post.post_status}
+                        small Posted on #{post.post_created}
+                        hr
+                        .user-post-body !{post.post_body}
+                        .expand-post-body.text-center
+                            i.fas.fa-2x.fa-angle-down
+        .pagination-container.mt-15
+            .pagination
+                +createPagination(posts[0].count, 20, page, '/profile/posts?')

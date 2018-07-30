@@ -56,7 +56,7 @@ block content
                 each post, i in posts
                     .col.forum-post-row
                         div
-                            +vote(post)
+                            +vote(post, true)(post)
                         .w-80
                             .show-posts
                                 if post.post_type === 'Discussion'
