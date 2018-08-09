@@ -4,14 +4,13 @@
     .w-85
         .show-posts
             if post.post_type === 'Discussion'
-                - var postIcon = 'far fa-comments mr-5'
+                - var postIcon = 'far fa-comments'
             else if post.post_type === 'Question'
-                - var postIcon = 'far fa-question-circle mr-5'
+                - var postIcon = 'far fa-question-circle'
             else if post.post_type === 'Rant'
-                - var postIcon = 'fas fa-exclamation mr-5'
+                - var postIcon = 'fas fa-exclamation'
             span.user-badge.post-tag-badge.mr-5
                 i(class=postIcon)
-                | #{post.post_type}
             a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
         .forum-post-details
             small #{post.post_created} |  

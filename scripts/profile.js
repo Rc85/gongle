@@ -1,97 +1,26 @@
 $(document).ready(function() {
     let username = App.url.param('u');
 
-/*     $('.tab-link-button').on('click', function(e) {
-        let clicked = $(this).attr('data-id');
-        $('.tab-link-button').removeClass('active');
-        $(this).addClass('active');
-
+    $('.unfriend-button').on('click', function(e) {
         e.preventDefault();
 
-        $('.tab-content').hide();
-        $('#' + clicked).show();
-    }); */
+        let button = $(this);
+        let id = $(this).attr('data-id');
 
-    /* function populatePosts(parent, obj, show_body, is_reply) {
-        //if (is_reply) {
-            let url = '/forums/posts/post-details?pid=' + obj.belongs_to_post_id + '&page=1';
-        //} else {
-            //var url = '/forums/posts/post-details?pid=' + obj.post_id + '&tid=' + obj.post_topic + '&page=1';
-        //}
+        alertify.confirm('Are you sure you want to unfriend this user? This cannot be reversed.', function(e) {
+            e.preventDefault();
 
-        $(parent).append(
-            $('<div>').addClass('section-container mb-15').append(
-                $('<div>').addClass('d-flex').append(
-                    $('<div>').addClass('user-vote-div').append(
-                        $('<span>').addClass('vote-counter').text(obj.post_upvote + obj.post_downvote),
-                        $('<small>').text('Votes')
-                    ),
-                    $('<div>').append(
-                        $('<div>').addClass('d-flex').append(
-                            $('<a>').attr('href', url).append(
-                                $('<h3>').html(obj.post_title)
-                            ),
-                            obj.post_status === 'Removed' ?
-                            $('<span>').addClass('ml-15 user-badge critical-badge').append(
-                                $('<i>').addClass('fas fa-minus mr-5'),
-                                'Removed'
-                            ) :
-                            $('<span>').addClass('ml-15 user-badge error-badge').append(
-                                $('<i>').addClass('fas fa-comment-slash mr-5'),
-                                'Closed'
-                            )
-                        ),
-                        $('<small>').html('Posted in <a href="/subforums/' + obj.subtopic_title.toLowerCase().replace(' ', '_') + '">' + obj.subtopic_title + '</a> ' + obj.post_created + ' with ' + obj.replies + ' Replies')
-                    )
-                ),
-                (show_body ? $('<div>').addClass('show-posts border-top-light mt-10').html(obj.post_body) : null)
-            )
-        )
-    } */
-
-    /* function getUserPosts(page, type, appendDiv) {
-        App.loading.show();
-
-        $.post({
-            url: '/get-user-posts',
-            data: {
-                type: type,
-                page: page
-            },
-            success: function(resp) {
-                App.loading.hide();
-                if (type === 'posts') {
-                    postsLoaded = true;
-                } else if (type === 'replies') {
-                    repliesLoaded = true;
-                } else if (type === 'followed') {
-                    followedPostsLoaded = true;
-                }
-
-                if (resp.status === 'success') {
-                    $(appendDiv).empty();
-
-                    for (let post of resp.posts) {
-                        populatePosts(appendDiv, post, true, false);
-                    }
-
-                    if (type === 'posts') {
-                        var appendPaginationTo = '.profile-posts-pagination';
-                    } else {
-                        var appendPaginationTo = '.profile-replies-pagination';
-                    }
-
-                    if (resp.posts.total_posts > 0) {
-                        createPagination(appendPaginationTo, resp.posts.total_posts, 10, false, false, getUserPosts);
-                    }
-                } else {
-                    $(appendDiv).append(
-                        $('<div>').addClass('section-container').html('An error occurred while trying to retrieve your posts.')
-                    );
-                }
-            }
+            User.friend.remove(id, (resp) => {
+                App.handle.response(resp, () => {
+                    alertify.success('Unfriend successful');
+                    $(button).parents('.friend-container').remove();
+                });
+            });
+        }, function() {
+            App.loading.hide();
+            return false;
         });
-    } */
+    });
 
     function getFriendsList(page) {
         App.loading.show();
@@ -226,7 +155,9 @@ $(document).ready(function() {
 
     let dayInt = dateObj.getUTCDate();
 
-    if (day < 10) {
+    console.log(dayInt);
+
+    if (dayInt < 10) {
         day = '0' + dayInt;
     } else {
         day = dayInt;
@@ -259,6 +190,7 @@ $(document).ready(function() {
             end_date: endDate
         },
         success: function(resp) {
+            console.log(resp);
             if (resp.status === 'error') {
                 $('#post-frequency-chart').addClass('d-flex justify-content-center align-items-center').append(
                     $('<span>').text('An error occurred while trying to retrieve post data.')

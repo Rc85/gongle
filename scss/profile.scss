@@ -111,10 +111,23 @@ div:not(#user-stats) {
 
 #user-friends-content {
     display: flex;
-    justify-content: space-between;
     flex-wrap: wrap;
 
     small {
-        font-size: 0.6em;
+        font-size: 0.75em;
     }
+}
+
+.friend-container {
+    display: flex;
+}
+
+.user-friend-profile-pic {
+    border-radius: 100%;
+}
+
+.user-friend-profile-pic:after {
+    padding-bottom: 100%;
+    content: '';
+    display: block;
 }

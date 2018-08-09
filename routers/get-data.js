@@ -442,9 +442,8 @@ app.get('/get-forum-sidebar', function(req, resp) {
         LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id
         LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
         LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
-        WHERE category_status != 'Closed'
+        WHERE category_status != 'Removed'
         AND topic_status != 'Removed'
-        AND topic_status != 'Closed'
         AND subtopic_status != 'Removed'
         GROUP BY belongs_to_topic, subtopic_title, topic_title, category, category_status, topic_status, subtopic_status
         ORDER BY category, topic_title LIKE '%General' DESC, topic_title, subtopic_title`)

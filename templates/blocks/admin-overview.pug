@@ -32,6 +32,10 @@ block content
                             section.categories-list.section-list
                                 header.header.categories-header.col
                                     div !{category['icon']} #{key}
+                                        if category.status === 'Closed'
+                                            span.user-badge.error-badge.ml-5
+                                                i.fas.fa-comment-slash.mr-5
+                                                | #{category.status}
                                     i.fas.fa-lg.fa-angle-down
                                 each topic, key in category['topics']
                                     section.topics-list.section-list
@@ -48,16 +52,3 @@ block content
                             i.far.fa-bell.mr-5
                             | Notifications
                         section.section-list
-                            h4 June 1, 2018
-                            .list-item
-                                a(href='#') 
-                                    span.error-status 43 
-                                    | errors need to be fixed.
-                            .list-item
-                                a(href='#')
-                                    span.error-status 5 
-                                    | posts has been reported.
-                            .list-item
-                                a(href='#')
-                                    span.error-status 3 
-                                    | user reports have been submitted.

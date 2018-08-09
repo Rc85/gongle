@@ -98,11 +98,24 @@ div:not(#user-stats) h3 {
 
 #user-friends-content {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
 }
 #user-friends-content small {
-  font-size: 0.6em;
+  font-size: 0.75em;
 }
 
-/*# sourceMappingURL=profile.css.map */
+.friend-container {
+  display: flex;
+}
+
+.user-friend-profile-pic {
+  border-radius: 100%;
+}
+
+.user-friend-profile-pic:after {
+  padding-bottom: 100%;
+  content: "";
+  display: block;
+}
+
+/*# sourceMappingURL=css/profile.css.map */

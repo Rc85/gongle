@@ -12,6 +12,21 @@ const User = (() => {
                         callback(resp);
                     }
                 });
+            },
+            remove: (id, callback) => {
+                App.loading.show();
+
+                $.post({
+                    url: '/unfriend',
+                    data: {
+                        fid: id
+                    },
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
             }
         }
     }

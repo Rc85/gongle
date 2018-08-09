@@ -139,6 +139,16 @@
   cursor: pointer;
 }
 
+.user-details-profile-pic {
+  border-radius: 100%;
+}
+
+.user-details-profile-pic:after {
+  padding-bottom: 100%;
+  content: "";
+  display: block;
+}
+
 .admin-menu-button {
   background: transparent;
   border: 0;
@@ -175,4 +185,4 @@
   display: none;
 }
 
-/*# sourceMappingURL=admin.css.map */
+/*# sourceMappingURL=css/admin.css.map */

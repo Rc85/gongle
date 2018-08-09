@@ -89,9 +89,7 @@ block content
                                                 div(data-id=u.user_id, data-status='Delete') Delete
                                 section.user-details
                                     .col.align-items-start
-                                        .w-15.user-details-profile-pic
-                                            a(href='/profile?u=' + u.username)
-                                                img.profile-pic.w-100(src=u.avatar_url)
+                                        .w-15.user-details-profile-pic(style=`background: url(${u.avatar_url}); background-size: cover; background-position: center top;`)
                                             button.delete-user-profile-pic(type='submit', data-id=u.user_id, data-username=u.username)
                                                     i.fas.fa-lg.fa-times
                                         .user-fields

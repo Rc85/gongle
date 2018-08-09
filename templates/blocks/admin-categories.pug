@@ -55,12 +55,15 @@ block content
                             .w-10.cat-status.text-center
                                 if category.category_status === 'Open'
                                     span.user-badge.success-badge #{category.category_status}
-                                else
+                                else if category.category_status === 'Closed'
                                     span.user-badge.error-badge #{category.category_status}
+                                else if category.category_status === 'Removed'
+                                    span.user-badge.critical-badge #{category.category_status}
                             .w-5.text-right
                                 .admin-menu-container
                                     i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
-                                    .admin-menu
+                                    .admin-menu.text-left
                                         div(data-id=category.category_id, data-status='Open') Open
                                         div(data-id=category.category_id, data-status='Closed') Close
+                                        div(data-id=category.category_id, data-status='Removed') Remove
                                         div(data-id=category.category_id, data-status='Delete') Delete

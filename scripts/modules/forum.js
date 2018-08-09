@@ -50,6 +50,19 @@ const Post = (() => {
                     callback(resp);
                 }
             });
+        },
+        edit: (data, callback) => {
+            App.loading.show();
+
+            $.post({
+                url: '/edit-post',
+                data: data,
+                success: function(resp) {
+                    App.loading.hide();
+
+                    callback(resp);
+                }
+            });
         }
     }
 })();

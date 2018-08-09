@@ -2,9 +2,10 @@ extends ../profile-layout
 
 block user-content
     section#user-replies.tab-content
-        .pagination-container.mb-15
-            .pagination
-                +createPagination(replies[0].count, 20, page, '/profile/replies?')
+        if replies.length > 0
+            .pagination-container.mb-15
+                .pagination
+                    +createPagination(replies[0].count, 20, page, '/profile/replies?')
         each reply, i in replies
             .section-container.mb-15
                 .d-flex
@@ -21,6 +22,7 @@ block user-content
                         .user-post-body !{reply.post_body}
                         .expand-post-body.text-center
                             i.fas.fa-2x.fa-angle-down
-        .pagination-container.mt-15
-            .pagination
-                +createPagination(replies[0].count, 20, page, '/profile/replies?')
+        if replies.length > 0
+            .pagination-container.mt-15
+                .pagination
+                    +createPagination(replies[0].count, 20, page, '/profile/replies?')

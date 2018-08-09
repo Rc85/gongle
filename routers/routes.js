@@ -46,7 +46,7 @@ app.get('/', function(req, resp) {
         LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id
         LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
         LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
-        WHERE category_status != 'Closed'
+        WHERE category_status != 'Removed'
         GROUP BY belongs_to_topic, subtopic_title, topic_title, category, category_status, cat_icon
         ORDER BY category, topic_title
         LIKE '%General' DESC, topic_title, subtopic_title = 'Other' ASC, subtopic_title`
@@ -63,14 +63,13 @@ app.get('/', function(req, resp) {
             fn.error(req, resp, 400)
         });
 
-        console.log(allTopics);
-
         let category = {},
             last = '';
 
         for (let item of allTopics) {
             category[item.category] = {}
             category[item.category]['icon'] = item.cat_icon;
+            category[item.category]['status'] = item.category_status;
             category[item.category]['topics'] = {}
         }
 
@@ -126,9 +125,7 @@ app.get('/forums/:category', function(req, resp) {
             done();
         });
 
-        console.log(status);
-
-        if (status !== 'Closed' && status !== undefined) {
+        if (status !== 'Removed' && status !== undefined) {
             let categories = await client.query(`SELECT topic_title, topic_status, pt.last_posted, pt.post_user
             FROM topics
             LEFT JOIN categories ON categories.category_id = topics.topic_category
@@ -146,7 +143,6 @@ app.get('/forums/:category', function(req, resp) {
                 GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id
             WHERE category = $1
             AND topic_status != 'Removed'
-            AND topic_status != 'Closed'
             ORDER BY topic_title LIKE '%General' DESC, topic_title ASC`, [title])
             .then((result) => {
                 if (result !== undefined) {
@@ -377,12 +373,41 @@ app.get('/profile/followed', (req, resp) => {
                 fn.error(req, resp, 500);
             });
 
-            console.log(posts);
-
             resp.render('blocks/profile-followed', {user: req.session.user, viewing: req.session.user, posts: posts, page: page, title: 'User - Followed Posts'});
         });
     } else {
         fn.error(req, resp, 401);
+    }
+});
+
+app.get('/profile/friends', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            let friends = await client.query(`SELECT friends.*, users.user_id, users.email, users.last_login, users.user_status, users.user_level, users.avatar_url, users.online_status FROM friends
+            LEFT JOIN users ON users.username = friends.befriend_with
+            WHERE friendly_user = $1`, [req.session.user.username])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].last_login = moment(result.rows[i].last_login).fromNow();
+                    }
+                    
+                    return result.rows;
+                }
+            })
+            .catch((err) => {
+                console.log(err)
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            console.log(req.session.user);
+
+            resp.render('blocks/profile-friends', {user: req.session.user, viewing: req.session.user, friends: friends, title: 'User - Friends'});
+        });
     }
 });
 
@@ -405,17 +430,15 @@ app.get('/subforums/:topic', function(req, resp) {
             resp.send({status: 'error'});
         });
 
-        let access;
-
-        if (status !== undefined) { // Topic does not exist
-            if (status.category_status === 'Open') {
+        if (status !== undefined) {
+            if (status.category_status === 'Removed') {
+                access = false;
+            } else {
                 access = true;
 
-                if (status.topic_status !== 'Open') {
-                    access = false;
+                if (status.topic_status === 'Removed') {
+                    access = false
                 }
-            } else {
-                access = false;
             }
         } else {
             access = false;
@@ -490,24 +513,21 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
             resp.send({status: 'error'});
         });
 
-        console.log(status);
         let access;
 
         if (status !== undefined) {
-            if (status.category_status === 'Open') {
+            if (status.category_status === 'Removed') {
+                access = false;
+            } else {
                 access = true;
 
-                if (status.topic_status !== 'Open') {
+                if (status.topic_status === 'Removed') {
                     access = false
                 }
-            } else {
-                access = false;
             }
         } else {
             access = false;
         }
-
-        console.log(access);
 
         if (access) {
             let getTopics = await client.query(`SELECT subtopic_status, subtopic_id, topic_title, category, category_status
@@ -557,6 +577,7 @@ app.get('/subforums/:topic/:subtopic', function(req, resp) {
                 LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
                 LEFT JOIN users ON users.username = posts.post_user
                 WHERE subtopics.subtopic_title = $1
+                AND post_status != 'Removed'
                 AND reply_to_post_id IS NULL
                 GROUP BY posts.post_id, subtopics.subtopic_title, subtopics.subtopic_id, users.user_id
                 ORDER BY post_created DESC
@@ -829,12 +850,12 @@ app.get('/admin-page/overview', function(req, resp) {
                 if (err) { console.log(err); }
 
                 let allTopics = await client.query(`
-                SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, cat_icon
+                SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category, cat_icon, category_status
                 FROM categories
                 LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id
                 LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id
                 LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic
-                GROUP BY belongs_to_topic, subtopic_title, topic_title, category, cat_icon
+                GROUP BY belongs_to_topic, subtopic_title, topic_title, category, cat_icon, category_status
                 ORDER BY category, topic_title, subtopic_title`)
                 .then((result) => {
                     if (result !== undefined) {
@@ -855,6 +876,7 @@ app.get('/admin-page/overview', function(req, resp) {
                 for (let item of allTopics) {
                     category[item.category] = {}
                     category[item.category]['icon'] = item.cat_icon;
+                    category[item.category]['status'] = item.category_status;
                     category[item.category]['topics'] = {}
                 }
 
@@ -892,6 +914,8 @@ app.get('/admin-page/overview', function(req, resp) {
                     done();
                     fn.error(req, resp, 500);
                 });
+
+                console.log(category);
 
                 resp.render('blocks/admin-overview', {user: req.session.user, page: 'overview', categories: category, configs: configs, title: 'Admin Overview'});
             });
@@ -1637,7 +1661,7 @@ app.get('/messages/:location', function(req, resp) {
                 }
 
                 if (req.params.location !== 'content') {
-                    resp.render('blocks/messages', {user: req.session.user, messages: messages, starred_messages: starredIdArray, title: 'Messages', location: req.params.location});
+                    resp.render('blocks/messages', {user: req.session.user, messages: messages, saved_messages: starredIdArray, title: 'Messages', location: req.params.location});
                 } else {
                     let message;
                     let messageId = parseInt(req.query.id);
@@ -1655,7 +1679,7 @@ app.get('/messages/:location', function(req, resp) {
                         }
                     }
 
-                    resp.render('blocks/message', {user: req.session.user, message: message, starred_messages: starredIdArray, title: message.subject, location: req.query.location});
+                    resp.render('blocks/message', {user: req.session.user, message: message, saved_messages: starredIdArray, title: message.subject, location: req.query.location});
                 }
             } else {
                 fn.error(req, resp, 401);

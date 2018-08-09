@@ -6,6 +6,7 @@ const fn = require('./utils/functions');
 app.post('/post', function(req, resp) {
     if (req.session.user) {
         let checkPost = /^(<p>(\s*|<br>)<\/p>)*$/
+        console.log(req.body);
         
         if (checkPost.test(req.body.post_body)) {
             resp.send({status: 'invalid post'});
@@ -25,13 +26,33 @@ app.post('/post', function(req, resp) {
                     resp.send({status: 'error'});
                 });
 
-                let status = await client.query(`SELECT category_status, topic_status, subtopic_status, post_status
-                FROM posts
-                LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
-                LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
-                LEFT JOIN categories ON topics.topic_category = categories.category_id
-                WHERE posts.post_id = $1`, [req.body.belongs_to_post_id])
+                let queryString,
+                    params;
+
+                if (req.body.belongs_to_post_id) {
+                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status
+                    FROM posts
+                    LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
+                    LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                    LEFT JOIN categories ON topics.topic_category = categories.category_id
+                    WHERE posts.post_id = $1`;
+                    params = [req.body.belongs_to_post_id];
+                } else {
+                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status
+                    FROM subtopics
+                    LEFT JOIN posts ON posts.post_topic = subtopics.subtopic_id
+                    LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
+                    LEFT JOIN categories ON topics.topic_category = categories.category_id
+                    WHERE subtopics.subtopic_id = $1`;
+                    params = [req.body.subtopic_id];
+                }
+
+                console.log(queryString)
+                console.log(params)
+
+                let status = await client.query(queryString, params)
                 .then((result) => {
+                    console.log(result.rows);
                     if (result !== undefined && result.rows.length === 1) {
                         return result.rows[0];
                     }
@@ -43,6 +64,7 @@ app.post('/post', function(req, resp) {
                 });
 
                 let allowPost;
+                console.log(status);
 
                 if (status !== undefined) {
                     if (status.category_status === 'Open') {
@@ -56,7 +78,7 @@ app.post('/post', function(req, resp) {
                             allowPost = false;
                         }
 
-                        if (status.post_status !== 'Open') {
+                        if (status.post_status !== 'Open' && status.post_status !== null) {
                             allowPost = false;
                         }
                     } else {
@@ -65,6 +87,8 @@ app.post('/post', function(req, resp) {
                 } else {
                     allowPost = false;
                 }
+
+                console.log(allowPost);
 
                 if (allowPost) {
                     if (userStatus[0].user_status === 'Suspended') {
@@ -93,7 +117,7 @@ app.post('/post', function(req, resp) {
                         });
                     }
                 } else {
-                    fn.error(req, resp, 403);
+                    resp.send({status: 'fail'})
                 }    
             });
         }
@@ -109,23 +133,29 @@ app.post('/edit-post', function(req, resp) {
 
             let now = new Date();
 
-            await client.query('UPDATE posts SET post_title = $1, post_body = $2, post_modified = $3 WHERE post_id = $4 RETURNING post_id, post_topic', [req.body.title, req.body.post_body, now, req.body.post_id])
+            await client.query('UPDATE posts SET post_title = $1, post_body = $2, post_modified = $3 WHERE post_id = $4 RETURNING post_id, post_topic, belongs_to_post_id', [req.body.title, req.body.post_body, now, req.body.post_id])
             .then((result) => {
                 done();
                 if (result !== undefined && result.rowCount === 1) {
-                    let link = req.headers.referer;
+                    let link;
 
-                    resp.render('blocks/response', {user: req.session.user, status: 'Success', message: 'Your successfully edited your post.', from: link});
+                    if (result.rows[0].belongs_to_post_id !== null) {
+                        link = `/forums/posts/post-details?pid=${result.rows[0].belongs_to_post_id}`
+                    } else {
+                        link = `/forums/posts/post-details?pid=${result.rows[0].post_id}&page=1`
+                    }
+
+                    resp.send({status: 'success', link: link})
                 }
             })
             .catch((err) => {
                 console.log(err);
                 done();
-                fn.error(req, resp, 500);
+                resp.send({status: 'error'});
             })
         });
     } else {
-        fn.error(req, resp, 401);
+        resp.send({status: 'unauthorized'});
     }
 });
 
@@ -326,6 +356,8 @@ app.post('/vote-post', function(req, resp) {
 app.post('/get-post-freq', function(req, resp) {
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
+
+        console.log(req.body);
 
         await client.query("SELECT COUNT(*) FILTER (WHERE belongs_to_post_id IS NULL) AS posts, COUNT(*) FILTER (WHERE belongs_to_post_id IS NOT NULL) AS replies, date_trunc('day', post_created) AS date FROM posts WHERE post_user = $1 AND post_created BETWEEN $2 AND $3 GROUP BY date", [req.body.username, req.body.start_date, req.body.end_date])
         .then((result) => {

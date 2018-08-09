@@ -1,6 +1,10 @@
 extends ../layout
 
 block header
+    link(rel='stylesheet', href='/css/vendor/quill.core.css')
+    link(rel='stylesheet', href='/css/vendor/quill.snow.css')
+    script(src='/scripts/vendor/quill.js')
+    script(src='/scripts/editor.js')
     script.
         var postBody = !{JSON.stringify(post.post_body)}
     script(src='/scripts/edit-post.js')
@@ -43,11 +47,9 @@ block content
                         input(type='radio', name='tag', value='Rant', checked=rantRadioCheck)
                         span Rant
                             i.ml-10.fas.fa-check
-            .post-editor.mb-15
+            .post-editor.ql-editor.mb-15
                 //-textarea.w-100(name='post_body', rows='10') #{post.post_body}
             .text-right
                 input.mr-5(type='submit', value='Submit')
                 input.mr-5(type='reset', value='Clear')
                 input(type='button', value='Cancel', onClick='javascript:history.go(-1)')
-            script.
-                let editor = document.getElementsByClassName('.ql-editor')

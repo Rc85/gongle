@@ -32,6 +32,37 @@ app.use(function (req, res, next) {
 const staticRoutes = require('./routers/static');
 app.use(staticRoutes);
 
+app.get('*', (req, resp, next) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            client.query(`SELECT befriend_with FROM friends WHERE friendly_user = $1 AND friend_confirmed IS TRUE`, [req.session.user.username])
+            .then((result) => {
+                done();
+                if (result !== undefined) {
+                    for (let friend of result.rows) {
+                        if (req.session.user.friends.indexOf(friend.befriend_with) < 0) {
+                            req.session.user.friends.push(friend.befriend_with);
+                        }
+                    }
+                }
+
+                next();
+            })
+            .catch((err) => {
+                console.log(err);
+                done();
+            });
+
+            console.log('from index.js');
+            console.log(req.session.user);
+        });
+    } else {
+        next();
+    }
+});
+
 // routers
 const routers = require('./routers/routes');
 app.use(routers);

@@ -19,8 +19,13 @@ block content
                         - var catClass = 'category-list-parent'
                         - var arrowClass = 'fa-angle-down'
                     .category-bar
-                        a(href='/forums/' + cat.toLowerCase().replace(' ', '_').replace('/', ''))
-                            h3.category-title !{category.icon} #{cat}
+                        .d-flex
+                            a(href='/forums/' + cat.toLowerCase().replace(' ', '_').replace('/', ''))
+                                h3.category-title !{category.icon} #{cat}
+                            if category.status === 'Closed'
+                                span.user-badge.error-badge.ml-5
+                                    i.fas.fa-comment-slash.mr-5
+                                    | Closed
                         i.fa.fa-lg(class=arrowClass)
                     section(class=catClass)
                         section.category-list

@@ -36,9 +36,7 @@ mixin mod-user(username, id, last_login, level)
         button.user-menu-button #{username}
         .mod-user-menu
             .d-flex
-                .mr-5
-                    a(href='/profile?u=' + username)
-                        img.profile-pic(src='/files/' + id + '/profile_pic/' + username + '_profile_pic.png')
+                .profile-pic.mr-5(style=`background: url('/files/${id}/profile_pic/${username}_profile_pic.png'); background-size: cover; background-position: center top`)
                 div
                     div
                         a(href='/profile?u=' + username) #{username}
@@ -46,8 +44,7 @@ mixin mod-user(username, id, last_login, level)
                         if last_login !== 'Invalid date'
                             small Last seen #{last_login}
                     if user && user.user_id !== id
-                        hr
-                        div
+                        .mt-5
                             if user.friends.indexOf(username) < 0
                                 form.add-friend(action='/add-friend', method='post')
                                     input(type='hidden', name='username', value=username)

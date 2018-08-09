@@ -1,0 +1,21 @@
+extends ../profile-layout
+
+block user-content
+    section#user-friends-content.tab-content
+        each friend, i in friends
+            .friend-container.section-container.w-20.mr-10
+                .w-25.mr-5
+                    .user-friend-profile-pic(style=`background: url('${friend.avatar_url}'); background-size: cover; background-position: center top`)
+                div
+                    a(href=`/profile?u=${friend.befriend_with}`) #{friend.befriend_with}
+                    if friend.online_status === 'Online'
+                        span.user-badge.success-badge.ml-5 #{friend.online_status}
+                    else
+                        span.user-badge.user-badge-newcomer.ml-5 #{friend.online_status}
+                    .mb-5
+                        small Last seen #{friend.last_login}
+                    div
+                        a(href='#')
+                            i.fas.fa-user-minus.unfriend-button.mr-5(data-id=friend.fid)
+                        a(href=`/message/compose?u=${friend.befriend_with}`)
+                            i.fas.fa-envelope.message-user(data-id=friend.befriend_with)

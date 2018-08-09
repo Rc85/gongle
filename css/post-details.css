@@ -16,7 +16,6 @@
 }
 .post-details section, .post-details footer {
   margin: 0 auto 0 auto;
-  width: 80%;
 }
 
 .replies {
@@ -93,4 +92,4 @@
   color: #c84b00;
 }
 
-/*# sourceMappingURL=post-details.css.map */
+/*# sourceMappingURL=css/post-details.css.map */

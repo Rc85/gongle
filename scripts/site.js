@@ -39,7 +39,7 @@ $(document).ready(function() {
         $(this).siblings('.tooltip').hide();
     });
 
-    //Toggle.menu('user-menu-button', 'mod-user-menu');
+    Toggle.menu('user-menu-button', 'mod-user-menu');
 
     $('.issue-violation').on('submit', function(e) {
         e.preventDefault();
