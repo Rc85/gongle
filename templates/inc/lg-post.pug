@@ -1,7 +1,7 @@
-.col
-    .w-10
+.d-flex.p-10
+    .mr-15
         +vote(post, true)(post)
-    .w-80
+    .w-90
         .show-posts
             if post.post_type === 'Discussion'
                 - var postIcon = 'far fa-comments mr-5'
@@ -18,11 +18,5 @@
                 +mod-user(post.post_user, post.user_id, post.last_login, post.user_level)
                 |  #{post.post_created} in 
                 a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
-    .w-10.text-right #{post.total_replies} Replies
-
-    //-.w-10
-        a(href='/subforums/' + post.topic_title.toLowerCase() + '/' + post.subtopic_title.toLowerCase()) #{post.subtopic_title}
-    //-.w-10 #{post.total_replies} Replies
-    //-.w-15.d-flex.post-username-column
-        +mod-user(post.post_user, post.user_id, post.last_login)
-    //-.w-15.text-right #{post.post_created}
+    .text-right.w-5 #{post.total_replies}
+        i.far.fa-comment-alt.ml-10

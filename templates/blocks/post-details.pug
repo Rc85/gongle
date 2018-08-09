@@ -42,23 +42,7 @@ block content
                             |  | 
                             i.post-edited Edited #{posts.post.post_modified}
                 .w-10.follow-div
-                    if user
-                        - let followed = false
-                        each post, i in user.followed_posts
-                            if post.followed_post === posts.post.post_id
-                                - followed = true
-                        form#follow-post-form.mb-0(action='/follow-post', method='POST')
-                            input(type='hidden', name='post_id', value=posts.post.post_id)
-                            if followed
-                                button(type='submit', name='follow')
-                                    span.fa-stack.fa-lg
-                                        i.fas.fa-star.fa-stack-1x.followed
-                                        i.far.fa-star.fa-stack-1x
-                                    | Followed
-                            else
-                                button(type='submit', name='follow')
-                                    i.far.fa-lg.fa-star
-                                    |  Follow
+                    +followPost(user, posts.post)
             section.post-body.ql-editor !{posts.post.post_body}
             footer
                 +postAction(posts.post, posts.post)

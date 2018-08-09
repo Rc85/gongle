@@ -9,6 +9,12 @@
     .profile-pic {
         width: 100%;
         border-radius: 100%;
+
+        &:after {
+            padding-bottom: 100%;
+            display: block;
+            content: '';
+        }
     }
 }
 

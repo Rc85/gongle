@@ -284,6 +284,8 @@ app.get('/profile/posts', (req, resp) => {
 
             resp.render('blocks/profile-posts', {user: req.session.user, viewing: req.session.user, posts: posts, title: 'User - Posts', page: page});
         });
+    } else {
+        fn.error(req, resp, 401);
     }
 });
 
@@ -330,6 +332,8 @@ app.get('/profile/replies', (req, resp) => {
 
             resp.render('blocks/profile-replies', {user: req.session.user, viewing: req.session.user, replies: replies, title: 'User - Replies', page: page});
         });
+    } else {
+        fn.error(req, resp, 401);
     }
 });
 
@@ -353,7 +357,7 @@ app.get('/profile/followed', (req, resp) => {
             LEFT OUTER JOIN posts ON followed_posts.followed_post = posts.post_id
             LEFT OUTER JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
             WHERE user_following = $1
-            GROUP BY posts.post_id, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id
+            GROUP BY posts.post_id, followed_posts.followed_post, followed_posts.user_following, subtopics.subtopic_title, followed_posts.followed_id, subtopics.subtopic_id
             ORDER BY followed_on DESC
             LIMIT 20
             OFFSET $2`, [req.session.user.username, offset])
@@ -363,11 +367,24 @@ app.get('/profile/followed', (req, resp) => {
                         result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
                         result.rows[i].post_modified = moment(result.rows[i].post_modified).fromNow();
                     }
+
+                    return result.rows;
                 }
             })
-        })
+            .catch((err) => {
+                console.log(err);
+                done();
+                fn.error(req, resp, 500);
+            });
+
+            console.log(posts);
+
+            resp.render('blocks/profile-followed', {user: req.session.user, viewing: req.session.user, posts: posts, page: page, title: 'User - Followed Posts'});
+        });
+    } else {
+        fn.error(req, resp, 401);
     }
-})
+});
 
 app.get('/subforums/:topic', function(req, resp) {
     db.connect(async function(err, client, done) {

@@ -6,22 +6,22 @@ block user-content
             .section-container.w-25.mr-5.text-center
                 h3
                     i.fas.fa-trophy.mr-5
-                    | Total Honors
+                    | Honors
                 span.user-stats 0
             .section-container.w-25.mr-5.text-center
                 h3
                     i.far.fa-file-alt.mr-5
-                    | Total Posts
+                    | Posts
                 span.user-stats #{viewing.posts_count}
             .section-container.w-25.mr-5.text-center
                 h3
                     i.far.fa-thumbs-up.mr-5
-                    | Total Upvotes
+                    | Upvoted
                 span.user-stats #{Math.abs(viewing.upvotes)}
             .section-container.w-25.text-center
                 h3
                     i.far.fa-thumbs-down.mr-5
-                    | Total Downvotes
+                    | Downvoted
                 span.user-stats #{Math.abs(viewing.downvotes)}
         section#post-frequency.section-container
             h3

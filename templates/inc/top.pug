@@ -19,7 +19,7 @@ else if checkTitle.test(title)
             .d-flex.w-60
                 .text-center
                     a(href='/profile?u=' + user.username)
-                        img.profile-pic.mb-5(src=user.avatar_url)
+                        .profile-pic(style=`background: url('${user.avatar_url}'); background-position: center top; background-size: cover; background-repeat: no-repeat;`)
                 .ml-10
                     .mb-10.username-profile-link
                         a(href='/profile?u=' + user.username) #{user.username}

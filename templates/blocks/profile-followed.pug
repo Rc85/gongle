@@ -1,0 +1,22 @@
+extends ../profile-layout
+
+block user-content
+    section#users-followed-posts.tab-content
+        each post, i in posts
+            .section-container.mb-15
+                .d-flex
+                    .mr-15
+                        +vote(post, false)
+                    .w-100
+                        .d-flex.justify-content-between
+                            h4.mb-0
+                                a(href='/forums/posts/post-details?pid=' + post.post_id + '&page=1') #{post.post_title}
+                                if post.post_status === 'Closed'
+                                    span.ml-15.user-badge.error-badge #{post.post_status}
+                            .w-10.text-right
+                                +followPost(user, post)
+                        small Posted on #{post.post_created}
+                        hr
+                        .user-post-body !{post.post_body}
+                        .expand-post-body.text-center
+                            i.fas.fa-2x.fa-angle-down

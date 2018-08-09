@@ -13,7 +13,8 @@ block content
         section.profile-body
             .w-20
                 .profile-pic-div
-                    img.profile-pic(src=viewing.avatar_url)
+                    .profile-pic(style=`background: url(${viewing.avatar_url}); background-position: center top; background-size: cover; background-repeat: no-repeat;`)
+                    //-img.profile-pic(src=viewing.avatar_url)
                     if user
                         if viewing.user_level === 'Newcomer'
                             span.user-badge.user-badge-newcomer #{viewing.user_level}

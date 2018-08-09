@@ -254,3 +254,22 @@ mixin userLevel(u)
         span.user-badge.user-badge-unreliable.mr-5 #{u.user_level}
     else if u.user_level === 'Owner'
         span.user-badge.user-badge-owner.mr-5 #{u.user_level}
+
+mixin followPost(user, post)
+    if user
+        - let followed = false
+        each p, i in user.followed_posts
+            if p.followed_post === post.post_id
+                - followed = true
+        form#follow-post-form.mb-0(action='/follow-post', method='POST')
+            input(type='hidden', name='post_id', value=post.post_id)
+            if followed
+                button(type='submit', name='follow')
+                    span.fa-stack.fa-lg
+                        i.fas.fa-star.fa-stack-1x.followed
+                        i.far.fa-star.fa-stack-1x
+                    | Followed
+            else
+                button(type='submit', name='follow')
+                    i.far.fa-lg.fa-star
+                    |  Follow

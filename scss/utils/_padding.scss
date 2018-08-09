@@ -1,0 +1,27 @@
+@import '../mixins';
+
+.py-auto {
+    padding: auto 0 auto 0;
+}
+
+.px-auto {
+    padding: 0 auto 0 auto;
+}
+
+.pt-auto {
+    padding-top: auto;
+}
+
+.pb-auto {
+    padding-bottom: auto;
+}
+
+.pr-auto {
+    padding-right: auto;
+}
+
+.pl-auto {
+    padding-left: auto;
+}
+
+@include padding-list;

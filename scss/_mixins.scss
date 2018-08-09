@@ -11,29 +11,65 @@
         .mt-#{$i} {
             margin-top: #{$i}px;
         }
-    }
 
-    @for $i from 0 through 100 {
         .mr-#{$i} {
             margin-right: #{$i}px;
         }
-    }
 
-    @for $i from 0 through 100 {
         .mb-#{$i} {
             margin-bottom: #{$i}px;
         }
-    }
 
-    @for $i from 0 through 100 {
         .ml-#{$i} {
             margin-left: #{$i}px;
         }
-    }
 
-    @for $i from 0 through 100 {
         .m-#{$i} {
             margin: #{$i}px;
+        }
+
+        .mx-#{$i} {
+            margin-left: #{$i}px;
+            margin-right: #{$i}px;
+        }
+
+        .my-#{$i} {
+            margin-top: #{$i}px;
+            margin-bottom: #{$i}px;
+        }
+    }
+}
+
+@mixin padding-list {
+    @for $i from 0 through 100 {
+        .p-#{$i}  {
+            padding: #{$i}px
+        }
+        
+        .pt-#{i} {
+            padding-top: #{$i}px;
+        }
+
+        .pb-#{i} {
+            padding-top: #{$i}px;
+        }
+
+        .pl-#{i} {
+            padding-top: #{$i}px;
+        }
+
+        .pr-#{i} {
+            padding-top: #{$i}px;
+        }
+
+        .px-#{i} {
+            padding-left: #{$i}px;
+            padding-right: #{$i}px;
+        }
+
+        .py-#{i} {
+            padding-top: #{$i}px;
+            padding-bottom: #{$i}px;
         }
     }
 }

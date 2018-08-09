@@ -4,6 +4,7 @@
 @import 'utils/flex';
 @import 'utils/margin';
 @import 'utils/alignment';
+@import 'utils/padding.scss';
 @import 'topbar';
 @import 'navbar';
 @import 'footer';
@@ -47,6 +48,12 @@
 .profile-pic {
     width: 40px;
     border-radius: 100%;
+
+    &:after {
+        display: block;
+        content: '';
+        padding-bottom: 100%;
+    }
 }
 
 .show-posts {
