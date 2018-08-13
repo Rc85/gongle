@@ -679,55 +679,38 @@ app.post('/rename-category', function(req, resp) {
     }
 });
 
-/* app.post('/change-category-status', function(req, resp) {
+app.post('/submit-review', (req, resp) => {
     if (req.session.user) {
         if (req.session.user.privilege > 1) {
-            db.connect(async function(err, client, done) {
+            let id = req.body.id;
+            let message = req.body.review_message;
+            console.log(req.body);
+
+            db.connect(async(err, client, done) => {
                 if (err) { console.log(err); }
 
-                if (req.body.status !== 'Delete') {
-                    await client.query('UPDATE categories SET category_status = $1 WHERE category_id = $2 RETURNING category_status', [req.body.status, req.body.cat_id])
-                    .then((result) => {
-                        done();
-                        if (result !== undefined && result.rowCount === 1) {
-                            resp.send({status: 'success', category_status: result.rows[0].category_status});
-                        } else {
-                            resp.send({status: 'failed'});
-                        }
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                        done();
-                        resp.send({status: 'error'});
-                    });
-                } else {
-                    await client.query(`
-                    DELETE FROM categories
-                    WHERE category_id = $1
-                    RETURNING category_id`,
-                    [req.body.cat_id])
-                    .then((result) => {
-                        done();
-                        if (result !== undefined && result.rowCount === 1) {
-                            resp.send({status: 'deleted', cat_id: result.rows[0].category_id});
-                        } else {
-                            resp.send({status: 'failed'});
-                        }
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                        done();
-                        resp.send({status: 'error'});
-                    });
-                }
+                await client.query(`UPDATE user_reports SET report_reviewed_by = $1, report_review_message = $2, report_status = 'Reviewed' WHERE r_id = $3`, [req.session.user.username, message, id])
+                .then(result => {
+                    done();
+                    if (result !== undefined && result.rowCount === 1) {
+                        resp.send({status: 'success'});
+                    } else {
+                        resp.send({status: 'fail'});
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                    done();
+                    resp.send({status: 'error'});
+                });
             });
         } else {
-            fn.error(req, resp, 401);
+            resp.send({status: 'unauthorized'});
         }
     } else {
-        fn.error(req, resp, 403);
+        resp.send({status: 'unauthorized'});
     }
-}); */
+});
 
 app.post('/delete-forum', (req, resp) => {
     if (req.session.user) {

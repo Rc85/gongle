@@ -2,53 +2,48 @@ extends ../admin-layout
 
 block admin-header
     script(src='/scripts/admin-posts.js')
-    link(rel='stylesheet', href='/css/admin.css')
 
-block content
-    section.section-container.w-100
-        .d-flex
-            include ../inc/admin-sidebar
-            section.admin-main
-                h2
-                    i.fas.fa-search.mr-5
-                    | Search
-                section.section-container
-                    +adminSearchForm('/admin-page/posts', true)
-                    if posts.length === 0
-                        - var count = 0
-                    else
-                        - var count = posts[0].count
-                    .pagination-container.mb-15
-                        .pagination.text-right
-                            +createPagination(count, 10, page, url)
-                    if posts.length > 0
-                        header.header.col
-                            .w-5 ID
-                            .w-40 Post Title
-                            .w-15 Posted By
-                            .w-25 Posted On
-                            .w-10.text-center Status
-                            .w-5
-                    each post, i in posts
-                        .col.admin-post-row
-                            .w-5 #{post.post_id}
-                            .w-40 #{post.post_title}
-                            .w-15 #{post.post_user}
-                            .w-25 #{post.post_created}
-                            .w-10.post-status.text-center
-                                if post.post_status === 'Open'
-                                    span.user-badge.success-badge #{post.post_status}
-                                else if post.post_status === 'Closed'
-                                    span.user-badge.error-badge #{post.post_status}
-                                else if post.post_status === 'Removed'
-                                    span.user-badge.critical-badge #{post.post_status}
-                            .w-5
-                                .admin-menu-container
-                                    i.fas.fa-ellipsis-h.admin-menu-button
-                                    .admin-menu
-                                        div(data-id=post.post_id, data-status='Open') Open
-                                        div(data-id=post.post_id, data-status='Closed') Close
-                                        div(data-id=post.post_id, data-status='Removed') Remove
-                    .pagination-container.mb-15
-                        .pagination.text-right
-                            +createPagination(count, 10, page, url)
+block admin-content
+    h2
+        i.fas.fa-search.mr-5
+        | Search
+    section.section-container
+        +adminSearchForm('/admin-page/posts', true)
+        if posts.length === 0
+            - var count = 0
+        else
+            - var count = posts[0].count
+        .pagination-container.mb-15
+            .pagination.text-right
+                +createPagination(count, 10, page, url)
+        if posts.length > 0
+            header.header.col
+                .w-5 ID
+                .w-40 Post Title
+                .w-15 Posted By
+                .w-25 Posted On
+                .w-10.text-center Status
+                .w-5
+        each post, i in posts
+            .col.admin-post-row
+                .w-5 #{post.post_id}
+                .w-40 #{post.post_title}
+                .w-15 #{post.post_user}
+                .w-25 #{post.post_created}
+                .w-10.post-status.text-center
+                    if post.post_status === 'Open'
+                        span.user-badge.success-badge #{post.post_status}
+                    else if post.post_status === 'Closed'
+                        span.user-badge.error-badge #{post.post_status}
+                    else if post.post_status === 'Removed'
+                        span.user-badge.critical-badge #{post.post_status}
+                .w-5
+                    .admin-menu-container
+                        i.fas.fa-ellipsis-h.admin-menu-button
+                        .admin-menu
+                            div(data-id=post.post_id, data-status='Open') Open
+                            div(data-id=post.post_id, data-status='Closed') Close
+                            div(data-id=post.post_id, data-status='Removed') Remove
+        .pagination-container.mb-15
+            .pagination.text-right
+                +createPagination(count, 10, page, url)

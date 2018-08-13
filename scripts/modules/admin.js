@@ -153,6 +153,22 @@ const Admin = (() => {
                     }
                 });
             }
+        },
+        report: {
+            review: (data, callback) => {
+                App.loading.show();
+
+                $.post({
+                    url: '/submit-review',
+                    data: {
+                        id: data[0].value,
+                        review_message: data[1].message
+                    },
+                    success: (resp) => {
+                        callback(resp);
+                    }
+                });
+            }
         }
     }
 })();

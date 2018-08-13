@@ -2,53 +2,48 @@ extends ../admin-layout
 
 block admin-header
     script(src='/scripts/admin-overview.js')
-    link(rel='stylesheet', href='/css/admin.css')
 
-block content
-    section.section-container.w-100
-        .d-flex
-            include ../inc/admin-sidebar
-            section.admin-main
-                .d-flex.mb-15
-                    .w-50.mr-10.section-container
-                        h3
-                            i.fas.fa-stream.mr-5
-                            | Site Status
-                        each config, i in configs
-                            section.section-list
-                                .list-item
-                                    if config.config_name === 'Site'
-                                        - var icon = 'fas fa-bullseye mr-5'
-                                    else
-                                        - var icon = 'fas fa-book mr-5'
-                                    label 
-                                        i(class=icon)
-                                        | #{config.config_name}
-                                    if config.status === 'Open'
-                                        span.ok-status OPEN
-                                    else
-                                        span.error-status CLOSED
-                        each category, key in categories
-                            section.categories-list.section-list
-                                header.header.categories-header.col
-                                    div !{category['icon']} #{key}
-                                        if category.status === 'Closed'
-                                            span.user-badge.error-badge.ml-5
-                                                i.fas.fa-comment-slash.mr-5
-                                                | #{category.status}
-                                    i.fas.fa-lg.fa-angle-down
-                                each topic, key in category['topics']
-                                    section.topics-list.section-list
-                                        header.topics-header.header.col
-                                            span #{key}
-                                            i.fas.fa-lg.fa-angle-down
-                                        each subtopic, key in topic
-                                            section.subtopics-list
-                                                section.section-list.list-item
-                                                    span #{key}
-                                                    span #{subtopic} Posts
-                    section.w-50.section-container
-                        h3
-                            i.far.fa-bell.mr-5
-                            | Notifications
-                        section.section-list
+block admin-content
+    .d-flex.mb-15
+        .w-50.mr-10.section-container
+            h3
+                i.fas.fa-stream.mr-5
+                | Site Status
+            each config, i in configs
+                section.section-list
+                    .list-item
+                        if config.config_name === 'Site'
+                            - var icon = 'fas fa-bullseye mr-5'
+                        else
+                            - var icon = 'fas fa-book mr-5'
+                        label 
+                            i(class=icon)
+                            | #{config.config_name}
+                        if config.status === 'Open'
+                            span.ok-status OPEN
+                        else
+                            span.error-status CLOSED
+            each category, key in categories
+                section.categories-list.section-list
+                    header.header.categories-header.col
+                        div !{category['icon']} #{key}
+                            if category.status === 'Closed'
+                                span.user-badge.error-badge.ml-5
+                                    i.fas.fa-comment-slash.mr-5
+                                    | #{category.status}
+                        i.fas.fa-lg.fa-angle-down
+                    each topic, key in category['topics']
+                        section.topics-list.section-list
+                            header.topics-header.header.col
+                                span #{key}
+                                i.fas.fa-lg.fa-angle-down
+                            each subtopic, key in topic
+                                section.subtopics-list
+                                    section.section-list.list-item
+                                        span #{key}
+                                        span #{subtopic} Posts
+        section.w-50.section-container
+            h3
+                i.far.fa-bell.mr-5
+                | Notifications
+            section.section-list

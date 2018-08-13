@@ -396,8 +396,6 @@ app.get('/profile/friends', (req, resp) => {
                 fn.error(req, resp, 500);
             });
 
-            console.log(req.session.user);
-
             resp.render('blocks/profile-friends', {user: req.session.user, viewing: req.session.user, friends: friends, title: 'User - Friends'});
         });
     }
@@ -904,44 +902,8 @@ app.get('/admin-page/overview', function(req, resp) {
                     fn.error(req, resp, 500);
                 });
 
-                console.log(category);
-
-                resp.render('blocks/admin-overview', {user: req.session.user, page: 'overview', categories: category, configs: configs, title: 'Admin Overview'});
+                resp.render('blocks/admin-overview', {user: req.session.user, categories: category, configs: configs, title: 'Admin Overview'});
             });
-            /* db.query('SELECT subtopic_title, COUNT(post_id) AS post_count, belongs_to_topic, topic_title, category FROM categories LEFT OUTER JOIN topics ON topics.topic_category = categories.category_id LEFT OUTER JOIN subtopics ON subtopics.belongs_to_topic = topics.topic_id LEFT OUTER JOIN posts ON subtopics.subtopic_id = posts.post_topic GROUP BY belongs_to_topic, subtopic_title, topic_title, category ORDER BY category, topic_title, subtopic_title', function(err, result) {
-                if (err) { console.log(err); }
-
-                if (result !== undefined) {
-                    let category = {}
-                    let last = '';
-
-                    for (let item of result.rows) {
-                        category[item.category] = {}
-                    }
-
-                    for (let item of result.rows) {
-                        if (item.topic_title !== null) {
-                            if (item.topic_title !== last) {
-                                category[item.category][item.topic_title] = {}
-                                category[item.category][item.topic_title][item.subtopic_title] = {};
-                                category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
-                                last = item.topic_title
-                            } else {
-                                category[item.category][item.topic_title][item.subtopic_title] = item.post_count;
-                                last = item.topic_title
-                            }
-                        }
-                    }
-
-                    db.query('SELECT * FROM config ORDER BY config_id', function(err, result) {
-                        if (err) { console.log(err); }
-
-                        if (result !== undefined) {
-                            resp.render('blocks/admin-overview', {user: req.session.user, page: 'overview', categories: category, configs: result.rows, title: 'Admin Overview'});
-                        }
-                    });
-                }
-            }); */
         } else {
             fn.error(req, resp, 401);
         }
@@ -1023,22 +985,8 @@ app.get('/admin-page/users', function(req, resp) {
                     fn.error(req, resp, 500);
                 });
 
-                resp.render('blocks/admin-users', {user: req.session.user, page: 'users', users: users, title: 'Admin Users'});
+                resp.render('blocks/admin-users', {user: req.session.user, users: users, title: 'Admin Users'});
             });
-
-            /* db.query(queryString, params, function(err, result) {
-                if (err) { console.log(err); }
-
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        result.rows[i].user_created = moment(result.rows[i].user_created).format('MM/DD/YYYY @ hh:mm:ss A');
-                        result.rows[i].user_confirmed = moment(result.rows[i].user_confirmed).format('MM/DD/YYYY @ hh:mm:ss A');
-                        result.rows[i].last_login = moment(result.rows[i].last_login).format('MM/DD/YYYY @ hh:mm:ss A');
-                    }
-
-                    resp.render('blocks/admin-users', {user: req.session.user, page: 'users', users: result.rows, title: 'Admin Users'});
-                }
-            }); */
         } else {
             fn.error(req, resp, 401);
         }
@@ -1134,9 +1082,6 @@ app.get('/admin-page/posts', function(req, resp) {
                 LIMIT 10
                 OFFSET $1`;
 
-                console.log(queryString)
-                console.log(params);
-
                 let posts;
                 
                 if (whereConditions.length > 1) {
@@ -1161,7 +1106,7 @@ app.get('/admin-page/posts', function(req, resp) {
 
                 let url = `/admin-page/posts?category=${category}&topic=${topic}&subtopic=${subtopic}&post_id=${postId}&username=${username}&status=${status}&title=${title}`
 
-                resp.render('blocks/admin-posts', {user: req.session.user, posts: posts, url: url, page: page});
+                resp.render('blocks/admin-posts', {user: req.session.user, posts: posts, url: url, page: page, title: 'Admin Posts'});
             });
         } else {
             fn.error(req, resp, 401);
@@ -1212,7 +1157,7 @@ app.get('/admin-page/categories', function(req, resp) {
                     fn.error(req, resp, 500);
                 });
 
-                resp.render('blocks/admin-categories', {user: req.session.user, page: 'categories', categories: categories, title: 'Admin Categories'});
+                resp.render('blocks/admin-categories', {user: req.session.user, categories: categories, title: 'Admin Categories'});
             });
             /* db.query('SELECT * FROM categories', function(err, result) {
                 if (err) {
@@ -1356,7 +1301,6 @@ app.get('/admin-page/topics', function(req, resp) {
                     results: results,
                     type: type,
                     create: create,
-                    page: 'topics',
                     title: 'Admin Topics',
                     parents: parents,
                 });
@@ -1390,13 +1334,8 @@ app.get('/admin-page/config', function(req, resp) {
                     fn.error(req, resp, 500);
                 });
 
-                resp.render('blocks/admin-config', {user: req.session.user, page: 'config', config: config, title: 'Admin Config'});
+                resp.render('blocks/admin-config', {user: req.session.user, config: config, title: 'Admin Config'});
             })
-            /* db.query('SELECT * FROM config ORDER BY config_id', function(err, result) {
-                if (err) { console.log(err); }
-
-                resp.render('blocks/admin-config', {user: req.session.user, page: 'config', config: result.rows, title: 'Admin Config'});
-            }); */
         } else {
             fn.error(req, resp, 401);
         }
@@ -1411,7 +1350,7 @@ app.get('/admin-page/reports', function(req, resp) {
             db.connect(async(err, client, done) => {
                 if (err) { console.log(err); }
 
-                let reports = await client.query('SELECT * FROM user_reports')
+                let reports = await client.query('SELECT * FROM user_reports ORDER BY r_id')
                 .then(result => {
                     done();
                     if (result !== undefined) {
@@ -1427,7 +1366,7 @@ app.get('/admin-page/reports', function(req, resp) {
                     done();
                 });
 
-                resp.render('blocks/admin-reports', {user: req.session.user, page: 'reports', title: 'Admin Reports', reports: reports});
+                resp.render('blocks/admin-reports', {user: req.session.user, title: 'Admin Reports', reports: reports});
             });
         } else {
             fn.error(req, resp, 401);
@@ -1509,35 +1448,8 @@ app.get('/admin-page/posts/details', function(req, resp) {
                     fn.error(req, resp, 500);
                 });
 
-                resp.render('blocks/admin-post-details', {orig: originalPost, replies: replies, page: 'posts', title: originalPost.post_title});
+                resp.render('blocks/admin-post-details', {orig: originalPost, replies: replies, page: page, title: 'Admin Posts'});
             })
-            
-            /* db.query('SELECT * FROM posts WHERE post_id = $1', [postId], function(err, result) {
-                if (err) {
-                    console.log(err);
-                    fn.error(req, resp, 400);
-                } else if (result !== undefined && result.rows.length === 1) {
-                    result.rows[0].post_created = moment(result.rows[0].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
-                    result.rows[0].post_modified = moment(result.rows[0].post_modified).format('MM/DD/YYYY @ hh:mm:ss A');
-
-                    let orig = result.rows[0];
-
-                    db.query('SELECT * FROM posts WHERE belongs_to_post_id = $1 ORDER BY post_created DESC', [postId], function(err, result) {
-                        if (err) {
-                            console.log(err);
-                            fn.error(req, resp, 400);
-                        } else if (result !== undefined) {
-                            for (let i in result.rows) {
-                                result.rows[i].post_created = moment(result.rows[i].post_created).format('MM/DD/YYYY @ hh:mm:ss A');
-                                result.rows[i].post_modified = moment(result.rows[i].post_modified).format('MM/DD/YYYY @ hh:mm:ss A');
-                            }
-                            resp.render('blocks/admin-post-details', {orig: orig, replies: result.rows, page: 'posts', title: orig.post_title});
-                        }
-                    });
-                } else {
-                    fn.error(req, resp, 404);
-                }
-            }) */
         } else {
             fn.error(req, resp, 401);
         }
@@ -1613,32 +1525,6 @@ app.get('/messages/:location', function(req, resp) {
 
                 let starredIdArray = [];
 
-                /* let starredIds = await client.query('SELECT saved_msg FROM saved_messages WHERE msg_saved_by = $1', [req.session.user.username])
-                .then((result) => {
-                    if (result !== undefined) {
-                        for (let i in result.rows) {
-                            starredIdArray.push(result.rows[i].saved_msg);
-                        }
-
-                        let starredIds = starredIdArray.join(',');
-
-                        return starredIds;
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    done();
-                    fn.error(req, resp, 500);
-                });
-
-                let getStarredMessages;
-
-                if (starredIdArray.length > 0) {
-                    getStarredMessages = 'SELECT * FROM messages WHERE message_id IN (' + starredIds + ')';
-                } else {
-                    getStarredMessages = 'SELECT * FROM messages WHERE message_id IS NULL';
-                } */
-
                 let messages;
 
                 let starredMessages = await client.query('SELECT messages.sender, messages.recipient, messages.subject, messages.message, messages.message_status, saved_messages.msg_saved_on AS message_date, saved_messages.msg_saved_by, saved_messages.saved_msg AS message_id FROM saved_messages LEFT JOIN messages ON saved_msg = messages.message_id WHERE msg_saved_by = $1', [req.session.user.username])
@@ -1694,123 +1580,10 @@ app.get('/messages/:location', function(req, resp) {
                 fn.error(req, resp, 401);
             }
         });
-        /* let validatedKey = fn.validateKey(req);
-
-        if (validatedKey === req.session.user.username) {
-            db.query('SELECT * FROM messages WHERE sender = $1 OR recipient = $1 ORDER BY message_date DESC', [req.session.user.username], function(err, result) {
-                if (err) {
-                    console.log(err);
-                    fn.error(req, resp, 400);
-                } else if (result !== undefined) {
-                    let allMessages = result.rows;
-                    let inbox = [];
-                    let outbox = [];
-
-                    for (let i in result.rows) {
-                        result.rows[i].message_date = moment(result.rows[i].message_date).format('MM/DD/YYYY @ hh:mm:ss A')
-
-                        if (result.rows[i].sender === req.session.user.username) {
-                            outbox.push(result.rows[i]);
-                        } else {
-                            inbox.push(result.rows[i]);
-                        }
-                    }
-
-                    db.query('SELECT saved_msg FROM saved_messages WHERE msg_saved_by = $1', [req.session.user.username], function(err, result) {
-                        if (err) {
-                            console.log(err);
-                            fn.error(req, resp, 400);
-                        } else if (result !== undefined) {
-                            let starredIdArray = [];
-    
-                            for (let i in result.rows) {
-                                starredIdArray.push(result.rows[i].saved_msg);
-                            }
-                            
-                            let joinedIds = starredIdArray.join(',');
-                            let savedMessages
-                            
-                            if (starredIdArray.length > 1) {
-                                savedMessages = joinedIds.slice(0, -1);
-                            } else {
-                                savedMessages = starredIdArray.toString();
-                            }
-                            
-                            let queryString;
-
-                            if (starredIdArray.length > 0) {
-                                queryString = 'SELECT * FROM messages WHERE message_id IN (' + savedMessages + ')';
-                            } else {
-                                queryString = 'SELECT * FROM messages WHERE message_id IS NULL';
-                            }
-    
-                            db.query(queryString, function(err, result) {
-                                if (err) {
-                                    console.log(err);
-                                    fn.error(req, resp, 400);
-                                } else if (result !== undefined) {
-                                    let messages;
-
-                                    if (req.params.location === 'inbox') {
-                                        messages = inbox;
-                                    } else if (req.params.location === 'outbox') {
-                                        messages = outbox;
-                                    } else if (req.params.location === 'starred') {
-                                        messages = result.rows;
-                                    }
-
-                                    if (req.params.location !== 'content') {
-                                        resp.render('blocks/messages', {user: req.session.user, messages: messages, starred_messages: starredIdArray, title: 'Messages', location: req.params.location});
-                                    } else {
-                                        let message;
-                                        let messageId = parseInt(req.query.id);
-
-                                        for (let msg of allMessages) {
-                                            if (msg.message_id === messageId) {
-                                                message = msg;
-                                            }
-                                        }
-
-                                        resp.render('blocks/message', {user: req.session.user, message: message, starred_messages: starredIdArray, title: message.subject, location: req.query.location});
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        } else {
-            fn.error(req, resp, 401);
-        } */
     } else {
         fn.error(req, resp, 403);
     }
 });
-
-/* app.get('/message/content', function(req, resp) {
-    if (req.session.user) {
-        let messageId = req.query.id;
-        let location = req.query.location;
-        let validatedKey = fn.validateKey(req);
-
-        if (validatedKey === req.session.user.username) {
-            db.query('SELECT * FROM messages WHERE message_id = $1', [messageId], function(err, result) {
-                if (err) {
-                    console.log(err);
-                    fn.error(req, resp, 400);
-                } else if (result !== undefined && result.rows.length === 1) {
-                    result.rows[0].message_date = moment(result.rows[0].message_date).format('MM/DD/YYYY @ hh:mm:ss A');
-
-                    resp.render('blocks/message', {user: req.session.user, message: result.rows[0], title: result.rows[0].subject, location: location});
-                }
-            });
-        } else {
-            fn.error(req, resp, 401);
-        }
-    } else {
-        fn.error(req, resp, 403);
-    }
-}); */
 
 app.get('/message/compose', function(req, resp) {
     if (req.session.user) {
@@ -1819,6 +1592,20 @@ app.get('/message/compose', function(req, resp) {
         fn.error(req, resp, 403);
     }
 });
+
+app.get('/admin-page/review/report', (req, resp) => {
+    if (req.session.user) {
+        if (req.session.user.privilege > 1) {
+            let id = req.query.id;
+
+            resp.render('blocks/admin-review-report', {user: req.session.user, id: id, title: 'Admin Reports'});
+        } else {
+            fn.error(req, resp, 401);
+        }
+    } else {
+        resp.render('admin-login', {title: 'Admin Login'});
+    }
+})
 
 app.get('/about', (req, resp) => {
     resp.render('blocks/about');

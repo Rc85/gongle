@@ -29,8 +29,7 @@ app.use(function (req, res, next) {
 });
 
 // static routes
-const staticRoutes = require('./routers/static');
-app.use(staticRoutes);
+app.use(require('./routers/static'));
 
 app.get('*', (req, resp, next) => {
     if (req.session.user) {
@@ -54,9 +53,6 @@ app.get('*', (req, resp, next) => {
                 console.log(err);
                 done();
             });
-
-            console.log('from index.js');
-            console.log(req.session.user);
         });
     } else {
         next();
@@ -96,8 +92,6 @@ app.post('/change-status', function(req, resp) {
 
             let queryString,
                 status;
-
-            console.log(req.body);
 
             if (req.body.type === 'categories') {
                 queryString = `UPDATE categories SET category_status = $1 WHERE category_id = $2`;
@@ -208,8 +202,6 @@ app.post('/change-status', function(req, resp) {
                     queryString = `UPDATE users SET user_status = $1 WHERE user_id = $2`;
                 }
             }
-
-            console.log(status);
 
             if (status !== 'Closed' && status !== 'Removed') {
                 await client.query(queryString, [req.body.status, req.body.id])
@@ -324,6 +316,3 @@ server.listen(port, function(err) {
     console.log('Server running on port ' + port);
     console.log(process.env.NODE_ENV);
 });
-
-
-module.exports = app;

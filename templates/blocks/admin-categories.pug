@@ -2,68 +2,63 @@ extends ../admin-layout
 
 block admin-header
     script(src='/scripts/admin-categories.js')
-    link(rel='stylesheet', href='/css/admin.css')
 
-block content
-    section.section-container.w-100
-        .d-flex
-            include ../inc/admin-sidebar
-            section.admin-main
-                h2 
-                    i.far.fa-plus-square.mr-5
-                    | Create Category
-                section.section-container
-                    form#create-category-form(action='/create-forum', method='POST')
-                        input(type='hidden', name='type', value='category')
-                        .col.mb-15.align-items-center
-                            label.mr-10(for='category_name') Category:
-                            input.w-100(type='text', name='title')
-                        .text-right
-                            input(type='submit', value='Create')
-                h2 
-                    i.fas.fa-align-justify.mr-5
-                    | Categories
-                section.section-container
-                    .mb-15
-                        button.delete-button(type='button') Delete
-                    header.header.col
-                        .w-5
-                            input#select-all(type='checkbox', name='select-all')
-                        .w-5 ID
-                        .w-35.category-header
-                            .tooltip Click a title to rename
-                            i.far.fa-question-circle.mr-5.tooltip-button
-                            | Category
-                        .w-15 Created By
-                        .w-25 Creatd On
-                        .w-10.text-center Status
-                        .w-5
-                    each category, i in categories
-                        .col.category-row
-                            .w-5
-                                input.select-item(type='checkbox', name='select-item', data-id=category.category_id)
-                            .w-5 #{category.category_id}
-                            .w-35.category-title-container
-                                .category-title #{category.category}
-                                form.rename-category(action='/rename-category', method='post')
-                                    input(type='hidden', name='category_id', value=category.category_id)
-                                    .d-flex
-                                        input(type='text', name='category')
-                                        input.cancel-rename-category.ml-10(type='button', value='Cancel')
-                            .w-15 #{category.cat_created_by}
-                            .w-25 #{category.cat_created_on}
-                            .w-10.cat-status.text-center
-                                if category.category_status === 'Open'
-                                    span.user-badge.success-badge #{category.category_status}
-                                else if category.category_status === 'Closed'
-                                    span.user-badge.error-badge #{category.category_status}
-                                else if category.category_status === 'Removed'
-                                    span.user-badge.critical-badge #{category.category_status}
-                            .w-5.text-right
-                                .admin-menu-container
-                                    i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
-                                    .admin-menu.text-left
-                                        div(data-id=category.category_id, data-status='Open') Open
-                                        div(data-id=category.category_id, data-status='Closed') Close
-                                        div(data-id=category.category_id, data-status='Removed') Remove
-                                        div(data-id=category.category_id, data-status='Delete') Delete
+block admin-content
+    h2 
+        i.far.fa-plus-square.mr-5
+        | Create Category
+    section.section-container
+        form#create-category-form(action='/create-forum', method='POST')
+            input(type='hidden', name='type', value='category')
+            .col.mb-15.align-items-center
+                label.mr-10(for='category_name') Category:
+                input.w-100(type='text', name='title')
+            .text-right
+                input(type='submit', value='Create')
+    h2 
+        i.fas.fa-align-justify.mr-5
+        | Categories
+    section.section-container
+        .mb-15
+            button.delete-button(type='button') Delete
+        header.header.col
+            .w-5
+                input#select-all(type='checkbox', name='select-all')
+            .w-5 ID
+            .w-35.category-header
+                .tooltip Click a title to rename
+                i.far.fa-question-circle.mr-5.tooltip-button
+                | Category
+            .w-15 Created By
+            .w-25 Creatd On
+            .w-10.text-center Status
+            .w-5
+        each category, i in categories
+            .col.category-row
+                .w-5
+                    input.select-item(type='checkbox', name='select-item', data-id=category.category_id)
+                .w-5 #{category.category_id}
+                .w-35.category-title-container
+                    .category-title #{category.category}
+                    form.rename-category(action='/rename-category', method='post')
+                        input(type='hidden', name='category_id', value=category.category_id)
+                        .d-flex
+                            input(type='text', name='category')
+                            input.cancel-rename-category.ml-10(type='button', value='Cancel')
+                .w-15 #{category.cat_created_by}
+                .w-25 #{category.cat_created_on}
+                .w-10.cat-status.text-center
+                    if category.category_status === 'Open'
+                        span.user-badge.success-badge #{category.category_status}
+                    else if category.category_status === 'Closed'
+                        span.user-badge.error-badge #{category.category_status}
+                    else if category.category_status === 'Removed'
+                        span.user-badge.critical-badge #{category.category_status}
+                .w-5.text-right
+                    .admin-menu-container
+                        i.fas.fa-lg.fa-ellipsis-h.admin-menu-button
+                        .admin-menu.text-left
+                            div(data-id=category.category_id, data-status='Open') Open
+                            div(data-id=category.category_id, data-status='Closed') Close
+                            div(data-id=category.category_id, data-status='Removed') Remove
+                            div(data-id=category.category_id, data-status='Delete') Delete

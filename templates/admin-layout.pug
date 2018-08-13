@@ -2,4 +2,12 @@ extends layout
 
 block header
     script(src='/scripts/admin.js')
+    link(rel='stylesheet', href='/css/admin.css')
     block admin-header
+
+block content
+    section.section-container.w-100
+        .d-flex
+            include ./inc/admin-sidebar
+            section.admin-main
+                block admin-content

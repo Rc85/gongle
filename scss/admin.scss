@@ -108,6 +108,13 @@
     background: $med_border_color;
 }
 
+.review-detail {
+    margin-left: 30px;
+    background: $light_border_color;
+    padding: 10px;
+    border-left: 5px solid $secondary_color;
+}
+
 .post-row {
     background: rgb(255, 255, 255);
     border: 1px solid $light_border_color;
@@ -193,6 +200,6 @@
     top: 0;
 }
 
-.admin-rename-topic-submit {
+.admin-rename-topic-submit, .review-detail {
     display: none;
 }

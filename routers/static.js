@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-const path = require('path');
 
 app.use('/css', express.static('css'));
 app.use('/scripts', express.static('scripts'));

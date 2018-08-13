@@ -256,7 +256,6 @@ app.post('/login', (req, resp) => {
             loginUser.blocked_users = blockedUsers;
 
             req.session.user = loginUser;
-            console.log(req.session);
 
             let referer = req.get('referer').split('/').pop();
             /* During a fail login or registration, the referer head is set to the POST URL, which users cannot get.

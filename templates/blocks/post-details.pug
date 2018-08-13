@@ -43,7 +43,7 @@ block content
                             i.post-edited Edited #{posts.post.post_modified}
                 .w-10.follow-div
                     +followPost(user, posts.post)
-            section.post-body.ql-editor !{posts.post.post_body}
+            section.post-body !{posts.post.post_body}
             footer
                 +postAction(posts.post, posts.post, 'post')
         section.replies
@@ -91,7 +91,7 @@ block content
                                     .mx-auto.w-90 #{post.p2_post_body}
                                     .text-right
                                         i.fas.fa-quote-right.ml-auto
-                        section.post-body.ql-editor.mb-15 !{post.post_body}
+                        section.post-body.mb-15 !{post.post_body}
                     footer
                         +postAction(posts.post, post, 'reply')
             if posts.replies.length > 0

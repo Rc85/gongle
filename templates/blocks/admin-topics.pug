@@ -2,89 +2,84 @@ extends ../admin-layout
 
 block admin-header
     script(src='/scripts/admin-topics.js')
-    link(rel='stylesheet', href='/css/admin.css')
 
-block content
-    section.section-container.w-100
-        .d-flex
-            include ../inc/admin-sidebar
-            section.admin-main
-                h2
-                    i.fas.fa-search.mr-5
-                    | Search
-                section.section-container.subtopic-settings
-                    +adminSearchForm('/admin-page/topics', false)
-                if create.length > 0
-                    h2
-                        i.far.fa-plus-square.mr-5
-                        | Create
-                    section.section-container
-                        .create-topic.mb-15
-                            form.mb-15.create-topic-form(action='/create-forum', method='POST')
-                                input(type='hidden', name='id', value=create[0].id)
+block admin-content
+    h2
+        i.fas.fa-search.mr-5
+        | Search
+    section.section-container.subtopic-settings
+        +adminSearchForm('/admin-page/topics', false)
+    if create.length > 0
+        h2
+            i.far.fa-plus-square.mr-5
+            | Create
+        section.section-container
+            .create-topic.mb-15
+                form.mb-15.create-topic-form(action='/create-forum', method='POST')
+                    input(type='hidden', name='id', value=create[0].id)
+                    input(type='hidden', name='type', value=type)
+                    .mb-5
+                        if type === 'topic'
+                            | #{create[0].title}
+                        else
+                            | #{create[0].parent}
+                            i.fas.fa-angle-right.mr-10.ml-10
+                            | #{create[0].title}
+                    .d-flex.align-items-center
+                        input.w-100(type='text', name='title')
+                        input.ml-10(type='submit', value='Create')
+    if results.length > 0
+        section.section-container
+            button#delete-all(type='button', data-type=type) Delete
+            header.header.col
+                .w-5
+                    input#select-all(type='checkbox', name='select-all')
+                .w-5 ID
+                .w-25.topic-header
+                    .tooltip Click a title to rename
+                    i.far.fa-question-circle.mr-5.tooltip-button
+                    | Name
+                .w-15 Belongs To
+                .w-15 Created By
+                .w-20 Created On
+                .w-10 Status
+                .w-5
+            .admin-topics
+                each topic, i in results
+                    .col.admin-topic-row
+                        .w-5
+                            input.select-item(type='checkbox', name='select-item', data-id=topic.id)
+                        .w-5 #{topic.id}
+                        .w-25.admin-topic-title
+                            div #{topic.title}
+                            form.admin-rename-topic-form(action='/rename-topic', method='post')
+                                input(type='hidden', name='id', value=topic.id)
                                 input(type='hidden', name='type', value=type)
-                                .mb-5
-                                    if type === 'topic'
-                                        | #{create[0].title}
+                                input.admin-rename-topic-title(type='text', name='title')
+                                input.admin-rename-topic-submit(type='submit', value='Submit')
+                                input.admin-rename-topic-cancel.ml-10(type='button', value='Cancel')
+                        .w-15
+                            select.belongs-to(name='belongs_to', data-type=type, data-item=topic.id)
+                                option
+                                each item, i in parents
+                                    if item.id === topic.belongs_to_id
+                                        option(value=item.id, selected) #{item.name}
                                     else
-                                        | #{create[0].parent}
-                                        i.fas.fa-angle-right.mr-10.ml-10
-                                        | #{create[0].title}
-                                .d-flex.align-items-center
-                                    input.w-100(type='text', name='title')
-                                    input.ml-10(type='submit', value='Create')
-                if results.length > 0
-                    section.section-container
-                        button#delete-all(type='button', data-type=type) Delete
-                        header.header.col
-                            .w-5
-                                input#select-all(type='checkbox', name='select-all')
-                            .w-5 ID
-                            .w-25.topic-header
-                                .tooltip Click a title to rename
-                                i.far.fa-question-circle.mr-5.tooltip-button
-                                | Name
-                            .w-15 Belongs To
-                            .w-15 Created By
-                            .w-20 Created On
-                            .w-10 Status
-                            .w-5
-                        .admin-topics
-                            each topic, i in results
-                                .col.admin-topic-row
-                                    .w-5
-                                        input.select-item(type='checkbox', name='select-item', data-id=topic.id)
-                                    .w-5 #{topic.id}
-                                    .w-25.admin-topic-title
-                                        div #{topic.title}
-                                        form.admin-rename-topic-form(action='/rename-topic', method='post')
-                                            input(type='hidden', name='id', value=topic.id)
-                                            input(type='hidden', name='type', value=type)
-                                            input.admin-rename-topic-title(type='text', name='title')
-                                            input.admin-rename-topic-submit(type='submit', value='Submit')
-                                            input.admin-rename-topic-cancel.ml-10(type='button', value='Cancel')
-                                    .w-15
-                                        select.belongs-to(name='belongs_to', data-type=type, data-item=topic.id)
-                                            option
-                                            each item, i in parents
-                                                if item.id === topic.belongs_to_id
-                                                    option(value=item.id, selected) #{item.name}
-                                                else
-                                                    option(value=item.id) #{item.name}
-                                    .w-15 #{topic.created_by}
-                                    .w-20 #{topic.created_on}
-                                    .w-10.admin-topic-status
-                                        if topic.status === 'Open'
-                                            span.user-badge.success-badge #{topic.status}
-                                        else if topic.status === 'Closed'
-                                            span.user-badge.error-badge #{topic.status}
-                                        else if topic.status === 'Removed'
-                                            span.user-badge.critical-badge #{topic.status}
-                                    .w-5
-                                        .admin-menu-container
-                                            i.fas.fa-ellipsis-h.admin-menu-button
-                                            .admin-menu
-                                                div(data-id=topic.id, data-status='Open', data-type=type) Open
-                                                div(data-id=topic.id, data-status='Closed', data-type=type) Close
-                                                div(data-id=topic.id, data-status='Removed', data-type=type) Remove
-                                                div(data-id=topic.id, data-status='Delete', data-type=type) Delete
+                                        option(value=item.id) #{item.name}
+                        .w-15 #{topic.created_by}
+                        .w-20 #{topic.created_on}
+                        .w-10.admin-topic-status
+                            if topic.status === 'Open'
+                                span.user-badge.success-badge #{topic.status}
+                            else if topic.status === 'Closed'
+                                span.user-badge.error-badge #{topic.status}
+                            else if topic.status === 'Removed'
+                                span.user-badge.critical-badge #{topic.status}
+                        .w-5
+                            .admin-menu-container
+                                i.fas.fa-ellipsis-h.admin-menu-button
+                                .admin-menu
+                                    div(data-id=topic.id, data-status='Open', data-type=type) Open
+                                    div(data-id=topic.id, data-status='Closed', data-type=type) Close
+                                    div(data-id=topic.id, data-status='Removed', data-type=type) Remove
+                                    div(data-id=topic.id, data-status='Delete', data-type=type) Delete

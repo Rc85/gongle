@@ -1,0 +1,35 @@
+extends ../admin-layout
+
+block admin-header
+    link(rel='stylesheet', href='/css/vendor/quill.core.css')
+    link(rel='stylesheet', href='/css/vendor/quill.snow.css')
+    script(src='/scripts/vendor/quill.js')
+
+block admin-content
+    h2 Submit Review
+    section.section-container
+        form#review-report-form(action='/submit-review', method='post')
+            input(type='hidden', name='id', value=id)
+            .post-editor
+            .text-right
+                input.mr-5(type='submit', value='Submit')
+                input(type='reset', value='Clear')
+    script.
+        var quill = new Quill('.post-editor', {
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'color': [] }],
+                    [{ 'align': [] }],
+
+                    ['clean']       
+                ]
+            },
+            placeholder: `In brief words, describe the reported content and action(s) you've taken. Did you issue a violation to the user of the reported content?`,
+            theme: 'snow'
+        });
