@@ -91,4 +91,5 @@ The reports section shows all the reports made by users. Only one report can be 
 ## Third-party Libraries Used
 
 [Quill WYSIWYG Editor](https://github.com/quilljs/quill)
+
 [Chart.js](https://www.chartjs.org/)
