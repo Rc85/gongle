@@ -75,7 +75,7 @@ mixin mod-user(username, id, last_login, level)
                             input(type='hidden', name='option', value='Banned')
                             input(type='submit', value='Permanent Ban User')
                 
-mixin postAction(op, reply)
+mixin postAction(op, reply, type)
     if user
         if op.subtopic_status === 'Open'
             if post.post_status !== 'Closed'
@@ -102,8 +102,12 @@ mixin postAction(op, reply)
                             | Edit
         .d-flex.mt-15
             form.user-report.mr-10(action='/user-report', method='post')
-                input(type='hidden', name='type', value='forum post')
-                input(type='hidden', name='id', value=reply.post_id)
+                if type === 'post'
+                    input(type='hidden', name='type', value='forum post')
+                else if type === 'reply'
+                    input(type='hidden', name='type', value='forum reply')
+                input(type='hidden', name='post_id', value=reply.belongs_to_post_id)
+                input(type='hidden', name='reply_id', value=reply.post_id)
                 a(href='#')
                     small
                         i.fas.fa-exclamation-triangle.mr-5

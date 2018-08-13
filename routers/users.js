@@ -298,7 +298,18 @@ app.post('/user-report', function(req, resp) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            await client.query('INSERT INTO user_reports (reported_id, reported_type, reported_by) VALUES ($1, $2, $3)', [req.body.id, req.body.type, req.session.user.username])
+            let queryString;
+            let params;
+
+            if (req.body.type === 'forum post') {
+                queryString = `INSERT INTO user_reports (reported_primary_id, reported_type, reported_by) VALUES ($1, $2, $3)`;
+                params = [req.body.post_id, req.body.type, req.session.user.username];
+            } else if (req.body.type === 'forum reply') {
+                queryString = `INSERT INTO user_reports (reported_primary_id, reported_alt_id, reported_type, reported_by) VALUES ($1, $2, $3, $4)`;
+                params = [req.body.post_id, req.body.reply_id, req.body.type, req.session.user.username];
+            }
+
+            await client.query(queryString, params)
             .then((result) => {
                 done();
                 if (result !== undefined && result.rowCount === 1) {

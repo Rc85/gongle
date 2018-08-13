@@ -6573,7 +6573,7 @@ button[name=vote]:disabled {
 }
 
 .pending-badge {
-  background: #007de1;
+  background: #00c8ff;
 }
 
 .warning-badge {
@@ -7124,4 +7124,4 @@ span.fa-stack {
   width: 100%;
 }
 
-/*# sourceMappingURL=css/styles.css.map */
+/*# sourceMappingURL=styles.css.map */

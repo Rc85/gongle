@@ -64,32 +64,25 @@ app.get('*', (req, resp, next) => {
 });
 
 // routers
-const routers = require('./routers/routes');
-app.use(routers);
+app.use(require('./routers/routes'));
 
 // authentication
-const auth = require('./routers/auth');
-app.use(auth);
+app.use(require('./routers/auth'));
 
 // get data
-const getData = require('./routers/get-data');
-app.use(getData);
+app.use(require('./routers/fetch'));
 
 // posts handler
-const posts = require('./routers/posts');
-app.use(posts);
+app.use(require('./routers/posts'));
 
 // users profile
-const users = require('./routers/users');
-app.use(users);
+app.use(require('./routers/users'));
 
 // admin configurations
-const adminPanel = require('./routers/admin');
-app.use(adminPanel);
+app.use(require('./routers/admin'));
 
 // message controller
-const message = require('./routers/messages');
-app.use(message);
+app.use(require('./routers/messages'));
 
 // setting view engine to use pug
 app.set('view engine', 'pug');

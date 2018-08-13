@@ -11,4 +11,31 @@ block content
                 h2
                     i.far.fa-file-alt.mr-5
                     | Reports
-                .posts-table
+                section.section-container.report-table
+                    header.header.col
+                        .w-5 ID
+                        .w-10 Type
+                        .w-15 Reported By
+                        .w-25 Link
+                        .w-15 Date
+                        .w-10 Status
+                        .w-15 Reviewed By
+                        .w-5 Review
+                    each report, i in reports
+                        .col.report-row
+                            .w-5 #{report.r_id}
+                            .w-10 #{report.reported_type}
+                            .w-15 #{report.reported_by}
+                            .w-25
+                                if report.reported_type === 'forum post'
+                                    a(href=`/forums/posts/post-details?pid=${report.reported_primary_id}`) /forums/posts/post-details?pid=#{report.reported_primary_id}
+                                else if report.reported_type === 'forum reply'
+                                    a(href=`/forums/posts/post-details?pid=${report.reported_primary_id}&rid=${report.reported_alt_id}`) /forums/posts/post-details?pid=#{report.reported_primary_id}&rid=#{report.reported_alt_id}
+                            .w-15 #{report.reported_on}
+                            .w-10
+                                if report.report_status === 'Pending'
+                                    span.user-badge.pending-badge #{report.report_status}
+                            .w-15
+                            .w-5
+                                button.reviewed(data-id=report.r_id)
+                                    i.fas.fa-check.fa-lg

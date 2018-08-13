@@ -5,14 +5,6 @@ const fn = require('./utils/functions');
 const fs = require('fs');
 
 app.use(/^(?!\/admin-page|\/logout|\/login|\/change-config)/, function(req, resp, next) {
-    /* let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-    console.log(config);
-
-    if (!config.site) {
-        resp.render('closed', {status: 'Closed', message: 'The site is down for maintenance. Please check back later.', title: 'Closed'});
-    } else {
-        next();
-    } */
     db.connect(async function(err, client, done) {
         if (err) { console.log(err); }
         
@@ -126,7 +118,7 @@ app.get('/forums/:category', function(req, resp) {
         });
 
         if (status !== 'Removed' && status !== undefined) {
-            let categories = await client.query(`SELECT topic_title, topic_status, pt.last_posted, pt.post_user
+            let categories = await client.query(`SELECT topics.topic_id, topic_title, topic_status, pt.last_posted, pt.post_user
             FROM topics
             LEFT JOIN categories ON categories.category_id = topics.topic_category
             LEFT JOIN
@@ -135,15 +127,15 @@ app.get('/forums/:category', function(req, resp) {
                 LEFT JOIN topics ON topics.topic_id = subtopics.belongs_to_topic
                 WHERE subtopic_status != 'Removed') st ON topics.topic_id = st.belongs_to_topic
             LEFT JOIN
-                (SELECT DISTINCT ON (post_topic) MAX(post_created) AS last_posted, post_user, topic_id
+                (SELECT DISTINCT ON (topic_id) MAX(post_created) AS last_posted, post_user, topic_id
                 FROM posts
                 LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
                 LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
                 WHERE post_status != 'Removed'
-                GROUP BY post_user, subtopic_title, post_topic, topic_id) pt ON pt.topic_id = topics.topic_id
+                GROUP BY topic_id, post_user, post_topic) pt ON pt.topic_id = topics.topic_id
             WHERE category = $1
             AND topic_status != 'Removed'
-            ORDER BY topic_title LIKE '%General' DESC, topic_title ASC`, [title])
+            ORDER BY topic_title LIKE '%General' DESC, topic_title ASC, pt.last_posted DESC`, [title])
             .then((result) => {
                 if (result !== undefined) {
                     for (let i in result.rows) {
@@ -667,8 +659,6 @@ app.get('/forums/posts/post-details', function(req, resp) {
                     result.rows[0].last_login = moment(result.rows[0].last_login).fromNow();
                     result.rows[0].p2_post_created = moment(result.rows[0].p2_post_created).fromNow();
 
-                    console.log(result.rows[0]);
-
                     return result.rows[0];
                 }
             })
@@ -705,7 +695,6 @@ app.get('/forums/posts/post-details', function(req, resp) {
             .then((result) => {
                 done();
 
-                console.log(result.rows);
                 if (result !== undefined) {
                     for (let i in result.rows) {
                         result.rows[i].post_created = moment(result.rows[i].post_created).fromNow();
@@ -1419,7 +1408,27 @@ app.get('/admin-page/config', function(req, resp) {
 app.get('/admin-page/reports', function(req, resp) {
     if (req.session.user) {
         if (req.session.user.privilege > 1) {
-            resp.render('blocks/admin-reports', {user: req.session.user, page: 'reports', title: 'Admin Reports'});
+            db.connect(async(err, client, done) => {
+                if (err) { console.log(err); }
+
+                let reports = await client.query('SELECT * FROM user_reports')
+                .then(result => {
+                    done();
+                    if (result !== undefined) {
+                        for (let i in result.rows) {
+                            result.rows[i].reported_on = moment(result.rows[i].reported_on).format('MM/DD/YYYY @ hh:mm:ss A');
+                        }
+
+                        return result.rows;
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                    done();
+                });
+
+                resp.render('blocks/admin-reports', {user: req.session.user, page: 'reports', title: 'Admin Reports', reports: reports});
+            });
         } else {
             fn.error(req, resp, 401);
         }
