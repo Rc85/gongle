@@ -35,6 +35,10 @@ const Admin = (() => {
         },
         users: {
             privilege: {
+                /**
+                 * @param {Number} userId The user's id
+                 * @param {String} privilege The name of the privilege
+                 */
                 change: (userId, privilege, callback) => {
                     App.loading.show();
 
@@ -53,6 +57,10 @@ const Admin = (() => {
                 }
             },
             delete: {
+                /**
+                 * @param {String} user The username
+                 * @param {String} reason The reason for deleting this user
+                 */
                 profilePic: (user, reason, callback) => {
                     App.loading.show();
 

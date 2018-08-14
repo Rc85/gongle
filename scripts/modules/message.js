@@ -26,9 +26,11 @@ const Message = (() => {
                 }
             });
         },
-        delete: function(message, all, callback) {
+        delete: (message, callback) => {
             let args = Array.from(arguments);
             let allMessage = args.find((b) => { return typeof b === 'boolean' });
+
+            App.loading.show();
 
             if (allMessage) {
                 if (message.length > 0) {
@@ -60,10 +62,47 @@ const Message = (() => {
                     success: function(resp) {
                         App.loading.hide();
     
-                        callback();
+                        callback(resp);
                     }
                 });
             }
+        },
+        report: (form, callback) => {
+            alertify.confirm('Are you sure you want to report this message?', (e) => {
+                e.preventDefault();
+                App.loading.show();
+
+                $.post({
+                    url: '/report-message',
+                    data: $(form).serialize(),
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
+            }, () => {
+                return false;
+            });
+        },
+        unsave: (form, callback) => {
+            alertify.confirm('Are you sure you want to unsave this message?', (e) => {
+                e.preventDefault();
+
+                App.loading.show();
+
+                $.post({
+                    url: '/unsave-message',
+                    data: $(form).serialize(),
+                    success: (resp) => {
+                        App.loading.hide();
+
+                        callback(resp);
+                    }
+                });
+            }, () => {
+                return false;
+            });
         }
     }
 })();

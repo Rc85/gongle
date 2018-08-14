@@ -11,9 +11,9 @@ block subforum-header
 block content
     section.section-container
         section.post-details(id='post-' + posts.post.post_id)
-            header.col.mb-10
+            header.d-flex.mb-10
                 - let post = posts.post
-                div
+                .w-10
                     +vote(post, true)(post)
                 .w-80
                     h2
@@ -43,9 +43,11 @@ block content
                             i.post-edited Edited #{posts.post.post_modified}
                 .w-10.follow-div
                     +followPost(user, posts.post)
-            section.post-body !{posts.post.post_body}
-            footer
-                +postAction(posts.post, posts.post, 'post')
+            .d-flex.justify-content-center
+                .w-80
+                    section.post-body !{posts.post.post_body}
+                    footer
+                        +postAction(posts.post, posts.post, 'post')
         section.replies
             if posts.replies.length > 0
                 .pagination-container.mb-15

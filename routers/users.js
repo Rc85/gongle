@@ -449,21 +449,17 @@ app.get('/accept-friend-request', function(req, resp) {
                     resp.send({status: 'accept error'});
                 });
 
-                let message = '<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>' + req.session.user.username + ' has accepted your friend request and has been added to your friends list.</p>'
-
-                await client.query('INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, $3, $4)', [req.session.user.username, authorizeUser[0].friendly_user, 'Friend Request Accepted', message])
-                .then(() => { done(); })
-                .catch((err) => {
-                    console.log(err);
-                    done();
-                    resp.send({status: 'error'});
-                });
-
                 if (addFriend.rowCount === 1 && acceptFriend.rowCount === 1) {
+                    let message = '<p><b><i>*** This message is sent by the system on behalf of the approving user ***</b></i></p><p>' + req.session.user.username + ' has accepted your friend request and has been added to your friends list.</p>'
+
+                    await client.query('INSERT INTO messages (sender, recipient, subject, message) VALUES ($1, $2, $3, $4)', [req.session.user.username, authorizeUser[0].friendly_user, 'Friend Request Accepted', message])
+
                     resp.send({status: 'success'});
                 } else {
                     resp.send({status: 'are friends'});
                 }
+
+                done();
             } else {
                 done();
                 resp.send({status: 'invalid'});

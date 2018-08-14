@@ -49,13 +49,9 @@ app.post('/move-forum', (req, resp) => {
             let queryString;
 
             if (req.body.type === 'topic') {
-                queryString = `UPDATE topics
-                SET topic_category = $1
-                WHERE topic_id = $2`;
+                queryString = `UPDATE topics SET topic_category = $1 WHERE topic_id = $2`;
             } else if (req.body.type === 'subtopic') {
-                queryString = `UPDATE subtopics
-                SET belongs_to_topic = $1
-                WHERE subtopic_id = $2`;
+                queryString = `UPDATE subtopics SET belongs_to_topic = $1 WHERE subtopic_id = $2`;
             }
 
             await client.query(queryString, [req.body.to, req.body.item])
@@ -139,9 +135,7 @@ app.post('/delete-user', (req, resp) => {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            let userLevel = await client.query(`SELECT privilege
-            FROM users
-            WHERE user_id = $1`,
+            let userLevel = await client.query(`SELECT privilege FROM users WHERE user_id = $1`,
             [req.body.user_id])
             .then((result) => {
                 if (result !== undefined) {
@@ -154,8 +148,7 @@ app.post('/delete-user', (req, resp) => {
             });
 
             if (userLevel < 2) {
-                await client.query(`DELETE FROM users
-                WHERE user_id = $1`,
+                await client.query(`DELETE FROM users WHERE user_id = $1`,
                 [req.body.user_id])
                 .then((result) => {
                     done();
@@ -182,7 +175,7 @@ app.post('/delete-user-profile-pic', function(req, resp) {
             db.connect(async function(err, client, done) {
                 if (err) { console.log(err); }
 
-                let updateAvatarURL = await client.query("UPDATE users SET avatar_url = $2 WHERE user_id = $1 RETURNING user_id, username, avatar_url", [req.body.user_id, '/files/' + req.body.user_id + '/profile_pic/' + req.body.username + '_profile_pic.png'])
+                let updateAvatarURL = await client.query(`UPDATE users SET avatar_url = $2 WHERE user_id = $1 RETURNING user_id, username, avatar_url`, [req.body.user_id, '/files/' + req.body.user_id + '/profile_pic/' + req.body.username + '_profile_pic.png'])
                 .then((result) => {
                     if (result !== undefined && result.rowCount === 1) {
                         return result.rows;

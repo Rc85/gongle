@@ -31,3 +31,14 @@
 .reply-form {
     display: none;
 }
+
+#report-message button {
+    border: 0;
+    background: transparent;
+    color: $secondary_color;
+}
+
+#report-message button:hover {
+    color: $link_color;
+    cursor: pointer;
+}

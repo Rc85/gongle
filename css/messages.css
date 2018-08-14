@@ -27,4 +27,15 @@
   display: none;
 }
 
+#report-message button {
+  border: 0;
+  background: transparent;
+  color: #199664;
+}
+
+#report-message button:hover {
+  color: #32ffc8;
+  cursor: pointer;
+}
+
 /*# sourceMappingURL=messages.css.map */

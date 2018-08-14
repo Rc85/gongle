@@ -198,7 +198,7 @@ app.post('/change-status', function(req, resp) {
                             queryString = `UPDATE posts SET post_status = $1 WHERE post_id = $2`;
                         }
                     }
-                } else {
+                } else if (req.body.type === 'users') {
                     queryString = `UPDATE users SET user_status = $1 WHERE user_id = $2`;
                 }
             }

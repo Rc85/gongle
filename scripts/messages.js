@@ -129,4 +129,27 @@ $(document).ready(function() {
             messages.splice(messages.indexOf($(checkbox).attr('value')), 1);
         }
     });
+
+    $('#report-message').on('click', function(e) {
+        e.preventDefault();
+        let form = $(this);
+
+        Message.report(form, (resp) => {
+            App.handle.response(resp, () => {
+                alertify.success('Message reported');
+            });
+        });
+    });
+
+    $('.unsave-message').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        
+        Message.unsave(form, (resp) => {
+            App.handle.response(resp, () => {
+                $(form).find('button').html('<i class="far fa-lg fa-star"></i>');
+                alertify.success('Message unsaved');
+            });
+        });
+    });
 });

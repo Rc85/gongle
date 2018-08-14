@@ -18,9 +18,10 @@ block content
                         .w-20 Date
                         .w-5
                         .w-10.text-right
-                            form.delete-all-messages(action='/delete-all-messages', method='post')
-                                button(type='submit')
-                                    i.far.fa-lg.fa-trash-alt
+                            if location !== 'saved'
+                                form.delete-all-messages(action='/delete-all-messages', method='post')
+                                    button(type='submit')
+                                        i.far.fa-lg.fa-trash-alt
                     each message, i in messages
                         #messages
                         -var unreadClass = ''
@@ -40,6 +41,15 @@ block content
                                 if message.message_status === 'Unread' && location === 'inbox'
                                     span.user-badge.success-badge Unread
                             .w-10.d-flex.justify-content-end
-                                +deleteMessage(message, 'messages')
-                                if location === 'inbox'
-                                    include ../inc/save-message
+                                if location !== 'saved'
+                                    +deleteMessage(message, 'messages')
+                                    if location === 'inbox'
+                                        include ../inc/save-message
+                                else
+                                    form.unsave-message(action='/unsave-message', method='post')
+                                        input(type='hidden', name='message_id', value=message.message_id)
+                                        button(type='submit', name='follow')
+                                            span.fa-stack.fa-lg
+                                                i.fas.fa-star.fa-stack-1x.followed
+                                                i.far.fa-star.fa-stack-1x
+                                

@@ -3,6 +3,10 @@ const moment = require('moment');
 const CryptoJS = require('crypto-js');
 
 module.exports = {
+    /**
+     * Capitalize the first letter of each word in a string
+     * @param {String} string The string(s)
+     */
     capitalize: function(string) {
         let strings = string.split(' ');
         let newString = [];
@@ -155,6 +159,9 @@ module.exports = {
 
         return resp.render('blocks/response', {user: req.session.user, status: 'Error ' + code, message: customMessage});
     },
+    /**
+     * Validates the session key encrypted upon user login
+     */
     validateKey: function(req) {
         let key = req.query.key
 
@@ -173,56 +180,5 @@ module.exports = {
         }
 
         return validateKey;
-    },
-    changeTopicStatus: async (client, status, id, done) => {
-        let result = await client.query(`UPDATE topics
-        SET topic_status = $1
-        WHERE topic_category = $2
-        RETURNING topic_id`, [status, id])
-        .then((result) => {
-            if (result !== undefined) {
-                let id = result.rows.map((obj, i) => {
-                    return result.rows[i].topic_id;
-                });
-
-                return id;
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-        });
-
-        return result;
-    },
-    changeSubtopicStatus: async (client, status, id, done) => {
-        let result = await client.query(`UPDATE subtopics
-        SET subtopic_status = $1
-        WHERE belongs_to_topic = ANY($2)
-        RETURNING subtopic_id`, [status, id])
-        .then((result) => {
-            if (result !== undefined) {
-                let id = result.rows.map((obj, i) => {
-                    return result.rows[i].subtopic_id;
-                });
-
-                return id;
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-        });
-
-        return result;
-    },
-    changePostStatus: async (client, status, id, done) => {
-        let result = await client.query(`UPDATE posts
-        SET post_status = $1
-        WHERE post_topic = ANY($2)`, [status, id])
-        .catch((err) => {
-            console.log(err);
-            done();
-        })
     }
 }

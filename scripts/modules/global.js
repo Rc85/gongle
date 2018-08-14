@@ -39,6 +39,10 @@ const App = (() => {
                     alertify.error('Failed to execute that action');
                 } else if (resp.status === 'deleted') {
                     alertify.success('Deleted');
+                } else if (resp.status === 'duplicate') {
+                    alertify.error('Duplicate found')
+                } else if (resp.status === 'requested') {
+                    alertify.error('Request already sent');
                 }
             }
         },

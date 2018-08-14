@@ -63,6 +63,44 @@ const Post = (() => {
                     callback(resp);
                 }
             });
+        },
+        report: (form, callback) => {
+            App.loading.show();
+
+            $.post({
+                url: '/user-report',
+                data: $(form).serialize(),
+                success: function(resp) {
+                    App.loading.hide();
+
+                    callback(resp);
+                }
+            });
+        },
+        vote: (id, vote, callback) => {
+            $.post({
+                url: '/vote-post',
+                data: {
+                    id: id,
+                    vote: vote  
+                },
+                success: (resp) => {
+                    callback(resp)
+                }
+            });
+        },
+        status: (form, callback) => {
+            App.loading.show();
+
+            $.post({
+                url: '/change-status',
+                data: $(form).serialize(),
+                success: function(resp) {
+                    App.loading.hide();
+
+                    callback(resp);
+                }
+            });
         }
     }
 })();

@@ -1527,13 +1527,19 @@ app.get('/messages/:location', function(req, resp) {
 
                 let messages;
 
-                let starredMessages = await client.query('SELECT messages.sender, messages.recipient, messages.subject, messages.message, messages.message_status, saved_messages.msg_saved_on AS message_date, saved_messages.msg_saved_by, saved_messages.saved_msg AS message_id FROM saved_messages LEFT JOIN messages ON saved_msg = messages.message_id WHERE msg_saved_by = $1', [req.session.user.username])
+                let starredMessages = await client.query(`SELECT
+                messages.sender, messages.recipient, messages.subject, messages.message,
+                messages.message_status, saved_messages.msg_saved_on AS message_date,
+                saved_messages.msg_saved_by, saved_messages.saved_msg AS message_id
+                FROM saved_messages
+                LEFT JOIN messages ON saved_msg = messages.message_id
+                WHERE msg_saved_by = $1`, [req.session.user.username])
                 .then((result) => {
                     done();
                     if (result !== undefined) {
                         for (let i in result.rows) {
                             result.rows[i].message_date = moment(result.rows[i].message_date).format('MM/DD/YYYY @ hh:mm:ss A');
-                            starredIdArray.push(result.rows[i].saved_msg);
+                            starredIdArray.push(result.rows[i].message_id);
                         }
 
                         return result.rows;
@@ -1551,9 +1557,11 @@ app.get('/messages/:location', function(req, resp) {
                     messages = inbox;
                 } else if (req.params.location === 'outbox') {
                     messages = outbox;
-                } else if (req.params.location === 'starred') {
+                } else if (req.params.location === 'saved') {
                     messages = starredMessages;
                 }
+
+                console.log(starredIdArray);
 
                 if (req.params.location !== 'content') {
                     resp.render('blocks/messages', {user: req.session.user, messages: messages, saved_messages: starredIdArray, title: 'Messages', location: req.params.location});

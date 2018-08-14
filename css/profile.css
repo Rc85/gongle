@@ -98,6 +98,7 @@ div:not(#user-stats) h3 {
 
 #user-friends-content {
   display: flex;
+  justify-content: space-between;
   flex-wrap: wrap;
 }
 #user-friends-content small {

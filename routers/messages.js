@@ -54,6 +54,31 @@ app.post('/save-message', function(req, resp) {
     }
 });
 
+app.post('/unsave-message', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            await client.query('DELETE FROM saved_messages WHERE saved_msg = $1 and msg_saved_by = $2', [req.body.message_id, req.session.user.username])
+            .then(result => {
+                done();
+                if (result !== undefined && result.rowCount === 1) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'not found'});
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                done();
+                resp.send({status: 'error'});
+            });
+        });
+    } else {
+        resp.send({status: 'unauthorized'});
+    }
+});
+
 app.post('/change-message-status', function(req, resp) {
     if (req.session.user) {
         db.connect(async function(err, client, done) {
@@ -193,6 +218,37 @@ app.post('/delete-all-messages', function(req, resp) {
                 resp.send({status: 'nothing'});
             }
         });
+    } else {
+        resp.send({status: 'unauthorized'});
+    }
+});
+
+app.post('/report-message', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            await client.query('INSERT INTO user_reports (reported_primary_id, reported_by, reported_type, reported_content) VALUES ($1, $2, $3, $4)', [req.body.id, req.session.user.username, req.body.type, req.body.content])
+            .then(result => {
+                done();
+                if (result !== undefined && result.rowCount === 1) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'fail'});
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                done();
+                if (err.code = '23505') {
+                    resp.send({status: 'duplicate'});
+                } else {
+                    resp.send({status: 'error'});
+                }
+            });
+        });
+    } else {
+        resp.send({status: 'unauthorized'});
     }
 });
 

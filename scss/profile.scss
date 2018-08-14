@@ -111,6 +111,7 @@ div:not(#user-stats) {
 
 #user-friends-content {
     display: flex;
+    justify-content: space-between;
     flex-wrap: wrap;
 
     small {
