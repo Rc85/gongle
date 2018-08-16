@@ -29,7 +29,7 @@ block content
                     i.fas.fa-user.mr-5
                     | USERNAME:                        
                 .profile-field #{viewing.username}
-                if viewing.hide_email
+                if !viewing.hide_email
                     h4
                         i.fas.fa-envelope.mr-5
                         | EMAIL:

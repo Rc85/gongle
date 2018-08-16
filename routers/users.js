@@ -548,4 +548,27 @@ app.post('/unfriend', function(req, resp) {
     }
 });
 
+app.post('/change-notification-status', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            await client.query(`UPDATE notifications SET notification_status = 'Old' WHERE notification_owner = $1`, [req.session.user.username])
+            .then(result => {
+                if (result !== undefined) {
+                    resp.send({status: 'success'});
+                } else {
+                    resp.send({status: 'fail'});
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                resp.send({status: 'error'});
+            });
+
+            done();
+        });
+    }
+});
+
 module.exports = app;

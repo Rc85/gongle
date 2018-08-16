@@ -36,15 +36,6 @@ app.post('/check-exists', function(req, resp) {
             } else {
                 resp.send({status: 'not exist'});
             }
-            /* db.query('SELECT username FROM users WHERE username = $1', [req.body.string], function(err, result) {
-                if (err) { console.log(err); }
-
-                if (result !== undefined && result.rows.length === 1) {
-                    resp.send({status: 'exist'});
-                } else {
-                    resp.send({status: 'not exist'});
-                }
-            }); */
         } else if (req.body.type === 'email') {
             let email = await client.query('SELECT email FROM users WHERE email = $1', [req.body.string])
             .then((result) => {
@@ -70,16 +61,6 @@ app.post('/check-exists', function(req, resp) {
             } else {
                 resp.send({status: 'not exist'});
             }
-
-            /* db.query('SELECT email FROM users WHERE email = $1', [req.body.string], function(err, result) {
-                if (err) { console.log(err); }
-
-                if (result !== undefined && result.rows.length === 1) {
-                    resp.send({status: 'exist'});
-                } else {
-                    resp.send({status: 'not exist'});
-                }
-            }); */
         }
     });
 });
@@ -119,41 +100,7 @@ app.post('/registration', function(req, resp) {
                             resp.render('blocks/custom-response', {status: 'Success', message: 'Registration successful.'});
                         });
                     });
-                })
-                /* bcrypt.hash(req.body.password, 10, function(err, result) {
-                    if (err) { console.log(err); }
-    
-                    db.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING user_id, username', [req.body.username, result, req.body.email], function(err, result) {
-                        if (err) {
-                            console.log(err);
-                            fn.error(req, resp, 500);
-                        } else if (result !== undefined && result.rowCount === 1) {
-                            db.query('UPDATE users SET avatar_URL = $1 WHERE user_id = $2 RETURNING user_id, username', ['/files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', result.rows[0].user_id], function(err, result) {
-                                if (err) {
-                                    console.log(err);
-                                    fn.error(req, resp, 500);
-                                } else if (result !== undefined && result.rowCount === 1) {
-                                    fs.mkdir('user_files/' + result.rows[0].user_id, function(err) {
-                                        if (err) { console.log(err); }
-                                        fs.mkdir('user_files/' + result.rows[0].user_id + '/profile_pic', function(err) {
-                                            if (err) { console.log(err); }
-        
-                                            fs.copyFile('images/profile_default.png', 'user_files/' + result.rows[0].user_id + '/profile_pic/' + result.rows[0].username + '_profile_pic.png', function(err) {
-                                                if (err) { console.log(err); }
-            
-                                                resp.render('blocks/custom-response', {status: 'Success', message: 'Registration successful.'});
-                                            });
-                                        });
-                                    });
-                                } else {
-                                    fn.error(req, resp, 500);
-                                }
-                            });
-                        } else {
-                            fn.error(req, resp, 500);
-                        }
-                    })
-                }) */
+                });
             } else {
                fn.error(req, resp, 400, 'One or more credentials contains invalid format.');
             }
@@ -170,6 +117,7 @@ app.post('/login', (req, resp) => {
         if (err) { console.log(err); }
 
         let publicKey;
+        // Select the user from database
         let loginUser = await client.query('SELECT * FROM users WHERE email = $1', [req.body.email])
         .then((result) => {
             if (result !== undefined && result.rows.length === 1) {
@@ -186,76 +134,37 @@ app.post('/login', (req, resp) => {
         .catch((err) => {
             console.log(err);
             done();
-        })
+        });
 
-        let authorized = await bcrypt.compare(req.body.password, loginUser.password)
+        // Compare the password sent by unhashing with bcrypt and comparing it with the one in database
+        let matched = await bcrypt.compare(req.body.password, loginUser.password)
         .then((result) => { return result })
         .catch((err) => {
             console.log(err);
             done();
         });
 
-        if (authorized) {
-            let now = new Date();
-            await client.query('UPDATE users SET last_login = $1 WHERE email = $2', [now, req.body.email])
-            .catch((err) => {
+        if (matched) {
+            /* Save the last login as previous login
+            This will be used later for getting new posts and/or replies since last login */
+            let previousLogin = loginUser.last_login;
+            let date = new Date();
+
+            let loggedInUser = await client.query('UPDATE users SET last_login = $1, previous_login = $3 WHERE user_id =$2 RETURNING *', [date, loginUser.user_id, previousLogin])
+            .then(result => {
+                if (result !== undefined) {
+                    return result.rows[0];
+                }
+            })
+            .catch(err => {
                 console.log(err);
-                done();
-                fn.error(req, resp, 500);
             });
 
-            let votes, followedPosts, friends = [], blockedUsers = [];
+            delete loggedInUser.password; // Make sure to delete the password before storing it in the session
+            loggedInUser.last_login = moment.tz(loginUser.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
+            loggedInUser.session_key = publicKey;
 
-            // Vote tracking ensures user cannot vote twice on a post
-            await client.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [loginUser.user_id])
-            .then((result) => {
-                if (result !== undefined) {
-                    votes = result.rows;
-                }
-            })
-            .catch((err) => {
-                console.log(err);
-                done();
-            });
-
-            await client.query('SELECT * FROM followed_posts WHERE user_following = $1', [loginUser.username])
-            .then((result) => {
-                if (result !== undefined) {
-                    followedPosts = result.rows;
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            await client.query('SELECT befriend_with FROM friends WHERE friendly_user = $1 AND friend_confirmed IS TRUE', [loginUser.username])
-            .then((result) => {
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        friends.push(result.rows[i].befriend_with);
-                    }
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            await client.query('SELECT blocked_user FROM blocked_users WHERE blocking_user = $1', [loginUser.username])
-            .then((result) => {
-                done();
-                if (result !== undefined) {
-                    for (let i in result.rows) {
-                        blockedUsers.push(result.rows[i].blocked_user);
-                    }
-                }
-            })
-            .catch((err) => { console.log(err); });
-
-            delete loginUser.password;
-            loginUser.last_login = moment.tz(loginUser.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
-            loginUser.session_key = publicKey;
-            loginUser.followed_posts = followedPosts;
-            loginUser.votes = votes;
-            loginUser.friends = friends;
-            loginUser.blocked_users = blockedUsers;
-
-            req.session.user = loginUser;
+            req.session.user = loggedInUser;
 
             let referer = req.get('referer').split('/').pop();
             /* During a fail login or registration, the referer head is set to the POST URL, which users cannot get.
@@ -269,172 +178,6 @@ app.post('/login', (req, resp) => {
             fn.error(req, resp, 401, 'Incorrect password');
         }
     });
-
-    /* let loginUser = db.query('SELECT * FROM users FROM email = $1', [req.body.email]);
-    
-    loginUser.then((result) => {
-        let encrypted = CryptoJS.AES.encrypt(result.rows[0].username, process.env.ENC_KEY);
-        encoded = encodeURIComponent(encrypted.toString());
-
-        console.log(encoded);
-    }); */
-
-    /* db.query('SELECT * FROM users WHERE email = $1', [req.body.email], function(err, result) {
-        if (err) { console.log(err); }
-
-        if (result !== undefined && result.rows.length === 1) {
-            let encrypted = CryptoJS.AES.encrypt(result.rows[0].username, process.env.ENC_KEY);
-            let encoded = encodeURIComponent(encrypted.toString());
-
-            bcrypt.compare(req.body.password, result.rows[0].password, function(err, matched) {
-                if (err) { console.log(err); }
-    
-                if (matched) {
-                    if (result.rows[0].user_status === 'Active') {
-                        let now = new Date();
-                        let user = result.rows[0];
-
-                        db.query('UPDATE users SET last_login = $1 WHERE email = $2', [now, req.body.email], function(err, result) {
-                            if (err) {
-                                console.log(err);
-                                fn.error(req, resp, 500);
-                            } else if (result !== undefined && result.rowCount === 1) {
-                                db.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [user.user_id], function(err, result) {
-                                    if (err) { console.log(err); }
-        
-                                    if (result !== undefined) {
-                                        let votes = result.rows;
-        
-                                        db.query('SELECT * FROM followed_posts WHERE user_following = $1', [user.username], function(err, result) {
-                                            if (err) { console.log(err); }
-
-                                            if (result !== undefined) {
-                                                let followedPosts = result.rows
-
-                                                db.query('SELECT befriend_with FROM friends WHERE friendly_user = $1', [user.username], function(err, result) {
-                                                    if (err) { console.log(err); }
-
-                                                    if (result !== undefined) {
-                                                        let friends = []
-
-                                                        for (let i in result.rows) {
-                                                            friends.push(result.rows[i].befriend_with);
-                                                        }
-
-                                                        db.query('SELECT blocked_user FROM blocked_users WHERE blocking_user = $1', [user.username], function(err, result) {
-                                                            if (err) { console.log(err); }
-                                                            
-                                                            if (result !== undefined) {
-                                                                let blockedUsers = []
-        
-                                                                for (let i in result.row) {
-                                                                    blockedUsers.push(result.rows[i].blocked_user);
-                                                                }
-                                                                    
-                                                                delete user.password;
-                                                                user.last_login = moment.tz(user.last_login, 'America/Vancouver').format('MM/DD/YY @ h:mm A z');
-                                                                user.session_key = encoded;
-                                                                user.followed_posts = followedPosts;
-                                                                user.votes = votes;
-                                                                user.friends = friends;
-                                                                user.blocked_users = blockedUsers;
-                                    
-                                                                req.session.user = user;
-                                                                console.log(req.session.user);
-                            
-                                                                let referer = req.get('referer').split('/').pop();
-                                                                if (referer === 'login' || referer === 'registration') {
-                                                                    resp.redirect('/');
-                                                                } else {
-                                                                    resp.redirect(req.get('referer'));
-                                                                }
-                                                            }
-                                                        })
-                                                    }
-                                                })
-                                            }
-                                        })
-                                    }
-                                });
-                            } else {
-                                fn.error(req, resp, 404);
-                            }
-                        });
-                    } else if (result.rows[0].user_status === 'Banned') {
-                        fn.error(req, resp, 403, 'Your account is temporary banned.');
-                    } else if (result.rows[0].user_status === 'Deleted') {
-                        fn.error(req, resp, 403, 'Your account is permanently banned.');
-                    } else {
-                        fn.error(req, resp, 403, 'Your account is not activated.');
-                    }
-                } else {
-                    fn.error(req, resp, 401, 'The email or password is incorrect.');
-                }
-            });
-        } else {
-            fn.error(req, resp, 401, 'The email or password is incorrect.');
-        }
-    }); */
-});
-
-app.post('/admin-login', function(req, resp) {
-    db.connect(async function(err, client, done) {
-        if (err) { console.log(err); }
-
-        await client.query('SELECT * FROM users WHERE username = $1', [req.body.username])
-        .then((result) => {
-            done();
-            if (result !== undefined && result.rows.length === 1) {
-                if (result.rows[0].privilege > 1) {
-                    bcrypt.compare(req.body.password, result.rows[0].password, function(err, matched) {
-                        if (err) { console.log(err); }
-        
-                        if (matched) {
-                            delete result.rows[0].password;
-                            req.session.user = result.rows[0];
-    
-                            resp.redirect('/admin-page/overview');
-                        } else {
-                            resp.render('admin-login', {message: 'Incorrect username or password', title: 'Admin Login'});
-                        }
-                    });
-                } else {
-                    resp.render('admin-login', {message: 'You\'re not authorized.', title: 'Admin Login'});
-                }
-            } else {
-                resp.render('admin-login', {message: 'You\'re not authorized.', title: 'Admin Login'});
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            fn.error(req, resp, 500);
-        });
-    });
-    /* db.query('SELECT * FROM users WHERE username = $1', [req.body.username], function(err, result) {
-        if (err) { console.log(err); }
-
-        if (result !== undefined && result.rows.length === 1) {
-            if (result.rows[0].privilege > 1) {
-                bcrypt.compare(req.body.password, result.rows[0].password, function(err, matched) {
-                    if (err) { console.log(err); }
-    
-                    if (matched) {
-                        delete result.rows[0].password;
-                        req.session.user = result.rows[0];
-
-                        resp.redirect('/admin-page/overview');
-                    } else {
-                        resp.render('admin-login', {message: 'Incorrect username or password', title: 'Admin Login'});
-                    }
-                });
-            } else {
-                resp.render('admin-login', {message: 'You\'re not authorized.', title: 'Admin Login'});
-            }
-        } else {
-            resp.render('admin-login', {message: 'You\'re not authorized.', title: 'Admin Login'});
-        }
-    }); */
 });
 
 module.exports = app;

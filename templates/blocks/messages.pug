@@ -24,11 +24,9 @@ block content
                                         i.far.fa-lg.fa-trash-alt
                     each message, i in messages
                         #messages
-                        -var unreadClass = ''
+                        - var unreadClass = ''
                         if message.message_status === 'Unread' && location === 'inbox'
                             - unreadClass = 'message-unread'
-                        else if location !== 'inbox' || message.message_status === 'Read'
-                            -unreadClass = ''
                         .col(class=unreadClass)
                             .w-5
                                 input.select-message(type='checkbox', name='select_message', value=message.message_id)
@@ -42,6 +40,9 @@ block content
                                     span.user-badge.success-badge Unread
                             .w-10.d-flex.justify-content-end
                                 if location !== 'saved'
+                                    form.mark-as-read(action='/message/mark-as-read', method='post')
+                                        input(type='hidden', name='id', value=message.message_id)
+
                                     +deleteMessage(message, 'messages')
                                     if location === 'inbox'
                                         include ../inc/save-message

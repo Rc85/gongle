@@ -2,6 +2,7 @@ mixin vote(post, votable)
     - let postVotes = parseInt(post.post_upvote) + parseInt(post.post_downvote)
     if user && votable
         .voting(class=`vote-${post.post_id}`)
+            script.
             if user.votes
                 - let upvoteClass = 'far'
                 - let downvoteClass = 'far'
@@ -88,7 +89,7 @@ mixin postAction(op, reply, type)
                             i.far.fa-comment-alt.mr-5
                             | Reply
                     form.reply-post-form.mt-15(action='/post', method='post')
-                        input(type='hidden', name='belongs_to_post_id', value=reply.post_id)
+                        input(type='hidden', name='belongs_to_post_id', value=op.post_id)
                         input(type='hidden', name='reply_to_post_id', value=reply.post_id)
                         input(type='hidden', name='subtopic_id', value=reply.post_topic)
                         input(type='hidden', name='tag', value='Reply')
@@ -217,7 +218,7 @@ mixin userSettingsForm(title, desc, type, yes, no)
 mixin deleteMessage(message, from)
     form.delete-message.mr-5(action='/delete-message', method='post')
         input(type='hidden', name='message_id', value=message.message_id)
-        input(type='hidden', name='from', value=from)
+        input(type='hidden', name='from_location', value=from)
         button(type='submit')
             i.far.fa-lg.fa-trash-alt
 

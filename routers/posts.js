@@ -5,15 +5,17 @@ const fn = require('./utils/functions');
 
 app.post('/post', function(req, resp) {
     if (req.session.user) {
-        let checkPost = /^(<p>(\s*|<br>)<\/p>)*$/
-        console.log(req.body);
-        
+        /* By default, Quill Editor will insert the <p> tag
+        Here, we make sure that there is no infinite white space or <br> tags nested inside */
+        let checkPost = /^(<p>|<p>(<br(\s|\/)*>|\s)*<\/p>)*$/;
+
         if (checkPost.test(req.body.post_body)) {
             resp.send({status: 'invalid post'});
         } else {
-            db.connect(async function(err, client, done) {
+            db.connect(async(err, client, done) => {
                 if (err) { console.log(err); }
 
+                // Let's first make sure the user is not banned or has not activated the account
                 let userStatus = await client.query('SELECT user_status FROM users WHERE user_id = $1', [req.session.user.user_id])
                 .then((result) => {
                     if (result !== undefined) {
@@ -26,20 +28,20 @@ app.post('/post', function(req, resp) {
                     resp.send({status: 'error'});
                 });
 
-                let queryString,
-                    params;
+                let queryString;
+                let params;
 
-                if (req.body.belongs_to_post_id) {
-                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status
-                    FROM posts
+                if (req.body.belongs_to_post_id) { // If the post belongs to a parent post
+                    // Get all status related to post
+                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status FROM posts
                     LEFT JOIN subtopics ON posts.post_topic = subtopics.subtopic_id
                     LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
                     LEFT JOIN categories ON topics.topic_category = categories.category_id
                     WHERE posts.post_id = $1`;
                     params = [req.body.belongs_to_post_id];
                 } else {
-                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status
-                    FROM subtopics
+                    // Else get all status related to subtopic
+                    queryString = `SELECT category_status, topic_status, subtopic_status, post_status FROM subtopics
                     LEFT JOIN posts ON posts.post_topic = subtopics.subtopic_id
                     LEFT JOIN topics ON subtopics.belongs_to_topic = topics.topic_id
                     LEFT JOIN categories ON topics.topic_category = categories.category_id
@@ -47,13 +49,9 @@ app.post('/post', function(req, resp) {
                     params = [req.body.subtopic_id];
                 }
 
-                console.log(queryString)
-                console.log(params)
-
-                let status = await client.query(queryString, params)
+                let status = await client.query(queryString, params) // Execute the query
                 .then((result) => {
-                    console.log(result.rows);
-                    if (result !== undefined && result.rows.length === 1) {
+                    if (result !== undefined && result.rows.length > 0) {
                         return result.rows[0];
                     }
                 })
@@ -64,57 +62,67 @@ app.post('/post', function(req, resp) {
                 });
 
                 let allowPost;
-                console.log(status);
 
-                if (status !== undefined) {
-                    if (status.category_status === 'Open') {
-                        allowPost = true;
+                if (status !== undefined) { // Make sure the status is not undefined
+                    if (status.category_status === 'Open') { // If category is open
+                        allowPost = true; // Allow posting
 
-                        if (status.topic_status !== 'Open') {
+                        if (status.topic_status !== 'Open') { // If category is open but topic is not open
+                            allowPost = false; // Disallow posting
+                        } else if (status.subtopic_status !== 'Open') { // If category and topic is open but subtopic is not open
+                            allowPost = false;
+                        } else if (status.post_status !== 'Open' && status.post_status !== null) { // If category, topic, and subtopic is open, but post is not
                             allowPost = false;
                         }
-
-                        if (status.subtopic_status !== 'Open') {
-                            allowPost = false;
-                        }
-
-                        if (status.post_status !== 'Open' && status.post_status !== null) {
-                            allowPost = false;
-                        }
-                    } else {
-                        allowPost = false;
+                    } else { // If category is closed
+                        allowPost = false; 
                     }
-                } else {
+                } else { // If status is undefined (rarely the case), we still handle it but not allow posting
                     allowPost = false;
                 }
 
-                console.log(allowPost);
-
-                if (allowPost) {
-                    if (userStatus[0].user_status === 'Suspended') {
+                if (allowPost) { // After the check, if allow is true
+                    if (userStatus[0].user_status === 'Suspended') { // If user is banned
                         done();
                         resp.send({status: 'banned'});
                     } else if (userStatus[0].user_status === 'Banned') {
                         done();
                         resp.send({status: 'banned'});
-                    } else if (userStatus.length === 0) {
+                    } else if (userStatus.length === 0) { // If there is no such user (if somehow a user logs in with a fake account)
                         done();
                         resp.send({status: 'user not found'});
                     } else {
-                        await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6, $7)', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id, req.body.tag])
+                        /* Execute a SQL function
+                        This function simply inserts the post into the posts table and also increments the posts table's replies column with the total number of replies only if the post is a reply */
+                        let id = await client.query('SELECT post_reply($1, $2, $3, $4, $5, $6, $7)', [req.body.title, req.session.user.username, req.body.subtopic_id, req.body.post_body, req.body.reply_to_post_id, req.body.belongs_to_post_id, req.body.tag])
                         .then((result) => {
-                            done();
-                            if (result !== undefined && result.rowCount === 1) {
-                                resp.send({status: 'success'});
-                            } else {
-                                resp.send({status: 'failed'});
-                            }
+                            console.log(result);
+                            return result.rows[0].post_reply;
                         })
                         .catch((err) => {
                             console.log(err);
                             done();
                             resp.send({status: 'error'});
                         });
+
+                        let user = await client.query(`SELECT post_user FROM posts WHERE post_id = $1`, [id[1]])
+                        .then(result => {
+                            if (result !== undefined && result.rows.length === 1) {
+                                return result.rows[0].post_user;
+                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            done();
+                        });
+
+                        let notification = `A user replied to your <a href='/forums/posts/post-details?pid=${id[2]}&rid=${id[0]}'>post</a>.`;
+
+                        await client.query(`INSERT INTO notifications (notification_title, notification_owner) VALUES ($1, $2)`, [notification, user])
+                        .catch(err => { console.log(err); });
+
+                        done();
+                        resp.send({status: 'success'});
                     }
                 } else {
                     resp.send({status: 'fail'})
@@ -158,50 +166,6 @@ app.post('/edit-post', function(req, resp) {
         resp.send({status: 'unauthorized'});
     }
 });
-
-/* app.post('/vote-post', function(req, resp) {
-    if (req.session.user) {
-        console.log(req.body);
-        if (req.body.vote === 'up') {
-            //checkQuery = "SELECT downvoted_posts FROM users WHERE user_id = $1 AND downvoted_posts @> '{$2}'::int[]";
-            updatePostQuery = 'UPDATE posts SET post_upvote = post_upvote + 1, post_downvote = post_downvote - 1 WHERE post_id = $1 RETURNING post_id, post_upvote, post_downvote';
-            updateUserQuery = "UPDATE users SET user_upvoted_posts = user_upvoted_posts || $1, user_downvoted_posts = f_array_remove(user_downvoted_posts::int[], $1::int) WHERE user_id = $2 RETURNING user_downvoted_posts, user_upvoted_posts";
-        } else if (req.body.vote === 'down') {
-            //checkQuery = "SELECT upvoted_posts FROM users WHERE user_id = $1 AND downvoted_posts @> '{$2}'::int[]";
-            updatePostQuery = 'UPDATE posts SET post_downvote = post_downvote + 1, post_upvote = post_upvote - 1 WHERE post_id = $1 RETURNING post_id, post_upvote, post_downvote';
-            updateUserQuery = "UPDATE users SET user_downvoted_posts = user_downvoted_posts || $1, user_upvoted_posts = f_array_remove(user_upvoted_posts::int[], $1::int) WHERE user_id = $2 RETURNING user_downvoted_posts, user_upvoted_posts";
-        }
-            
-        db.query(updateUserQuery, [req.body.id, req.session.user.user_id], function(err, result) {
-            if (err) {
-                console.log(err);
-                resp.send({status: 'error'});
-            } else if (result !== undefined) {
-                if (result.rowCount === 1) {
-                    let userResults = result.rows[0];
-
-                    db.query(updatePostQuery, [req.body.id], function(err, result) {
-                        if (err) {
-                            console.log(err);
-                            resp.send({status: 'error'});
-                        } else if (result !== undefined) {
-                            if (result.rowCount === 1) {
-                                req.session.user.user_upvoted_posts = userResults.user_upvoted_posts;
-                                req.session.user.user_downvoted_posts = userResults.user_downvoted_posts;
-
-                                resp.send({status: 'success', vote_posts: result.rows[0]});
-                            } else {
-                                resp.send({status: 'fail'});
-                            }
-                        }
-                    });
-                } else {
-                    resp.send({status: 'fail'});
-                }
-            }
-        });
-    }
-}); */
 
 app.post('/vote-post', function(req, resp) {
     /**  Get all the votes in the table and update the user's session
@@ -351,31 +315,6 @@ app.post('/vote-post', function(req, resp) {
             }
         });
     }
-});
-
-app.post('/get-post-freq', function(req, resp) {
-    db.connect(async function(err, client, done) {
-        if (err) { console.log(err); }
-
-        console.log(req.body);
-
-        await client.query("SELECT COUNT(*) FILTER (WHERE belongs_to_post_id IS NULL) AS posts, COUNT(*) FILTER (WHERE belongs_to_post_id IS NOT NULL) AS replies, date_trunc('day', post_created) AS date FROM posts WHERE post_user = $1 AND post_created BETWEEN $2 AND $3 GROUP BY date", [req.body.username, req.body.start_date, req.body.end_date])
-        .then((result) => {
-            done();
-            if (result !== undefined) {
-                for (let i in result.rows) {
-                    result.rows[i].date = moment(result.rows[i].date).format('YYYY-MM-DD');
-                }
-
-                resp.send({status: 'success', data: result.rows});
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            resp.send({status: 'error'});
-        });
-    });
 });
 
 app.post('/follow-post', function(req, resp) {

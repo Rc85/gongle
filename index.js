@@ -1,10 +1,9 @@
 // modules
 const express = require('express');
-const dotenv = require('dotenv').config();
+require('dotenv').config();
 const bodyParser = require('body-parser');
 const session = require('cookie-session');
 const db = require('./routers/db');
-const $ = require('jquery');
 const fn = require('./routers/utils/functions');
 
 // server configurations
@@ -30,37 +29,90 @@ app.use(function (req, res, next) {
 
 // static routes
 app.use(require('./routers/static'));
-
+    
 app.get('*', (req, resp, next) => {
     if (req.session.user) {
         db.connect(async(err, client, done) => {
             if (err) { console.log(err); }
-
-            client.query(`SELECT befriend_with FROM friends WHERE friendly_user = $1 AND friend_confirmed IS TRUE`, [req.session.user.username])
-            .then((result) => {
-                done();
+    
+            let messageCount = await client.query(`SELECT * FROM messages WHERE recipient = $1 AND message_status = 'Unread'`, [req.session.user.username])
+            .then(result => {
                 if (result !== undefined) {
-                    for (let friend of result.rows) {
-                        if (req.session.user.friends.indexOf(friend.befriend_with) < 0) {
-                            req.session.user.friends.push(friend.befriend_with);
-                        }
+                    return result.rowCount;
+                }
+            })
+            .catch(err => { console.log(err); });
+
+            let notifications = await client.query(`SELECT * FROM notifications WHERE notification_owner = $1 AND notification_status = 'New'`, [req.session.user.username])
+            .then(result => {
+                if (result !== undefined) {
+                    return result.rowCount;
+                }
+            })
+            .catch(err => { console.log(err); });
+
+            let friends = [], blockedUsers = [];
+
+            // Vote tracking ensures user cannot vote twice on a post
+            let votes = await client.query('SELECT * FROM vote_tracking WHERE voting_user_id = $1', [req.session.user.user_id])
+            .then((result) => {
+                if (result !== undefined) {
+                    return result.rows;
+                }
+            })
+            .catch((err) => { console.log(err); });
+
+            let followedPosts = await client.query('SELECT * FROM followed_posts WHERE user_following = $1', [req.session.user.username])
+            .then((result) => {
+                if (result !== undefined) {
+                    return result.rows;
+                }
+            })
+            .catch((err) => { console.log(err); });
+
+            await client.query('SELECT befriend_with FROM friends WHERE friendly_user = $1 AND friend_confirmed IS TRUE', [req.session.user.username])
+            .then((result) => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        friends.push(result.rows[i].befriend_with);
                     }
                 }
-
-                next();
             })
-            .catch((err) => {
-                console.log(err);
-                done();
-            });
+            .catch((err) => { console.log(err); });
+
+            await client.query('SELECT blocked_user FROM blocked_users WHERE blocking_user = $1', [req.session.user.username])
+            .then((result) => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        blockedUsers.push(result.rows[i].blocked_user);
+                    }
+                }
+            })
+            .catch((err) => { console.log(err); });
+
+            done();
+
+            req.session.user.messageCount = messageCount;
+            req.session.user.notifications = notifications;
+            req.session.user.votes = votes;
+            req.session.user.followed_posts = followedPosts;
+            req.session.user.friends = friends;
+            req.session.user.blocked_users = blockedUsers;
+
+            next();
         });
     } else {
         next();
     }
 });
 
-// routers
-app.use(require('./routers/routes'));
+// routes
+app.use(require('./routers/routes/index'));
+app.use(require('./routers/routes/admins'));
+app.use(require('./routers/routes/auths'));
+app.use(require('./routers/routes/forums'));
+app.use(require('./routers/routes/messages'));
+app.use(require('./routers/routes/users'));
 
 // authentication
 app.use(require('./routers/auth'));

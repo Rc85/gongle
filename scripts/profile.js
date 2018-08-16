@@ -22,7 +22,7 @@ $(document).ready(function() {
         });
     });
 
-    function getFriendsList(page) {
+    /* function getFriendsList(page) {
         App.loading.show();
 
         $.post({
@@ -105,7 +105,7 @@ $(document).ready(function() {
                 }
             }
         });
-    }
+    } */
 
     /* $('#user-posts-button').on('click', function(e) {
         if (!postsLoaded) {
@@ -141,11 +141,68 @@ $(document).ready(function() {
         return color;
     }
 
-    let dateObj = new Date();
+    let calculateDate = (m) => {
+        let dateObj = new Date();
+        let year = dateObj.getUTCFullYear();
+        let monthInt;
+
+        if (!m) {
+            monthInt = dateObj.getUTCMonth() + 1;
+        } else {
+            monthInt = parseInt(m);
+        }
+
+        let month;
+        let day = 01;
+        let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        let monthName = months[monthInt - 1];
+
+        if (monthInt < 10) {
+            month = '0' + monthInt;
+        } else {
+            month = monthInt;
+        }
+
+        let startDate = `${year}-${month}-${day}`;
+        let endDate;
+
+        let oddMonths = [1, 3, 5, 7, 8, 10, 12];
+        let lastDayOfMonth;
+
+        if (oddMonths.indexOf(monthInt) !== -1) {
+            lastDayOfMonth = 31;
+        } else {
+            lastDayOfMonth = 30;
+
+            if (monthInt === 2) {
+                if (year % 4 === 0) {
+                    lastDayOfMonth = 29;
+                } else {
+                    lastDayOfMonth = 28;
+                }
+            }
+        }
+
+        console.log(lastDayOfMonth);
+
+        endDate = `${year}-${month}-${lastDayOfMonth}`;
+
+        return {
+            month: {
+                name: monthName,
+                lastDay: lastDayOfMonth
+            },
+             start: startDate, end: endDate, 
+        };
+    }
+
+    /* let dateObj = new Date();
     let year = dateObj.getUTCFullYear();
     let monthInt = dateObj.getUTCMonth() + 1;
     let month;
-    let day;
+    let day = 01;
+    let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let monthName = months[monthInt - 1];
 
     if (month < 10) {
         month = '0' + monthInt;
@@ -153,103 +210,115 @@ $(document).ready(function() {
         month = monthInt;
     }
 
-    let dayInt = dateObj.getUTCDate();
-
-    console.log(dayInt);
-
-    if (dayInt < 10) {
-        day = '0' + dayInt;
-    } else {
-        day = dayInt;
-    }
-
-    let startDate = year + '-' + month + '-' + day;
+    let startDate = `${year}-${month}-${day}`;
     let endDate;
 
     let oddMonths = [1, 3, 5, 7, 8, 10, 12];
+    let lastDayOfMonth;
 
     if (oddMonths.indexOf(monthInt)) {
-        endDate = year + '-' + month + '-31';
+        lastDayOfMonth = 31;
     } else {
+        lastDayOfMonth = 30;
+
         if (monthInt === 2) {
             if (year % 4 === 0) {
-                endDate = year + '-' + month + '-29'; 
+                lastDayOfMonth = 29;
             } else {
-                endDate = year + '-' + month + '-28'; 
+                lastDayOfMonth = 28;
             }
-        } else {
-            endDate = year + '-' + month + '-30';
         }
     }
 
-    $.post({
-        url: '/get-post-freq',
-        data: {
-            username: username,
-            start_date: startDate,
-            end_date: endDate
-        },
-        success: function(resp) {
-            console.log(resp);
-            if (resp.status === 'error') {
-                $('#post-frequency-chart').addClass('d-flex justify-content-center align-items-center').append(
-                    $('<span>').text('An error occurred while trying to retrieve post data.')
-                )
-            } else {
-                let posts = [];
-                let replies = [];
-                let labels = [];
+    endDate = `${year}-${month}-${lastDayOfMonth}`; */
 
-                for (let i = 0; i < 31; i++) {
-                    posts.push(0);
-                    replies.push(0);
-                    labels.push(i);
-                }
+    function getPostFrequency(user, date) {
+        let startDate = date.start;
+        let endDate = date.end;
+        let lastDayOfMonth = date.month.lastDay;
+        let monthName = date.month.name;
 
-                for (let data of resp.data) {
-                    let date = new Date(data.date);
-                    let index = date.getUTCDate();
-
-                    posts[index] = parseInt(data.posts);
-                    replies[index] = parseInt(data.replies);
-                }
-
-                var postFreqChart = new Chart($('#post-frequency-chart'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: '# of Posts',
-                                data: posts,
-                                backgroundColor: randomColor()
-                            },
-                            {
-                                label: '# of Replies',
-                                data: replies,
-                                backgroundColor: randomColor()
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    beginAtZero:true
+        $.post({
+            url: '/get-post-freq',
+            data: {
+                username: user,
+                start_date: startDate,
+                end_date: endDate
+            },
+            success: function(resp) {
+                console.log(resp);
+                if (resp.status === 'error') {
+                    $('#post-frequency-chart').addClass('d-flex justify-content-center align-items-center').append(
+                        $('<span>').text('An error occurred while trying to retrieve post data.')
+                    )
+                } else {
+                    let posts = [];
+                    let replies = [];
+                    let labels = [];
+    
+                    for (let i = 0; i < lastDayOfMonth + 1; i++) {
+                        posts.push(0);
+                        replies.push(0);
+                        labels.push(i);
+                    }
+    
+                    for (let data of resp.data) {
+                        let date = new Date(data.date);
+                        let index = date.getUTCDate();
+    
+                        posts[index] = parseInt(data.posts);
+                        replies[index] = parseInt(data.replies);
+                    }
+    
+                    var postFreqChart = new Chart($('#post-frequency-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: '# of Posts',
+                                    data: posts,
+                                    backgroundColor: randomColor()
+                                },
+                                {
+                                    label: '# of Replies',
+                                    data: replies,
+                                    backgroundColor: randomColor()
                                 }
-                            }]
+                            ]
                         },
-                        legend: {
-                            display: true
-                        },
-                        title: {
-                            display: true,
-                            text: 'Post Frequency By Month'
-                        }
-                    } 
-                });
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero:true
+                                    }
+                                }]
+                            },
+                            legend: {
+                                display: true
+                            },
+                            title: {
+                                display: true,
+                                text: `Post Frequence of ${monthName}`
+                            },
+                            tooltip: {
+                                mode: 'dataset',
+                                intersect: true
+                            }
+                        } 
+                    });
+                }
             }
-        }
+        });
+    }
+
+    getPostFrequency(username, calculateDate());
+
+    $('#select-month').on('change', function() {
+        let month = $(this).val();
+
+        getPostFrequency(username, calculateDate(month));
     });
 
     $('#upload-profile-pic-button').on('click', function() {

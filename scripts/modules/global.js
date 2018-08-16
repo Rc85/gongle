@@ -43,6 +43,8 @@ const App = (() => {
                     alertify.error('Duplicate found')
                 } else if (resp.status === 'requested') {
                     alertify.error('Request already sent');
+                } else if (resp.status === 'invalid post') {
+                    alertify.error('Cannot submit blanks');
                 }
             }
         },

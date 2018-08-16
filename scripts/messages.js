@@ -72,7 +72,7 @@ $(document).ready(function() {
 
             App.loading.show();
 
-            Message.delete(form, (resp) => {
+            Message.delete(form, false, (resp) => {
                 App.handle.response(resp, (resp) => {
                     if (resp.from === 'messages') {
                         $(form).parent().parent().remove();

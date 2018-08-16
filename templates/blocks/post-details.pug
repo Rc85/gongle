@@ -52,7 +52,7 @@ block content
             if posts.replies.length > 0
                 .pagination-container.mb-15
                     .pagination
-                        +createPagination(posts.replies[0].count, 10, page, '/posts-detail?pid=' + posts.post.post_id)
+                        +createPagination(posts.replies[0].count, 10, page, '/forums/posts/post-details?pid=' + posts.post.post_id)
             each post, i in posts.replies
                 section.reply(id='reply-' + post.post_id)
                     header.col
@@ -90,7 +90,7 @@ block content
                                 section.quote-body
                                     .text-left
                                         i.fas.fa-quote-left
-                                    .mx-auto.w-90 #{post.p2_post_body}
+                                    .mx-auto.w-90 !{post.p2_post_body}
                                     .text-right
                                         i.fas.fa-quote-right.ml-auto
                         section.post-body.mb-15 !{post.post_body}
@@ -99,5 +99,5 @@ block content
             if posts.replies.length > 0
                 .pagination-container.mb-15
                     .pagination
-                        +createPagination(posts.replies[0].count, 10, page, '/posts-detail?pid=' + posts.post.post_id)
+                        +createPagination(posts.replies[0].count, 10, page, '/forums/posts/post-details?pid=' + posts.post.post_id)
                     

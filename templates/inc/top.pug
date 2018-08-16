@@ -16,24 +16,34 @@ else if checkTitle.test(title)
 
     section.user-panel
         if user
-            .d-flex.w-60
-                .text-center
-                    a(href='/profile?u=' + user.username)
-                        .profile-pic(style=`background: url('${user.avatar_url}'); background-position: center top; background-size: cover; background-repeat: no-repeat;`)
-                .ml-10
-                    .mb-10.username-profile-link
-                        a(href='/profile?u=' + user.username) #{user.username}
-                    .d-flex
-                        span.message-icon.mr-10
-                            a(href='/messages?key=' + user.session_key)
-                                i(class=messageClass + ' fas fa-lg fa-envelope')
-                        a.mr-10(href='/user-settings?key=' + user.session_key)
-                            i(class=userSettingClass + ' fas fa-lg fa-cog')
-                        if user.privilege > 1
-                            a.mr-10(href='/admin-page')
-                                i(class=adminClass + ' fas fa-lg fa-user-cog')
-                        a.mr-10(href='/logout')
-                            i.fas.fa-lg.fa-sign-out-alt
+            div
+                .d-flex.w-60
+                    .text-center
+                        a(href='/profile?u=' + user.username)
+                            .profile-pic(style=`background: url('${user.avatar_url}'); background-position: center top; background-size: cover; background-repeat: no-repeat;`)
+                    .ml-10
+                        .mb-10.username-profile-link
+                            a(href='/profile?u=' + user.username) #{user.username}
+                        .d-flex
+                            span.notification-icon.mr-10
+                                if user.notifications > 0
+                                    span.notification-counter #{user.notifications}
+                                i.fas.fa-lg.fa-bell.notification-button
+                                .notification-container
+                                    .mt-10.text-center
+                                        a(href='/profile/notifications') See All
+                            span.message-icon.mr-10
+                                if user.messageCount > 0
+                                    span.message-counter #{user.messageCount}
+                                a(href='/messages?key=' + user.session_key)
+                                    i(class=messageClass + ' fas fa-lg fa-envelope')
+                            a.mr-10(href='/user-settings?key=' + user.session_key)
+                                i(class=userSettingClass + ' fas fa-lg fa-cog')
+                            if user.privilege > 1
+                                a.mr-10(href='/admin-page')
+                                    i(class=adminClass + ' fas fa-lg fa-user-cog')
+                            a.mr-10(href='/logout')
+                                i.fas.fa-lg.fa-sign-out-alt
         else
             form#login-form(action='/login', method='post')
                 .d-flex

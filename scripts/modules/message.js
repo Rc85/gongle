@@ -26,18 +26,17 @@ const Message = (() => {
                 }
             });
         },
-        delete: (message, callback) => {
-            let args = Array.from(arguments);
-            let allMessage = args.find((b) => { return typeof b === 'boolean' });
-
+        delete: function(message, all, callback) {
             App.loading.show();
 
-            if (allMessage) {
+            console.log(all);
+            if (all) {
+                console.log(message.length)
                 if (message.length > 0) {
                     App.loading.show();
                     
                     $.post({
-                        url: '/delete-all',
+                        url: '/delete-all-messages',
                         data: {
                             type: 'messages',
                             ids: message

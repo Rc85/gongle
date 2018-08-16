@@ -27,6 +27,23 @@ block user-content
             h3
                 i.fas.fa-chart-line.mr-5
                 | Post Frequency
+            - var date = new Date()
+            - var year = date.getUTCFullYear()
+            b Filter By Month: 
+            select#select-month
+                option
+                option(value='01') January #{year}
+                option(value='02') February #{year}
+                option(value='03') March #{year}
+                option(value='04') April #{year}
+                option(value='05') May #{year}
+                option(value='06') June #{year}
+                option(value='07') July #{year}
+                option(value='08') August #{year}
+                option(value='09') September #{year}
+                option(value='10') October #{year}
+                option(value='11') November #{year}
+                option(value='12') December #{year}
             canvas#post-frequency-chart.w-100(height='300')
         if user
             if user.user_id === viewing.user_id

@@ -172,4 +172,47 @@ $(document).ready(function() {
         $('.post-type-button').removeClass('active');
         $(this).parent().addClass('active');
     });
+
+    $('.notification-button').on('click', function(e) {
+        $('.notification-container').prepend(
+            $('<div>').addClass('notification-loading text-center').append(
+                $('<i>').addClass('fas fa-spinner fa-3x fa-spin')
+            )
+        );
+
+        $.post({
+            url: '/get-notifications',
+            success: (resp) => {
+                console.log(resp);
+                App.handle.response(resp, resp => {
+                    if (resp.notifications.length === 0) {
+                        $('.notification-container').find('.notification-loading').remove();
+                        $('.notification-container').find('.notification').remove();
+                    } else {
+                        $('.notification-container').find('.notification-loading').remove();
+                        
+                        for (let n of resp.notifications) {
+                            $('.notification-container').prepend(
+                                $('<div>').addClass('notification').append(
+                                    $('<span>').html(n.notification_title),
+                                    $('<div>').addClass('mt-15 text-right').html(n.notification_date)
+                                )
+                            )
+                        }
+
+                        $.post({
+                            url: '/change-notification-status',
+                            success: (resp) => {
+                                if (resp.status === 'success') {
+                                    $('.notification-icon').children('.notification-counter').remove();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    Toggle.menu('notification-button', 'notification-container');
 });

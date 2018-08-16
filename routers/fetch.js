@@ -2,6 +2,7 @@ const app = require('express').Router();
 const db = require('./db');
 const moment = require('moment');
 const fn = require('./utils/functions');
+const capitalize = require('./utils/capitalize');
 
 app.get('/get-categories', function(req, resp) {
     db.connect(async function(err, client, done) {
@@ -520,10 +521,8 @@ app.post('/get-post-count', function(req, resp) {
             WHERE subtopics.subtopic_title = $1
             AND posts.belongs_to_post_id IS NULL
             AND posts.post_status != 'Removed'`;
-            params = [fn.capitalize(from).replace('_', ' ')];
+            params = [capitalize(from).replace('_', ' ')];
         }
-
-        console.log(queryString);
 
         client.query(queryString, params)
         .then((result) => {
@@ -586,42 +585,6 @@ app.post('/get-friends', function(req, resp) {
     }
 });
 
-/* app.post('/user-menu', function(req, resp) {
-    db.connect(async function(err, client, done) {
-        if (err) { console.log(err); }
-
-        let userMenuQuery;
-        let queryParams;
-        let loggedIn = false;
-
-        if (req.session.user) {
-            userMenuQuery = 'SELECT user_id, username, last_login, user_status, user_level, avatar_url, online_status, fid FROM users LEFT JOIN (SELECT fid, befriend_with FROM friends WHERE friendly_user = $1 AND befriend_with = $2 AND friend_confirmed IS TRUE) AS friends ON users.username = friends.befriend_with WHERE username = $2';
-            queryParams = [req.session.user.username, req.body.username];
-            loggedIn = req.session.user.username;
-        } else {
-            userMenuQuery = 'SELECT user_id, username, last_login, user_status, user_level, avatar_url, online_status FROM users WHERE username =$1';
-            queryParams = [req.body.username];
-        }
-        
-        await client.query(userMenuQuery, queryParams)
-        .then((result) => {
-            done();
-            if (result !== undefined && result.rows.length === 1) {
-                result.rows[0].last_login = moment(result.rows[0].last_login).fromNow();
-
-                resp.send({status: 'success', user: result.rows[0], logged_in: loggedIn});
-            } else {
-                resp.send({status: 'failed'});
-            }
-        })
-        .catch((err) => {
-            console.log(err);
-            done();
-            resp.send({status: 'error'});
-        });
-    });
-}); */
-
 app.post('/admin-post-details/get-replies', function(req, resp) {
     if (req.session.user && req.session.user.privilege > 1) {
         db.connect(async function(err, client, done) {
@@ -655,6 +618,54 @@ app.post('/admin-post-details/get-replies', function(req, resp) {
         });
     } else {
         resp.send({status: 'unauthorized'});
+    }
+});
+
+app.post('/get-post-freq', function(req, resp) {
+    db.connect(async function(err, client, done) {
+        if (err) { console.log(err); }
+
+        await client.query("SELECT COUNT(*) FILTER (WHERE belongs_to_post_id IS NULL) AS posts, COUNT(*) FILTER (WHERE belongs_to_post_id IS NOT NULL) AS replies, date_trunc('day', post_created) AS date FROM posts WHERE post_user = $1 AND post_created BETWEEN $2 AND $3 GROUP BY date", [req.body.username, req.body.start_date, req.body.end_date])
+        .then((result) => {
+            done();
+            if (result !== undefined) {
+                for (let i in result.rows) {
+                    result.rows[i].date = moment(result.rows[i].date).format('YYYY-MM-DD');
+                }
+
+                resp.send({status: 'success', data: result.rows});
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            done();
+            resp.send({status: 'error'});
+        });
+    });
+});
+
+app.post('/get-notifications', (req, resp) => {
+    if (req.session.user) {
+        db.connect(async(err, client, done) => {
+            if (err) { console.log(err); }
+
+            await client.query(`SELECT * FROM notifications WHERE notification_owner = $1 AND notification_status = 'New'`, [req.session.user.username])
+            .then(result => {
+                if (result !== undefined) {
+                    for (let i in result.rows) {
+                        result.rows[i].notification_date = moment(result.rows[i].notification_date).fromNow();
+                    }
+
+                    resp.send({status: 'success', notifications: result.rows});
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                resp.send({status: 'error'});
+            });
+
+            done();
+        });
     }
 });
 

@@ -27,19 +27,64 @@
     }
 }
 
-.message-icon {
+.notification-icon, .message-icon {
     position: relative;
 }
 
-.message-counter {
+.notification-counter, .message-counter {
     position: absolute;
     right: -5px;
     bottom: -5px;
+    width: 12px;
+    height: 12px;
     background: rgb(255, 125, 0);
     border-radius: 100%;
-    font-size: 0.6em;
+    font-size: 0.7em;
     padding: 3px;
     font-weight: bold;
+    text-align: center;
+    color: #000;
+}
+
+.user-panel {
+    position: relative;
+    color: #FFF;
+
+    label {
+        color: #000;
+    }
+}
+
+.notification-button {
+    cursor: pointer;
+}
+
+.notification-container {
+    position: absolute;
+    margin-top: 15px;
+    background: $dark_border_color;
+    padding: 20px;
+    border: 1px solid $primary_color;
+    font-size: 0.8em;
+    width: 200px;
+    right: 0;
+    display: none;
+
+    a {
+        color: $secondary_color;
+    }
+
+    a:hover {
+        color: $link_color;
+        text-decoration: underline;
+    }
+}
+
+.notification {
+    border: 1px solid $primary_color;
+    padding: 10px;
+    background: $light_border_color;
+    color: #000;
 }
 
 .user-panel-icon-highlight {

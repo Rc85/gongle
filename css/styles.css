@@ -6317,19 +6317,61 @@ small {
   align-items: center;
 }
 
-.message-icon {
+.notification-icon, .message-icon {
   position: relative;
 }
 
-.message-counter {
+.notification-counter, .message-counter {
   position: absolute;
   right: -5px;
   bottom: -5px;
+  width: 12px;
+  height: 12px;
   background: #ff7d00;
   border-radius: 100%;
-  font-size: 0.6em;
+  font-size: 0.7em;
   padding: 3px;
   font-weight: bold;
+  text-align: center;
+  color: #000;
+}
+
+.user-panel {
+  position: relative;
+  color: #FFF;
+}
+.user-panel label {
+  color: #000;
+}
+
+.notification-button {
+  cursor: pointer;
+}
+
+.notification-container {
+  position: absolute;
+  margin-top: 15px;
+  background: #646464;
+  padding: 20px;
+  border: 1px solid #19c896;
+  font-size: 0.8em;
+  width: 200px;
+  right: 0;
+  display: none;
+}
+.notification-container a {
+  color: #199664;
+}
+.notification-container a:hover {
+  color: #32ffc8;
+  text-decoration: underline;
+}
+
+.notification {
+  border: 1px solid #19c896;
+  padding: 10px;
+  background: #c8c8c8;
+  color: #000;
 }
 
 .user-panel-icon-highlight {

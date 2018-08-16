@@ -117,12 +117,14 @@ app.post('/change-message-status', function(req, resp) {
 });
 
 app.post('/delete-message', function(req, resp) {
+    console.log(req.body)
     if (req.session.user) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            let messageOwner = await client.query('SELECT recipient FROM messages WHERE message_id = $1 AND recipient = $2', [req.body.message_id, req.session.user.username])
+            let messageOwner = await client.query('SELECT recipient, sender FROM messages WHERE message_id = $1 AND (recipient = $2 OR sender = $2)', [req.body.message_id, req.session.user.username])
             .then((result) => {
+                console.log(result.rows);
                 if (result !== undefined) {
                     return result.rows;
                 }
@@ -140,7 +142,7 @@ app.post('/delete-message', function(req, resp) {
                 .then((result) => {
                     done();
                     if (result !== undefined && result.rowCount === 1) {
-                        resp.send({status: 'success', from: req.body.from, key: req.session.user.session_key});
+                        resp.send({status: 'success', from: req.body.from_location, key: req.session.user.session_key});
                     } else {
                         resp.send({status: 'failed'});
                     }
@@ -161,22 +163,19 @@ app.post('/delete-message', function(req, resp) {
 });
 
 app.post('/delete-all-messages', function(req, resp) {
+    console.log(req.body);
     if (req.session.user) {
         db.connect(async function(err, client, done) {
             if (err) { console.log(err); }
 
-            let messageIds;
+/*             let ids = req.body.ids.map(function(i) {
+                return parseInt(i);
+            })
+
+            console.log(ids); */
             
-            if (req.body.messages.length > 1) {
-                messageIds = req.body.messages.join(',');
-            } else if (req.body.messages.length === 1) {
-                messageIds = req.body.messages[0];
-            }
-
-            let authorizedUser = true;
-
-            if (req.body.messages.length > 0) {
-                let recipients = await client.query('SELECT recipient FROM messages WHERE message_id IN (' + messageIds + ')')
+            if (req.body.ids.length > 0) {
+                let messages = await client.query('SELECT recipient, sender FROM messages WHERE message_id = ANY($1)', [req.body.ids])
                 .then((result) => {
                     if (result !== undefined) {
                         return result.rows;
@@ -187,34 +186,33 @@ app.post('/delete-all-messages', function(req, resp) {
                     done();
                 });
 
-                for (let row of recipients) {
-                    if (req.session.user.username !== row.recipient) {
-                        authorizedUser = false;
-                        break;
-                    }
-                }
-
-                if (authorizedUser) {
-                    try {
-                        await client.query('BEGIN');
-                        await client.query('DELETE FROM saved_messages WHERE saved_msg IN (' + messageIds + ')');
-
-                        for (let i in req.body.messages) {
-                            await client.query('INSERT INTO deleted_messages (msg_deleted_by, deleted_msg) VALUES ($1, $2)', [req.session.user.username, req.body.messages[i]]);
+                for (let message of messages) {
+                    if (message.recipient === req.session.user.username || message.sender === req.session.user.username) {
+                        try {
+                            await client.query('BEGIN');
+                            await client.query(`DELETE FROM saved_messages WHERE saved_msg = ANY($1)`, [req.body.ids]);
+        
+                            for (let i in req.body.ids) {
+                                await client.query('INSERT INTO deleted_messages (msg_deleted_by, deleted_msg) VALUES ($1, $2)', [req.session.user.username, req.body.ids[i]]);
+                            }
+        
+                            await client.query('COMMIT');
+        
+                            resp.send({status: 'success'});
+                        } catch (err) {
+                            await client.query('ROLLBACK');
+                            console.log(err);
+                            resp.send({status: 'error'});
                         }
 
-                        await client.query('COMMIT');
                         done();
-
-                        resp.send({status: 'success'});
-                    } catch (err) {
-                        await client.query('ROLLBACK');
-                        console.log(err);
+                    } else {
                         done();
-                        resp.send({status: 'error'});
+                        resp.send({status: 'unauthorized'});
                     }
                 }
             } else {
+                done();
                 resp.send({status: 'nothing'});
             }
         });
