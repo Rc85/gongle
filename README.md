@@ -10,13 +10,17 @@ Users can upvote and downvote posts. A table tracks user votes to ensure that us
 
 ### Following Posts
 
-Users can follow a post by clicking on the star button at the top right of a post. Followed posts are listed in the user profile. However, there is a plan to list them in the forum for quick access.
+Users can follow a post by clicking on the star button at the top right of a post. Followed posts are listed in the user profile. However, there are plans to list them in the forum for quick access.
+
+### Notifications
+
+User will receive notifications when their post has a reply. A counter will display the number of new notifications in the user panel. Users can also view all their notifications in their profile.
 
 ### User Profile
 
 #### Stats
 
-The stats tab shows the total number of upvote and downvote that the user has received, total honor received (to be implemented), and total posts. There is also a chart that shows the user's post frequency for the current month. There is a plan to allow filtering by months.
+The stats tab shows the total number of upvote and downvote that the user has received, total honor received (to be implemented), and total posts. There is also a chart that shows the user's post frequency for the current month and can be filtered by different months.
 
 At the bottom of the tab is a list of violation issued to the user by the mods/admins. It is not visible to the public.
 
@@ -41,6 +45,10 @@ Enable/disable email notifications from the system such as violations being issu
 #### Change Password/Email
 
 Self-explanatory
+
+### Messaging
+
+A simple messaging system. The interface features organization of messages into inbox, outbox, and saved messages. Users can also report a message and the message content will be sent to the report table. The icon in the user panel will show the number of unread messages.
 
 ### Moderators
 
@@ -86,7 +94,7 @@ This is the site configuration page where admin can close down the forum or shut
 
 #### Reports
 
-The reports section shows all the reports made by users. Only one report can be made per post or message as there is a unique constraint in the database to prevent duplicate reports. Admin will review the report by going to the link and see what is being reported. If activities that violates the terms of service or anything that the admin feels it's worth disciplining, they will issue a violation to the user. After the issue has been reviewed, the admin will click the check button and write a short report as to what happened and how it is handled. Afterwards, the status of the report will change to "Reviewed".
+The reports section shows all the reports made by users. Only one report can be made per post or message as there is a unique constraint in the database to prevent duplicate reports. Admin will review the report by going to the link and see what is being reported. If activities that violates the terms of service or anything that the admin feels it's worth disciplining, they will issue a violation to the user. After the report has been reviewed, the admin will click the check button and write a short report as to what happened and how it is handled. Afterwards, the status of the report will change to "Reviewed".
 
 ## Third-party Libraries Used
 
